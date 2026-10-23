@@ -89,3 +89,8 @@ app:
 # ¿Generador pequeño para la demo? Compara un modelo menor con el 27B (mismo prompt, RAG y juez)
 modelo-pequeno *ARGS:
     python -m caso_uso_llm.rag.small_model {{ARGS}}
+
+# Demo en modo repetición: reconstruye casos.json y la abre (sin modelos; http://127.0.0.1:7861)
+replay:
+    python scripts/build_replay.py
+    python demo_replay/app.py

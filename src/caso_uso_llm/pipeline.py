@@ -177,23 +177,39 @@ def demo_items(seed: int = DEFAULT_SEED) -> list[dict]:
     return items
 
 
+def read_csv(path: str) -> list[dict]:
+    """CSV propio: id, hotel (opcional), title, text y, si los hay, tipo y esperado (van en meta).
+
+    Separador detectado (`;` o `,`). Filas con el texto vacío se ignoran (plantilla a medias).
+    """
+    df = pd.read_csv(path, sep=None, engine="python", dtype=str, encoding="utf-8-sig").fillna("")
+    df = df[df["text"].str.strip() != ""]
+    return [
+        {"id": r["id"], "hotel": r.get("hotel") or None, "title": r.get("title", ""),
+         "text": r["text"], "meta": {"grupo": "propio", "tipo": r.get("tipo", ""),
+                                     "esperado": r.get("esperado", "")}}
+        for _, r in df.iterrows()
+    ]  # fmt: skip
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--csv", help="CSV con columnas id, hotel (opcional), title, text")
+    ap.add_argument("--out", help="JSON de salida (por defecto, la cola de la demostración)")
     args = ap.parse_args()
-    if args.csv:
-        df = pd.read_csv(args.csv).fillna("")
-        items = [{"id": str(r["id"]), "hotel": r.get("hotel") or None, "title": r.get("title", ""),
-                  "text": r["text"], "meta": {}} for _, r in df.iterrows()]  # fmt: skip
-    else:
-        items = demo_items()
+    items = read_csv(args.csv) if args.csv else demo_items()
+    if not items:
+        raise SystemExit("No hay reseñas con texto en el CSV.")
+    out_path = ROOT / args.out if args.out else QUEUE
     out = run(items)
     queue = [it for it in out if it["decision"] == "revisión humana"]
-    QUEUE.write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8", newline="\n")
+    out_path.write_text(
+        json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8", newline="\n"
+    )
     if not args.csv:
         write_report(out)
     log(
-        f"OK: {len(out) - len(queue)} publicables, {len(queue)} a revisión → {QUEUE.relative_to(ROOT)}"
+        f"OK: {len(out) - len(queue)} publicables, {len(queue)} a revisión → {out_path.relative_to(ROOT)}"
     )
 
 
