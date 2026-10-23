@@ -41,3 +41,6 @@ evals/demo/formulario.html
 
 # Ficheros que crea Gradio al intentar el enlace compartido
 .gradio/
+
+# Reseñas escritas por personas en la demo en vivo (con consentimiento; fuera de git)
+data/live/

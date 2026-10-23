@@ -17,6 +17,7 @@ Uso: uv run just app        # http://127.0.0.1:7860
 """
 
 import json
+import re
 from datetime import datetime
 
 import gradio as gr
@@ -24,12 +25,20 @@ import gradio as gr
 from caso_uso_llm.classify.infer import SentimentEnsemble
 from caso_uso_llm.evals.rubric import IDS
 from caso_uso_llm.log import log
-from caso_uso_llm.paths import RESULTS
+from caso_uso_llm.paths import DATA, RESULTS
 from caso_uso_llm.pipeline import NAMES, QUEUE, run
 from caso_uso_llm.rag import kb
 
 SESSION_QUEUE = RESULTS / "cola_app.jsonl"  # reseñas a revisión procesadas en la app
 DECISIONS = RESULTS / "revision_humana.jsonl"
+# Reseñas escritas por personas en la demo en vivo, con su nick: conjunto de prueba de producción.
+# Fuera de git (data/live/): texto aportado por terceros con su consentimiento, ya enmascarado.
+LIVE_LOG = DATA / "live" / "resenas_vivo.jsonl"
+NICK = re.compile(r"^[\w.\-]{2,30}$")
+CONSENT = (
+    "Acepto que mi reseña (con mi nick, no mi nombre) se guarde para evaluar y mejorar el sistema. "
+    "No incluyas datos personales: nombres reales, teléfonos ni correos."
+)
 NO_HOTEL = "Sin ficha (hotel no registrado)"
 
 log("Cargando el clasificador (3 semillas de mRoBERTa en CPU)")
@@ -51,13 +60,34 @@ def _append(path, row: dict) -> None:
 # --- Responder una reseña ------------------------------------------------------------------------
 
 
-def respond(hotel_label: str, title: str, text: str):
+def save_live(it: dict, nick: str) -> None:
+    """Guarda la reseña (ya normalizada y enmascarada) y lo que hizo el sistema; el nick NO llega
+    al modelo: solo se guarda aquí."""
+    LIVE_LOG.parent.mkdir(parents=True, exist_ok=True)
+    _append(LIVE_LOG, {
+        "id": it["id"], "fecha": datetime.now().isoformat(timespec="seconds"), "nick": nick,
+        "origen": "demo en vivo: escrita por una persona", "consentimiento": True,
+        "hotel": it["hotel"], "resena": it["review"],
+        "sentimiento": it["sentiment"], "confianza": it["confidence"],
+        "decision": it["decision"], "motivos": it["reasons"], "respuesta": it.get("response"),
+        "juez": {k: v["cumple"] for k, v in (it.get("judge") or {}).items()},
+    })  # fmt: skip
+
+
+def respond(nick: str, consent: bool, hotel_label: str, title: str, text: str):
+    nick = nick.strip()
+    if not NICK.match(nick):
+        raise gr.Error("Escribe un nick de 2 a 30 caracteres (letras, números, punto, guion o _).")
+    if not consent:
+        raise gr.Error("Para generar la respuesta hay que aceptar que se guarde la reseña.")
     if not text.strip():
         raise gr.Error("Escribe o pega una reseña.")
     hotel = HOTELS.get(hotel_label)
     item_id = f"app-{datetime.now():%Y%m%d-%H%M%S}"
+    # El nick va solo en meta: el pipeline no lo usa en ningún prompt.
     it = run([{"id": item_id, "hotel": hotel, "title": title, "text": text,
-               "meta": {"grupo": "app"}}], CLASSIFIER)[0]  # fmt: skip
+               "meta": {"grupo": "app", "nick": nick}}], CLASSIFIER)[0]  # fmt: skip
+    save_live(it, nick)
     if it["decision"] == "revisión humana":
         _append(SESSION_QUEUE, it)
     probs = " · ".join(f"{k} {v:.2f}" for k, v in it["probs"].items())
@@ -132,8 +162,10 @@ def build() -> gr.Blocks:
                     hotel = gr.Dropdown(
                         [*HOTELS, NO_HOTEL], value=next(iter(HOTELS)), label="Hotel"
                     )
+                    nick = gr.Textbox(label="Tu nick (no tu nombre)", max_lines=1)
                     title = gr.Textbox(label="Título (opcional)")
                     text = gr.Textbox(label="Reseña", lines=6)
+                    consent = gr.Checkbox(label=CONSENT, value=False)
                     go = gr.Button("Generar respuesta", variant="primary")
                 with gr.Column():
                     decision = gr.Markdown()
@@ -145,7 +177,7 @@ def build() -> gr.Blocks:
                 analysis = gr.JSON(label="Aspectos (JSON)")
             go.click(
                 respond,
-                [hotel, title, text],
+                [nick, consent, hotel, title, text],
                 [sentiment, analysis, context, draft, judge, decision],
             )
         with gr.Tab("Cola de revisión") as tab:
