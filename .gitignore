@@ -38,3 +38,6 @@ kb/revision.html
 results/revision_humana.jsonl
 results/cola_app.jsonl
 evals/demo/formulario.html
+
+# Ficheros que crea Gradio al intentar el enlace compartido
+.gradio/
