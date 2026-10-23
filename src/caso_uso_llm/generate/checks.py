@@ -86,3 +86,27 @@ def run_checks(response: str, aspects: list[dict], extra_forbidden: list[str] = 
         "plazo": bool(PLAZO.search(response)),
         "case_forbidden": forbidden_hits,
     }
+
+
+# Nombres de personas (guardarraíl, Fase 9). El enmascarado de datos personales (R14) solo cubre
+# nombres con tratamiento o cargo; los nombres sueltos («soy Andrés», «una tal Lucía») llegan al
+# modelo. Mientras no haya NER, una respuesta que use un nombre de la reseña va a revisión.
+_NAME = r"([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)?)"
+NAME_IN_REVIEW = re.compile(
+    rf"\b(?:soy|me llamo|mi nombre es|una tal|un tal|la chica|el chico|recepcionista|camarer[oa])"
+    rf",?\s+{_NAME}"
+)
+SALUTATION = re.compile(r"^\s*Estimad[oa]s?\s+([^\s:,]+)", re.IGNORECASE)
+GENERIC_SALUTATION = {"cliente", "clienta", "clientes", "huésped", "huéspedes", "señor", "señora"}
+
+
+def person_names(response: str, review: str) -> list[str]:
+    """Nombres de persona en la respuesta: los que la reseña presenta como tales, o un saludo
+    personalizado («Estimado Andrés:») en vez de genérico."""
+    found = [
+        n for n in NAME_IN_REVIEW.findall(review) if re.search(rf"\b{re.escape(n)}\b", response)
+    ]
+    m = SALUTATION.match(response)
+    if m and m.group(1).lower() not in GENERIC_SALUTATION and m.group(1) not in found:
+        found.append(m.group(1))
+    return found

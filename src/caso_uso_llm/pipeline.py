@@ -6,6 +6,9 @@ reseña + hotel → [1] normalización y PII → [2] sentimiento y confianza (mR
 → [7] «publicable» o «revisión humana», con los motivos.
 
 Va a revisión humana si se cumple CUALQUIERA de estas condiciones:
+- el clasificador y el LLM (campo `sentimiento` del análisis) no coinciden: el clasificador no
+  entiende el sarcasmo (p06 de las reseñas propias: positivo con 0,93 y el LLM, negativo);
+- la respuesta usa el nombre de una persona de la reseña (sin NER todavía, ver checks.py);
 - la reseña es negativa o neutral (REVIEW_LABELS), o la confianza del clasificador es menor que
   el umbral elegido en validación (0,85; results/phase3b_realista.json). Las neutrales van siempre
   a revisión desde la primera demostración: las tres que se publicaban rozaban el umbral (0,851)
@@ -77,6 +80,7 @@ ALERTS = {
     "da un importe": lambda c: bool(c["importe"]),
     "nombra la ficha o las políticas": lambda c: c["nombra_fuente"],
     "longitud o firma": lambda c: not (c["length_ok"] and c["signature_ok"]),
+    "nombre de una persona en la respuesta": lambda c: bool(c.get("nombres")),
 }
 NAMES = {c.id: c.nombre for c in criterios(RUBRIC)}
 
@@ -120,6 +124,7 @@ def run(items: list[dict], classifier: "SentimentEnsemble | None" = None) -> lis
         response = respond(RESPONSE_PROMPTS[PROMPT], user, cache)
         checks = C.run_checks(response, analysis["aspectos"])
         checks.update(ficha_checks(response, it["review"], it["hotel"]))
+        checks["nombres"] = C.person_names(response, it["review"])
         it.update(analysis=analysis, response=response, checks=checks,
                   politicas=[d.id for d in p], ejemplos=[d.id for d in e])  # fmt: skip
         if i % 10 == 0:
@@ -147,7 +152,12 @@ def route(it: dict) -> list[str]:
     if it["sentiment"] in REVIEW_LABELS:
         r.append({"negativo": "reseña negativa", "neutral": "reseña neutral"}[it["sentiment"]])
     if it["confidence"] < THRESHOLD:
-        r.append(f"confianza {it['confidence']:.2f} < {THRESHOLD}")
+        r.append(f"confianza {it['confidence']:.3f} < {THRESHOLD}")
+    llm = it["analysis"].get("sentimiento")
+    if (
+        llm and llm != it["sentiment"]
+    ):  # segunda opinión: p. ej., sarcasmo que el clasificador no ve
+        r.append(f"el clasificador ({it['sentiment']}) y el LLM ({llm}) no coinciden")
     if it["analysis"]["peticiones"]:
         r.append("el cliente pide: " + "; ".join(it["analysis"]["peticiones"]))
     r += [name for name, fn in ALERTS.items() if fn(it["checks"])]
@@ -217,6 +227,8 @@ def reason_kind(reason: str) -> str:
     """Agrupa motivos para contarlos: «confianza 0.71 < 0.85» -> «confianza baja»."""
     if reason.startswith("confianza"):
         return f"confianza < {THRESHOLD}"
+    if reason.startswith("el clasificador"):
+        return "el clasificador y el LLM no coinciden"
     if reason.startswith("el cliente pide"):
         return "el cliente pide algo"
     return reason

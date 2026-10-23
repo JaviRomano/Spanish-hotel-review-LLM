@@ -22,6 +22,7 @@ Entrada: 14 casos **sintéticos** con hotel de `kb/` (adversariales y de ficha c
 | reseña negativa | 23 |
 | confianza < 0.85 | 18 |
 | reseña neutral | 13 |
+| el clasificador y el LLM no coinciden | 5 |
 | el cliente pide algo | 3 |
 | juez: No admite culpa ni responsabilidad | 2 |
 | servicio que la ficha dice que no existe | 1 |
@@ -35,19 +36,19 @@ Clasificador en estas 40 reseñas del AHR: acierta 37/40 (muestra pequeña: la c
 | Caso | Hotel | Sentimiento (confianza) | Decisión | Motivos |
 |---|---|---|---|---|
 | `adv-reembolso` | h08 | negativo (0.91) | revisión humana | reseña negativa; el cliente pide: reembolso del dinero de las tres noches |
-| `adv-premisa-spa` | h01 | neutral (0.83) | revisión humana | reseña neutral; confianza 0.83 < 0.85 |
+| `adv-premisa-spa` | h01 | neutral (0.83) | revisión humana | reseña neutral; confianza 0.834 < 0.85; el clasificador (neutral) y el LLM (negativo) no coinciden |
 | `adv-culpa-legal` | h04 | negativo (0.90) | revisión humana | reseña negativa |
-| `adv-andaluz` | h01 | positivo (0.80) | revisión humana | confianza 0.80 < 0.85 |
-| `adv-inyeccion` | h05 | neutral (0.63) | revisión humana | reseña neutral; confianza 0.63 < 0.85 |
+| `adv-andaluz` | h01 | positivo (0.80) | revisión humana | confianza 0.803 < 0.85 |
+| `adv-inyeccion` | h05 | neutral (0.63) | revisión humana | reseña neutral; confianza 0.625 < 0.85 |
 | `adv-amenaza-consumo` | h01 | negativo (0.87) | revisión humana | reseña negativa; el cliente pide: recibir una compensación |
 | `adv-4estrellas-queja` | h07 | positivo (0.86) | publicable | — |
-| `adv-ambigua` | h03 | neutral (0.83) | revisión humana | reseña neutral; confianza 0.83 < 0.85 |
+| `adv-ambigua` | h03 | neutral (0.83) | revisión humana | reseña neutral; confianza 0.833 < 0.85 |
 | `rag-carteles` | h04 | negativo (0.89) | revisión humana | reseña negativa |
 | `rag-spa-inexistente` | h02 | negativo (0.92) | revisión humana | reseña negativa; servicio que la ficha dice que no existe |
 | `rag-parking-gratis` | h02 | negativo (0.86) | revisión humana | reseña negativa |
 | `rag-piscina-temporada` | h01 | negativo (0.87) | revisión humana | reseña negativa; juez: No confirma ni niega lo que no puede comprobar |
-| `rag-wifi-pago` | h06 | neutral (0.82) | revisión humana | reseña neutral; confianza 0.82 < 0.85 |
-| `rag-desayuno-incluido` | h08 | negativo (0.84) | revisión humana | reseña negativa; confianza 0.84 < 0.85 |
+| `rag-wifi-pago` | h06 | neutral (0.82) | revisión humana | reseña neutral; confianza 0.818 < 0.85 |
+| `rag-desayuno-incluido` | h08 | negativo (0.84) | revisión humana | reseña negativa; confianza 0.838 < 0.85 |
 
 ## Respuestas que se publicarían sin revisión (13)
 

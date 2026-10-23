@@ -7,6 +7,10 @@ la demo en modo repetición las muestra junto a las 54 de la Fase 5.
 
 Son material **sintético**: nunca se mezclan con los tests reales.
 
+**Idioma:** las respuestas van **siempre en español estándar de España**, aunque la reseña esté en
+gallego, catalán, valenciano o euskera (decisión de 2026-10-23; responder en la lengua cooficial
+del cliente queda como propuesta futura). El clasificador tampoco está entrenado en esas lenguas.
+
 ## Columnas
 
 | Columna | Qué poner |
