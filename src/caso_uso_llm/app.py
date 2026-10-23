@@ -18,6 +18,7 @@ Uso: uv run just app        # http://127.0.0.1:7860
 
 import json
 import re
+import threading
 from datetime import datetime
 
 import gradio as gr
@@ -35,6 +36,11 @@ DECISIONS = RESULTS / "revision_humana.jsonl"
 # Fuera de git (data/live/): texto aportado por terceros con su consentimiento, ya enmascarado.
 LIVE_LOG = DATA / "live" / "resenas_vivo.jsonl"
 NICK = re.compile(r"^[\w.\-]{2,30}$")
+QUEUE_NOTE = (
+    "⏳ **Se procesa una reseña a la vez** (alrededor de 1 minuto cada una: hay una sola GPU). "
+    "Si otras personas enviaron la suya antes, verás **tu posición en la cola** y el tiempo "
+    "estimado sobre el resultado. No hace falta volver a pulsar el botón."
+)
 CONSENT = (
     "Acepto que mi reseña (con mi nick, no mi nombre) se guarde para evaluar y mejorar el sistema. "
     "No incluyas datos personales: nombres reales, teléfonos ni correos."
@@ -74,7 +80,33 @@ def save_live(it: dict, nick: str) -> None:
     })  # fmt: skip
 
 
+# Cola visible: cuántas reseñas hay enviadas y sin terminar (la que se procesa incluida).
+_PENDING = 0
+_LOCK = threading.Lock()
+
+
+def enqueue() -> str:
+    """Se ejecuta al pulsar, sin esperar turno: dice cuántas reseñas hay por delante."""
+    global _PENDING
+    with _LOCK:
+        ahead = _PENDING
+        _PENDING += 1
+    if ahead == 0:
+        return "⚙️ **Procesando tu reseña…** (alrededor de 1 minuto)"
+    return (f"⏳ **Tu reseña está en cola: {ahead} por delante** (≈ {ahead + 1} min en total). "
+            "No vuelvas a pulsar el botón.")  # fmt: skip
+
+
 def respond(nick: str, consent: bool, hotel_label: str, title: str, text: str):
+    global _PENDING
+    try:
+        return _respond(nick, consent, hotel_label, title, text)
+    finally:
+        with _LOCK:
+            _PENDING = max(0, _PENDING - 1)
+
+
+def _respond(nick: str, consent: bool, hotel_label: str, title: str, text: str):
     nick = nick.strip()
     if not NICK.match(nick):
         raise gr.Error("Escribe un nick de 2 a 30 caracteres (letras, números, punto, guion o _).")
@@ -166,7 +198,9 @@ def build() -> gr.Blocks:
                     title = gr.Textbox(label="Título (opcional)")
                     text = gr.Textbox(label="Reseña", lines=6)
                     consent = gr.Checkbox(label=CONSENT, value=False)
+                    gr.Markdown(QUEUE_NOTE)
                     go = gr.Button("Generar respuesta", variant="primary")
+                    status = gr.Markdown()
                 with gr.Column():
                     decision = gr.Markdown()
                     sentiment = gr.Markdown(label="Sentimiento")
@@ -175,11 +209,16 @@ def build() -> gr.Blocks:
                 context = gr.Markdown()
                 judge = gr.Markdown()
                 analysis = gr.JSON(label="Aspectos (JSON)")
-            go.click(
+            go.click(enqueue, None, status, queue=False)  # inmediato: posición en la cola
+            done = go.click(
                 respond,
                 [nick, consent, hotel, title, text],
                 [sentiment, analysis, context, draft, judge, decision],
+                show_progress="full",  # posición en la cola y tiempo estimado sobre el resultado
+                concurrency_id="gpu",  # todas las reseñas comparten la única GPU
             )
+            # Aparte, para que el aviso de la cola no quede atenuado mientras se espera el resultado
+            done.then(lambda: "✅ **Lista.**", None, status, queue=False)
         with gr.Tab("Cola de revisión") as tab:
             table = gr.Dataframe(headers=["id", "hotel", "sentimiento", "confianza", "motivos"],
                                  interactive=False, wrap=True)  # fmt: skip
@@ -254,7 +293,7 @@ def main() -> None:
     keep_awake()
     warm_up()
     demo = build()
-    demo.queue(default_concurrency_limit=1, max_size=10)  # una reseña a la vez: una sola GPU
+    demo.queue(default_concurrency_limit=1, max_size=20)  # una reseña a la vez: una sola GPU
     demo.launch(server_name="127.0.0.1", server_port=7860, share=args.share, auth=auth,
                 max_threads=4)  # fmt: skip
 
