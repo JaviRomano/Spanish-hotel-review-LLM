@@ -37,3 +37,4 @@ kb/revision.html
 # Decisiones de la persona que revisa y cola de la app (trabajo humano, no resultados reproducibles)
 results/revision_humana.jsonl
 results/cola_app.jsonl
+evals/demo/formulario.html
