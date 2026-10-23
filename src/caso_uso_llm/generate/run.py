@@ -80,9 +80,9 @@ class Cache:
         return self.data[key]
 
 
-def chat(system: str, user: str, schema: dict | None = None) -> str:
+def chat(system: str, user: str, schema: dict | None = None, model: str = MODEL) -> str:
     r = ollama.chat(
-        model=MODEL,
+        model=model,
         messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
         format=schema,
         think=False,
@@ -91,13 +91,13 @@ def chat(system: str, user: str, schema: dict | None = None) -> str:
     return r.message.content
 
 
-def analyze(review: str, cache: Cache) -> tuple[dict | None, str]:
+def analyze(review: str, cache: Cache, model: str = MODEL) -> tuple[dict | None, str]:
     """Aspectos en JSON validados con el esquema; (None, error) si el JSON no es válido."""
     schema = Analisis.model_json_schema()
     raw = cache.get_or_call(
-        {"model": MODEL, "opts": OPTIONS, "sys": ANALYSIS_SYSTEM, "review": review,
+        {"model": model, "opts": OPTIONS, "sys": ANALYSIS_SYSTEM, "review": review,
          "schema": schema},
-        lambda: chat(ANALYSIS_SYSTEM, review, schema),
+        lambda: chat(ANALYSIS_SYSTEM, review, schema, model),
     )  # fmt: skip
     try:
         analysis = Analisis.model_validate_json(raw).model_dump(mode="json")
@@ -108,10 +108,10 @@ def analyze(review: str, cache: Cache) -> tuple[dict | None, str]:
     return analysis, ""
 
 
-def respond(system: str, user: str, cache: Cache) -> str:
+def respond(system: str, user: str, cache: Cache, model: str = MODEL) -> str:
     return cache.get_or_call(
-        {"model": MODEL, "opts": OPTIONS, "sys": system, "user": user},
-        lambda: chat(system, user),
+        {"model": model, "opts": OPTIONS, "sys": system, "user": user},
+        lambda: chat(system, user, model=model),
     ).strip()
 
 
