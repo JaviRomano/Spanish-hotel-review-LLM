@@ -97,8 +97,52 @@ def enqueue() -> str:
             "No vuelvas a pulsar el botón.")  # fmt: skip
 
 
+def shutdown() -> None:
+    """Apaga la demo a distancia: descarga los modelos de la GPU, cierra el túnel y sale.
+
+    Al terminar el proceso se libera el bloqueo de suspensión y vuelve a mandar el plan de
+    energía de Windows. DEMO_KILL_TUNNEL=0 no cierra el túnel (para probar en otro puerto).
+    """
+    import os
+    import subprocess
+    import time
+
+    import ollama
+
+    from caso_uso_llm.evals.judge import JUDGE_MODEL
+    from caso_uso_llm.generate.run import MODEL
+
+    time.sleep(3)  # deja que la respuesta «Demo apagada» llegue al navegador
+    for model in (MODEL, JUDGE_MODEL):
+        try:
+            ollama.generate(model=model, prompt="", keep_alive=0)
+            log(f"{model}: descargado de la GPU")
+        except Exception as e:  # noqa: BLE001
+            log(f"{model}: no se pudo descargar ({e})")
+    if os.environ.get("DEMO_KILL_TUNNEL", "1") != "0":
+        subprocess.run(["taskkill", "/IM", "cloudflared.exe", "/F"], capture_output=True)
+        log("Túnel de Cloudflare cerrado")
+    log("Demo apagada a distancia")
+    os._exit(0)
+
+
+def is_kill(text: str) -> bool:
+    import os
+
+    kill = os.environ.get("DEMO_KILL", "").strip().lower()
+    return bool(kill) and text.strip().lower() == kill
+
+
 def respond(nick: str, consent: bool, hotel_label: str, title: str, text: str):
     global _PENDING
+    if is_kill(text):  # palabra clave de apagado: no se procesa ni se guarda como reseña
+        threading.Thread(target=shutdown, daemon=True).start()
+        with _LOCK:
+            _PENDING = max(0, _PENDING - 1)
+        off = (
+            "### 🔌 Demo apagada\nLos modelos se descargan de la GPU y el enlace deja de funcionar."
+        )
+        return "", None, "", "", "", off
     try:
         return _respond(nick, consent, hotel_label, title, text)
     finally:
@@ -121,6 +165,8 @@ def _respond(nick: str, consent: bool, hotel_label: str, title: str, text: str):
                "meta": {"grupo": "app", "nick": nick}}], CLASSIFIER)[0]  # fmt: skip
     save_live(it, nick)
     if it["decision"] == "revisión humana":
+        it["fecha"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        it["nick"] = it.get("meta", {}).get("nick", "")
         _append(SESSION_QUEUE, it)
     probs = " · ".join(f"{k} {v:.2f}" for k, v in it["probs"].items())
     sentiment = f"**{it['sentiment']}** (confianza {it['confidence']:.2f}) — {probs}"
@@ -153,9 +199,12 @@ def pending() -> list[dict]:
 
 
 def queue_table():
-    rows = [[it["id"], it.get("hotel") or "—", it["sentiment"], round(it["confidence"], 2),
-             "; ".join(it["reasons"])[:120]] for it in pending()]  # fmt: skip
-    ids = [r[0] for r in rows]
+    # Las de la demo en vivo, con fecha, primero y de la más reciente a la más antigua
+    items = sorted(pending(), key=lambda it: it.get("fecha", ""), reverse=True)
+    rows = [[it.get("fecha", "—"), it["id"], it.get("nick") or "—", it.get("hotel") or "—",
+             it["sentiment"], round(it["confidence"], 2), "; ".join(it["reasons"])[:120]]
+            for it in items]  # fmt: skip
+    ids = [r[1] for r in rows]
     return rows, gr.update(choices=ids, value=ids[0] if ids else None)
 
 
@@ -164,6 +213,8 @@ def show(item_id: str | None):
     if it is None:
         return "", "", ""
     reasons = "\n".join(f"- {r}" for r in it["reasons"])
+    if it.get("fecha"):
+        reasons = f"**Recibida:** {it['fecha']} · **nick:** {it.get('nick') or '—'}\n\n" + reasons
     return it["review"], it.get("response") or "", reasons
 
 
@@ -220,7 +271,7 @@ def build() -> gr.Blocks:
             # Aparte, para que el aviso de la cola no quede atenuado mientras se espera el resultado
             done.then(lambda: "✅ **Lista.**", None, status, queue=False)
         with gr.Tab("Cola de revisión") as tab:
-            table = gr.Dataframe(headers=["id", "hotel", "sentimiento", "confianza", "motivos"],
+            table = gr.Dataframe(headers=["fecha y hora", "id", "nick", "hotel", "sentimiento", "confianza", "motivos"],
                                  interactive=False, wrap=True)  # fmt: skip
             selector = gr.Dropdown(label="Reseña a revisar")
             with gr.Row():
@@ -281,6 +332,7 @@ def main() -> None:
         help="contraseña sin enlace de Gradio (p. ej., tras "
         "un túnel de Cloudflare: Defender bloquea frpc, el binario del túnel de Gradio)",
     )
+    ap.add_argument("--port", type=int, default=7860)
     args = ap.parse_args()
     auth = None
     if args.share or args.auth:
@@ -294,7 +346,7 @@ def main() -> None:
     warm_up()
     demo = build()
     demo.queue(default_concurrency_limit=1, max_size=20)  # una reseña a la vez: una sola GPU
-    demo.launch(server_name="127.0.0.1", server_port=7860, share=args.share, auth=auth,
+    demo.launch(server_name="127.0.0.1", server_port=args.port, share=args.share, auth=auth,
                 max_threads=4)  # fmt: skip
 
 
