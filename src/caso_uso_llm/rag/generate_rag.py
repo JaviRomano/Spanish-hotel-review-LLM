@@ -104,6 +104,7 @@ def ficha_checks(response: str, review: str, hotel: str | None) -> dict:
         "servicio_inexistente": [],
         "cifra_inventada": [],
         "contradice": False,
+        "estancia_inexistente": C.presupposed_stay(response, review),
     }
     if not hotel:
         return out
@@ -189,6 +190,7 @@ CHECKS = (
     ("⚠ Contradice o corrige al cliente", lambda c: c["contradice"], True),
     ("⚠ Da un importe (pol-precio)", lambda c: bool(c.get("importe")), True),
     ("⚠ Nombra la ficha o las políticas", lambda c: c.get("nombra_fuente", False), True),
+    ("⚠ Habla de una estancia que no hubo", lambda c: c.get("estancia_inexistente", False), True),
 )
 GROUPS = (("real", "reales"), ("adversarial", "advers."), ("rag", "ficha vs. cliente"))
 

@@ -218,3 +218,19 @@ RUBRICS_FICHA["v2g"] = tuple(
     else c
     for c in RUBRICS_FICHA["v2f"]
 )
+
+# v2h (Fase 9): v2g no suspendía la respuesta real a ahr-ahr-2775 (el cliente canceló y nunca se
+# alojó; la respuesta lamenta «su estancia» y admite que «la comunicación no fue la adecuada»).
+# Se aclara sin_culpa (afirmar que el hotel falló). La estancia inventada NO la detecta el juez ni
+# ampliando sin_invencion (dos redacciones probadas en la puerta): la cubre una regla determinista
+# (generate/checks.presupposed_stay) en vez de seguir ajustando el juez a su propia puerta.
+_V2H = {
+    "sin_culpa": " También NO CUMPLE si AFIRMA que el hotel o su personal fallaron («la "
+    "comunicación con nuestro personal no fue la adecuada», «no le atendimos como debíamos»). "
+    "Lamentar lo que el cliente cuenta o su malestar («sentimos lo ocurrido», «lamentamos que no "
+    "pudiera disfrutar de…», «lo que nos describe») SÍ cumple: no afirma ningún fallo.",
+}
+RUBRICS_FICHA["v2h"] = tuple(
+    replace(c, no_cumple_si=c.no_cumple_si + _V2H[c.id]) if c.id in _V2H else c
+    for c in RUBRICS_FICHA["v2g"]
+)

@@ -94,3 +94,8 @@ modelo-pequeno *ARGS:
 replay:
     python scripts/build_replay.py
     python demo_replay/app.py
+
+# Demo en vivo con contraseña (DEMO_USER y DEMO_PASS en el entorno). Publicarla con un túnel:
+#   cloudflared tunnel --url http://127.0.0.1:7860     (Defender bloquea el túnel de Gradio)
+app-live:
+    python -m caso_uso_llm.app --auth

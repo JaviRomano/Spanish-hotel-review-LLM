@@ -85,6 +85,7 @@ def test_los_prompts_rag_son_v4_mas_su_bloque_de_contexto():
     for v in RAG_PROMPTS:
         assert RESPONSE_PROMPTS[v] == RESPONSE_PROMPTS["v4"] + "\n\n" + CONTEXTOS[v]
     assert CONTEXTOS["v6"].startswith(CONTEXTOS["v5"])
+    assert CONTEXTOS["v7"].startswith(CONTEXTOS["v6"])
 
 
 def test_ficha_checks_importe_y_fuente_interna():
@@ -98,4 +99,5 @@ def test_ficha_checks_importe_y_fuente_interna():
         "servicio_inexistente": [],
         "cifra_inventada": [],
         "contradice": False,
+        "estancia_inexistente": False,
     }

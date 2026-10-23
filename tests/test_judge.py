@@ -68,3 +68,10 @@ def test_v2g_solo_aclara_sin_premisa_respecto_a_v2f():
 
     v2f, v2g = RUBRICS_FICHA["v2f"], RUBRICS_FICHA["v2g"]
     assert {a.id for a, b in zip(v2f, v2g, strict=True) if a != b} == {"sin_premisa"}
+
+
+def test_v2h_solo_aclara_culpa_respecto_a_v2g():
+    from caso_uso_llm.evals.rubric import RUBRICS_FICHA
+
+    v2g, v2h = RUBRICS_FICHA["v2g"], RUBRICS_FICHA["v2h"]
+    assert {a.id for a, b in zip(v2g, v2h, strict=True) if a != b} == {"sin_culpa"}

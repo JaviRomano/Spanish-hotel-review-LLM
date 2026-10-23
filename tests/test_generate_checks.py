@@ -91,3 +91,13 @@ def test_person_names_detecta_nombres_de_la_resena_y_saludos_personalizados():
     assert person_names("Estimada clienta: Gracias por su reseña.", review) == []
     # Lugares con mayúscula no son personas: solo cuentan nombres presentados como tales
     assert person_names("Estimado cliente: disfrute de la Alhambra.", "Vistas a la Alhambra.") == []
+
+
+def test_presupposed_stay_solo_si_el_cliente_no_llego_a_alojarse():
+    from caso_uso_llm.generate.checks import presupposed_stay
+
+    cancelled = "Íbamos a alojarnos un fin de semana pero cancelé la reserva y nadie me llamó."
+    assert presupposed_stay("Lamentamos que su estancia no estuviera a la altura.", cancelled)
+    assert not presupposed_stay("Lamentamos lo que nos describe sobre su reserva.", cancelled)
+    stayed = "Pasamos tres noches; la habitación, ruidosa."
+    assert not presupposed_stay("Lamentamos que su estancia no fuera tranquila.", stayed)

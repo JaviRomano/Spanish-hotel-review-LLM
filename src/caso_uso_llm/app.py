@@ -171,8 +171,60 @@ def build() -> gr.Blocks:
     return demo
 
 
+def keep_awake() -> None:
+    """Impide que Windows suspenda el equipo mientras la app esté abierta (se deshace al salir).
+
+    SetThreadExecutionState con ES_CONTINUOUS | ES_SYSTEM_REQUIRED: no cambia la configuración de
+    energía; la pantalla sí puede apagarse.
+    """
+    import ctypes
+    import sys
+
+    if sys.platform == "win32":
+        ctypes.windll.kernel32.SetThreadExecutionState(0x80000000 | 0x00000001)
+        log("Suspensión del equipo bloqueada mientras la app esté abierta")
+
+
+def warm_up() -> None:
+    """Carga el generador y el juez antes de la primera reseña y comprueba que están en la GPU."""
+    from caso_uso_llm.evals.judge import JUDGE_MODEL
+    from caso_uso_llm.generate.run import MODEL
+    from caso_uso_llm.ollama_gpu import require_gpu
+
+    for model in (JUDGE_MODEL, MODEL):  # el generador queda cargado: es el primero que se usa
+        require_gpu(model)
+        log(f"{model}: en la GPU")
+
+
 def main() -> None:
-    build().launch(server_name="127.0.0.1", server_port=7860)
+    """Local por defecto. Con --share: enlace público temporal de Gradio, siempre con contraseña
+    (variables de entorno DEMO_USER y DEMO_PASS; nunca en el código)."""
+    import argparse
+    import os
+
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--share", action="store_true", help="enlace público temporal (gradio.live)")
+    ap.add_argument(
+        "--auth",
+        action="store_true",
+        help="contraseña sin enlace de Gradio (p. ej., tras "
+        "un túnel de Cloudflare: Defender bloquea frpc, el binario del túnel de Gradio)",
+    )
+    args = ap.parse_args()
+    auth = None
+    if args.share or args.auth:
+        user, password = os.environ.get("DEMO_USER"), os.environ.get("DEMO_PASS")
+        if not (user and password):
+            raise SystemExit(
+                "Con --share hacen falta DEMO_USER y DEMO_PASS (contraseña obligatoria)."
+            )
+        auth = (user, password)
+    keep_awake()
+    warm_up()
+    demo = build()
+    demo.queue(default_concurrency_limit=1, max_size=10)  # una reseña a la vez: una sola GPU
+    demo.launch(server_name="127.0.0.1", server_port=7860, share=args.share, auth=auth,
+                max_threads=4)  # fmt: skip
 
 
 if __name__ == "__main__":

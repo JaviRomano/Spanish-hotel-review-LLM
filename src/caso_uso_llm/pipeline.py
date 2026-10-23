@@ -81,6 +81,7 @@ ALERTS = {
     "nombra la ficha o las políticas": lambda c: c["nombra_fuente"],
     "longitud o firma": lambda c: not (c["length_ok"] and c["signature_ok"]),
     "nombre de una persona en la respuesta": lambda c: bool(c.get("nombres")),
+    "habla de una estancia que no hubo": lambda c: c.get("estancia_inexistente", False),
 }
 NAMES = {c.id: c.nombre for c in criterios(RUBRIC)}
 

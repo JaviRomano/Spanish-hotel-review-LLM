@@ -1,7 +1,7 @@
 """Construye los datos del modo repetición (demo_replay/casos.json) desde los resultados del pipeline.
 
-Junta las 54 reseñas de la demostración de la Fase 5 (results/pipeline_cola.json) y, si existen,
-las reseñas propias (results/demo_propias.json, de `just pipeline --csv … --out …`). Guarda solo
+Toma las reseñas propias escritas para la demo (results/demo_propias.json, de `just pipeline
+--csv … --out …`): la demo muestra solo esas 10, para que sea ágil e interpretable. Guarda solo
 lo que la demo muestra: nada de modelos, pesos ni cachés.
 
 Uso: uv run python scripts/build_replay.py
@@ -15,7 +15,7 @@ from caso_uso_llm.pipeline import RUBRIC, THRESHOLD
 from caso_uso_llm.rag import kb
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCES = (ROOT / "results" / "demo_propias.json", ROOT / "results" / "pipeline_cola.json")
+SOURCES = (ROOT / "results" / "demo_propias.json",)  # solo las 10 reseñas propias: demo ágil
 OUT = ROOT / "demo_replay" / "casos.json"
 GROUP = {
     "propio": "Reseñas propias",

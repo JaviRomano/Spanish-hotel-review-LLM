@@ -110,3 +110,18 @@ def person_names(response: str, review: str) -> list[str]:
     if m and m.group(1).lower() not in GENERIC_SALUTATION and m.group(1) not in found:
         found.append(m.group(1))
     return found
+
+
+# Estancia que no hubo (Fase 9, ahr-ahr-2775): el juez no la detecta; esta regla sí.
+NO_STAY = re.compile(
+    r"\b(cancel[ée]\w*|cancelamos|cancelar la reserva|anul[ée]\w*|íbamos a alojarnos|"
+    r"no (?:llegamos|pudimos) (?:a )?(?:ir|llegar|alojarnos)|no nos (?:llegamos a )?alojamos|"
+    r"nunca llegamos)\b",
+    re.IGNORECASE,
+)
+STAY = re.compile(r"\bsu (?:estancia|visita|experiencia en (?:el|nuestro) hotel)\b", re.IGNORECASE)
+
+
+def presupposed_stay(response: str, review: str) -> bool:
+    """La reseña dice que el cliente no llegó a alojarse y la respuesta habla de «su estancia»."""
+    return bool(NO_STAY.search(review) and STAY.search(response))

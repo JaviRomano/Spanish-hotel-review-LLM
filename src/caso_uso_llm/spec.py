@@ -227,7 +227,15 @@ _CONTEXTO_V6 = _CONTEXTO_V5 + (
     "- No anuncies mejoras ni trabajos futuros («seguiremos trabajando para mejorar…»)."
 )
 
-CONTEXTOS = {"v5": _CONTEXTO_V5, "v6": _CONTEXTO_V6}
+# v7 (Fase 9): v6 lamentó «su estancia» ante un cliente que canceló y nunca se alojó
+# (ahr-ahr-2775). Una sola regla nueva, para poder aislar su efecto en la prueba de regresión.
+_CONTEXTO_V7 = _CONTEXTO_V6 + (
+    "\n- No presupongas hechos que la reseña no cuenta: si el cliente solo habla de una reserva, "
+    "una cancelación o un contacto previo y no llegó a alojarse, no hables de «su estancia» ni de "
+    "lo que vivió en el hotel; refiérete a lo que cuenta («su reserva», «lo que nos describe»)."
+)
+
+CONTEXTOS = {"v5": _CONTEXTO_V5, "v6": _CONTEXTO_V6, "v7": _CONTEXTO_V7}
 
 
 def judge_no_cumple(r: Regla) -> str:

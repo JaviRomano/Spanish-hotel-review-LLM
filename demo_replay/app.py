@@ -1,8 +1,9 @@
-"""Demo en modo repetición: respuestas a reseñas de hotel generadas antes, en local, por el pipeline.
+"""Demo en modo repetición: 10 reseñas extremas y lo que respondió el sistema, paso a paso.
 
-No ejecuta ningún modelo: muestra lo que produjo cada paso (clasificador mRoBERTa, RAG,
-generador Qwen 27B, comprobaciones y juez Gemma 12B) para cada reseña. Solo necesita Gradio y
-`casos.json` (generado por scripts/build_replay.py), así que corre en un servidor sin GPU.
+No ejecuta ningún modelo: muestra lo que produjo el pipeline completo (clasificador mRoBERTa,
+RAG, generador Qwen 27B, comprobaciones y juez Gemma 12B), ejecutado antes en local sobre una
+GPU AMD. Solo necesita Gradio y `casos.json` (scripts/build_replay.py), así que corre en un
+servidor sin GPU. Para probar reseñas nuevas hay que pedir una sesión en directo.
 
 Uso: python demo_replay/app.py     # http://127.0.0.1:7861
 """
@@ -14,92 +15,77 @@ import gradio as gr
 
 DATA = json.loads((Path(__file__).parent / "casos.json").read_text(encoding="utf-8"))
 CASES = {c["id"]: c for c in DATA["casos"]}
-GROUPS = ["Todas", *dict.fromkeys(c["grupo"] for c in DATA["casos"])]
 REPO = "https://github.com/JaviRomano/Spanish-hotel-review-LLM"
+CONTACT = "https://github.com/JaviRomano"
 
-INTRO = f"""# Respuestas a reseñas de hotel · modo repetición
+INTRO = f"""# ¿Cómo responde una IA a las reseñas difíciles de un hotel?
 
-Cada reseña pasó por el pipeline completo **en local, sobre una GPU AMD**: clasificador mRoBERTa
-→ RAG con la ficha del hotel, políticas y respuestas aprobadas → borrador con Qwen 27B →
-comprobaciones y juez Gemma 12B → **publicar o pasar a una persona**.
-Aquí **no se genera nada en directo**: ves las salidas reales que produjo el sistema.
-Los hoteles y sus fichas son ficticios. [Código, informes y cifras]({REPO})."""
+Diez reseñas escritas a propósito para ponerla a prueba (sarcasmo, insultos, amenazas legales,
+instrucciones ocultas, datos falsos…). Para cada una, **qué se esperaba** (escrito antes de
+generar), **qué respondió** el sistema y **si la publicaría o la pasaría a una persona**.
 
-FOOTER = (
-    "Reseñas reales del corpus *Andalusian Hotels' Reviews* (CC BY-NC 4.0), con los datos "
-    "personales enmascarados. Casos sintéticos y reseñas propias escritos para probar el sistema."
+Todo se generó **en local, sobre una GPU AMD**: clasificador mRoBERTa → contexto del hotel (RAG)
+→ borrador con Qwen 27B → comprobaciones y un segundo modelo como juez. Los hoteles son ficticios.
+[Código, informes y cifras]({REPO})."""
+
+LIVE = (
+    f"> 🔬 **Esto es una repetición: aquí no se genera nada en directo.** ¿Quieres probarlo con tus "
+    f"propias reseñas? [Pide una prueba en vivo]({CONTACT}) y despliego el modelo desde mi ordenador."
 )
 
 
 def label(c: dict) -> str:
     icon = "✅" if c["decision"] == "publicable" else "👤"
-    tipo = f" · {c['tipo']}" if c["tipo"] else ""
-    return f"{icon} {c['id']}{tipo}"
-
-
-def choices(group: str) -> list[tuple[str, str]]:
-    return [(label(c), c["id"]) for c in DATA["casos"] if group in ("Todas", c["grupo"])]
-
-
-def filter_cases(group: str):
-    opts = choices(group)
-    return gr.update(choices=opts, value=opts[0][1] if opts else None)
+    return f"{icon} {c['id']} · {c['tipo']}" if c["tipo"] else f"{icon} {c['id']}"
 
 
 def show(case_id: str | None):
     c = CASES.get(case_id)
     if c is None:
-        return ("",) * 6
+        return ("",) * 5
+    review = f"**{c['hotel']}**\n\n> " + c["review"].replace("\n", "\n> ")
+    expected = c["esperado"] or "—"
     if c["decision"] == "publicable":
         decision = "### ✅ Se publicaría sin revisión"
     else:
-        decision = "### 👤 Pasa a revisión humana\n" + "\n".join(f"- {r}" for r in c["reasons"])
-    probs = " · ".join(f"{k} {v:.2f}" for k, v in c["probs"].items())
-    decision += (
-        f"\n\n**Sentimiento:** {c['sentiment']} (confianza {c['confidence']:.2f}, umbral "
-        f"{DATA['umbral']}) — {probs}"
-    )
-    if c["esperado"]:
-        decision += f"\n\n**Qué se esperaba (escrito antes de generar):** {c['esperado']}"
-    review = f"**{c['grupo']}** · {c['hotel']}\n\n> " + c["review"].replace("\n", "\n> ")
-    judge = "\n".join(
+        decision = "### 👤 Pasa a una persona antes de publicar\n" + "\n".join(
+            f"- {r}" for r in c["reasons"]
+        )
+    passed = sum(j["cumple"] for j in c["judge"])
+    judge = f"**Juez: {passed}/{len(c['judge'])} criterios cumplidos**\n\n" + "\n".join(
         f"- {'✅' if j['cumple'] else '❌'} {j['criterio']}"
         + ("" if j["cumple"] else f": «{j['evidencia']}»")
         for j in c["judge"]
     )
-    context = (
+    probs = " · ".join(f"{k} {v:.2f}" for k, v in c["probs"].items())
+    detail = (
+        f"**Sentimiento (clasificador):** {c['sentiment']}, confianza {c['confidence']:.3f} "
+        f"(umbral {DATA['umbral']}) — {probs}\n\n"
         "**Políticas recuperadas:** " + (", ".join(c["politicas"]) or "—")
         + "\n\n**Peticiones detectadas:** " + (", ".join(c["peticiones"]) or "ninguna")
-        + "\n\n**Aspectos (cita literal de la reseña):**\n"
-        + "\n".join(f"- {a['categoria']} · {a['polaridad']}: «{a['cita']}»" for a in c["aspectos"])
+        + ("\n\n**Ficha del hotel:**\n```\n" + c["ficha"] + "\n```" if c["ficha"] else "")
     )  # fmt: skip
-    ficha = f"```\n{c['ficha']}\n```" if c["ficha"] else "Sin ficha: el hotel no está registrado."
-    return review, decision, c["response"] or "(sin respuesta)", judge, context, ficha
+    return review, expected, c["response"] or "(sin respuesta)", decision, judge + "\n\n" + detail
 
 
-with gr.Blocks(title="Reseñas de hotel · modo repetición") as demo:
+with gr.Blocks(title="Reseñas difíciles · modo repetición") as demo:
     gr.Markdown(INTRO)
-    with gr.Row():
-        group = gr.Dropdown(GROUPS, value=GROUPS[0], label="Conjunto", scale=1)
-        first = choices(GROUPS[0])
-        case = gr.Dropdown(
-            first, value=first[0][1], label="Reseña (✅ publicable · 👤 revisión)", scale=3
-        )
+    gr.Markdown(LIVE)
+    options = [(label(c), c["id"]) for c in DATA["casos"]]
+    case = gr.Dropdown(
+        options, value=options[0][1], label="Reseña (✅ se publica · 👤 pasa a una persona)"
+    )
     with gr.Row():
         with gr.Column():
-            review = gr.Markdown()
+            review = gr.Markdown(label="Reseña")
+            gr.Markdown("**Qué se esperaba de una buena respuesta**")
+            expected = gr.Markdown()
+        with gr.Column():
+            response = gr.Textbox(label="Respuesta generada", lines=12, interactive=False)
             decision = gr.Markdown()
-        with gr.Column():
-            response = gr.Textbox(label="Borrador generado", lines=12, interactive=False)
-    with gr.Accordion("Juez (8 criterios, con cita como evidencia de cada suspenso)", open=True):
-        judge = gr.Markdown()
-    with gr.Accordion("Contexto y análisis", open=False):
-        context = gr.Markdown()
-    with gr.Accordion("Ficha del hotel", open=False):
-        ficha = gr.Markdown()
-    gr.Markdown(FOOTER)
-    outputs = [review, decision, response, judge, context, ficha]
-    group.change(filter_cases, group, case)
+    with gr.Accordion("Cómo llegó a esa decisión (juez, clasificador, contexto)", open=False):
+        detail = gr.Markdown()
+    outputs = [review, expected, response, decision, detail]
     case.change(show, case, outputs)
     demo.load(show, case, outputs)
 

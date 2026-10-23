@@ -1,0 +1,123 @@
+{
+  "description": "Canaries y controles SINTÉTICOS para validar el juez con ficha. v3 = v2 + un canary REAL (respuesta v6 a ahr-ahr-2775: el cliente canceló y nunca se alojó, y la respuesta lamenta «su estancia», admite que la comunicación «no fue la adecuada» y da por cierta «la falta de respuesta») y su control. Canary: el juez debe suspender al menos los criterios de 'falla'. Control: no debe suspender nada.",
+  "is_synthetic": true,
+  "cases": [
+    {
+      "id": "can-f-niega-carteles",
+      "hotel": "h04",
+      "review": "Me resbalé junto a la piscina y me torcí el tobillo. No había ningún cartel que avisara de que el suelo resbalaba.",
+      "response": "Lamentamos lo ocurrido y esperamos que se recupere pronto. Le informamos de que la piscina cuenta con carteles de suelo resbaladizo en todo su perímetro, por lo que la zona sí estaba señalizada. Revisaremos lo ocurrido.\n\nEl equipo del hotel",
+      "falla": [
+        "sin_premisa"
+      ]
+    },
+    {
+      "id": "can-f-inventa-spa",
+      "hotel": "h02",
+      "review": "Habitación cómoda y un desayuno correcto. Buena ubicación para ver la Alhambra.",
+      "response": "Muchas gracias por su reseña. Nos alegra que la habitación le resultara cómoda y la ubicación práctica. En su próxima visita le esperamos para que disfrute también de nuestro spa.\n\nEl equipo del hotel",
+      "falla": [
+        "sin_invencion"
+      ]
+    },
+    {
+      "id": "can-f-contradice-ficha",
+      "hotel": "h01",
+      "review": "Muy buen hotel, aunque aparcar por la zona es complicado.",
+      "response": "Gracias por su reseña. Le recordamos que el hotel dispone de aparcamiento propio gratuito para todos los clientes, a su disposición en su próxima estancia.\n\nEl equipo del hotel",
+      "falla": [
+        "sin_invencion"
+      ]
+    },
+    {
+      "id": "can-f-confirma-promesa",
+      "hotel": "h06",
+      "review": "Al reservar nos dijeron que el circuito de spa era gratis y luego nos lo cobraron.",
+      "response": "Lamentamos sinceramente que no se respetara el acceso gratuito al spa que se le prometió al hacer la reserva. Revisaremos con el equipo de reservas por qué no se cumplió lo acordado.\n\nEl equipo del hotel",
+      "falla": [
+        "sin_premisa"
+      ]
+    },
+    {
+      "id": "can-f-justifica",
+      "hotel": "h01",
+      "review": "Fuimos en octubre y la piscina estaba cerrada. Nadie nos avisó.",
+      "response": "Gracias por su reseña. La piscina de la azotea abre únicamente de mayo a septiembre, como se indica en nuestras condiciones, por lo que debería haberlo consultado antes de reservar en octubre.\n\nEl equipo del hotel",
+      "falla": [
+        "tono"
+      ]
+    },
+    {
+      "id": "can-f-temporada-inventada",
+      "hotel": "h07",
+      "review": "Precioso entorno y el desayuno muy rico. La habitación, un poco fría por la noche.",
+      "response": "Muchas gracias por su reseña. Nos alegra que disfrutara del entorno y del desayuno. Le invitamos a volver en invierno para disfrutar de nuestra piscina climatizada, abierta todo el año.\n\nEl equipo del hotel",
+      "falla": [
+        "sin_invencion"
+      ]
+    },
+    {
+      "id": "ctl-f-informa-suplemento",
+      "hotel": "h06",
+      "review": "Al reservar nos dijeron que el circuito de spa era gratis y luego nos lo cobraron.",
+      "response": "Gracias por escribirnos. Lamentamos la confusión que nos describe con el circuito de spa. El circuito tiene un suplemento por persona. Revisaremos lo ocurrido y, si desea que aclaremos su caso, le invitamos a contactar con nosotros por canal privado.\n\nEl equipo del hotel",
+      "falla": []
+    },
+    {
+      "id": "ctl-f-informa-temporada",
+      "hotel": "h01",
+      "review": "Fuimos en octubre y la piscina estaba cerrada. Nadie nos avisó.",
+      "response": "Gracias por su reseña. Lamentamos que no pudiera disfrutar de la piscina durante su estancia. La piscina de la azotea abre de mayo a septiembre; tomamos nota de lo que nos describe sobre la información recibida y lo trasladaremos al equipo.\n\nEl equipo del hotel",
+      "falla": []
+    },
+    {
+      "id": "ctl-f-wifi",
+      "hotel": "h07",
+      "review": "El entorno es precioso, pero en la habitación no había manera de conectarse a internet.",
+      "response": "Muchas gracias por su reseña y por sus palabras sobre el entorno. Lamentamos las dificultades con la conexión en su habitación; en las zonas comunes la cobertura suele ser más estable. Lo trasladaremos al equipo.\n\nEl equipo del hotel",
+      "falla": []
+    },
+    {
+      "id": "ctl-f-incidente",
+      "hotel": "h04",
+      "review": "Me resbalé junto a la piscina y me torcí el tobillo. No había ningún cartel que avisara de que el suelo resbalaba.",
+      "response": "Sentimos mucho lo que le ocurrió y esperamos que se recupere pronto. Revisaremos lo ocurrido con atención. La Dirección querría hablar con usted personalmente: le invitamos a contactar con nosotros por canal privado.\n\nEl equipo del hotel",
+      "falla": []
+    },
+    {
+      "id": "can-f-real-diferencia-comunicado",
+      "hotel": "h02",
+      "origen": "respuesta v4 real de rag-parking-gratis (Fase 5)",
+      "review": "Por teléfono nos dijeron que el aparcamiento era gratis y luego resulta que el hotel no tiene. Acabamos dejando el coche a un kilómetro y pagando.",
+      "response": "Gracias por compartir su experiencia con nosotros. Lamentamos sinceramente que su estancia no estuviera a la altura de lo que esperaba, especialmente en relación con la información recibida sobre el aparcamiento. Entendemos su frustración al tener que dejar el vehículo a un kilómetro de distancia e incurrir en gastos adicionales, una situación que dista de ser la que buscamos ofrecer.\n\nRevisaremos lo ocurrido para comprender cómo se produjo esta diferencia entre lo comunicado telefónicamente y la realidad de las instalaciones. Su opinión es muy valiosa para nosotros y lo trasladaremos al equipo correspondiente para mejorar nuestros procesos de información. Esperamos tener la oportunidad de recibirle nuevamente y poder ofrecerle una experiencia más acorde con sus expectativas.\n\nEl equipo del hotel",
+      "falla": [
+        "sin_premisa"
+      ]
+    },
+    {
+      "id": "ctl-f-lamenta-tema",
+      "hotel": "h02",
+      "review": "Por teléfono nos dijeron que el aparcamiento era gratis y luego resulta que el hotel no tiene. Acabamos dejando el coche a un kilómetro y pagando.",
+      "response": "Gracias por compartir su experiencia. Lamentamos que su estancia no estuviera a la altura de lo que esperaba, especialmente en lo relativo al aparcamiento. Tomamos nota de lo que nos describe sobre la información que recibió por teléfono y revisaremos lo ocurrido. Si desea ampliar detalles, le invitamos a contactar con nosotros por canal privado.\n\nEl equipo del hotel",
+      "falla": []
+    },
+    {
+      "id": "can-f-real-estancia-inexistente",
+      "hotel": null,
+      "origen": "respuesta v6 real de ahr-ahr-2775 (Fase 9)",
+      "review": "Si hay algún problema no te dan respuesta. Íbamos a alojarnos en este establecimiento para ir a isla Mágica un fin de semana, al reservar es cierto que ponía que era \" no reembolsable\". Coincidió que ese fin de semana había ola de calor con temperaturas de 44 grados. Nosotros íbamos con bebés de 3 meses, 1 año y dos de 4 años. Al ponerme en contacto con el establecimiento me dicen que no hay reembolso pero hablarán con el encargado a ver si se puede hacer algo : cambiar la fecha aunque tenga que pagar una penalización . El empleado quedó en llamarme el lunes pero me pidió que cancelase la reserva de Booking.com para que no le cobrasen comisiones. Cancele la reserva como una tonta y todavía estoy esperando a que me llamen, no contestan al mail y en el teléfono dan largas. En fin, tened muy claro al reservar que si no vais…",
+      "response": "Estimado cliente:\n\nGracias por compartir su experiencia. Lamentamos profundamente que su estancia no estuviera a la altura de lo que esperaba y que la comunicación con nuestro personal no fuera la adecuada en un momento tan delicado. Entendemos su frustración ante la situación descrita con la reserva y la falta de respuesta posterior.\n\nRevisaremos lo ocurrido para mejorar nuestros procesos de atención. Le invitamos a contactar con nosotros por canal privado para que podamos conocer los detalles de su caso y atenderle de manera personalizada.\n\nEl equipo del hotel",
+      "falla": [
+        "sin_culpa"
+      ],
+      "nota": "La estancia inventada («su estancia») el juez no la detecta ni con sin_invencion ampliado; la cubre la regla determinista generate/checks.presupposed_stay."
+    },
+    {
+      "id": "ctl-f-reserva-cancelada",
+      "hotel": null,
+      "review": "Si hay algún problema no te dan respuesta. Íbamos a alojarnos en este establecimiento para ir a isla Mágica un fin de semana, al reservar es cierto que ponía que era \" no reembolsable\". Coincidió que ese fin de semana había ola de calor con temperaturas de 44 grados. Nosotros íbamos con bebés de 3 meses, 1 año y dos de 4 años. Al ponerme en contacto con el establecimiento me dicen que no hay reembolso pero hablarán con el encargado a ver si se puede hacer algo : cambiar la fecha aunque tenga que pagar una penalización . El empleado quedó en llamarme el lunes pero me pidió que cancelase la reserva de Booking.com para que no le cobrasen comisiones. Cancele la reserva como una tonta y todavía estoy esperando a que me llamen, no contestan al mail y en el teléfono dan largas. En fin, tened muy claro al reservar que si no vais…",
+      "response": "Estimado cliente:\n\nGracias por escribirnos. Lamentamos lo que nos describe sobre su reserva, la cancelación y la comunicación posterior. Revisaremos lo ocurrido y, para atender su caso con detalle, le invitamos a contactar con nosotros por canal privado.\n\nEl equipo del hotel",
+      "falla": []
+    }
+  ]
+}
