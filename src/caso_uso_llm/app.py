@@ -25,9 +25,10 @@ import gradio as gr
 
 from caso_uso_llm.classify.infer import SentimentEnsemble
 from caso_uso_llm.evals.rubric import IDS
+from caso_uso_llm.generate.prompts import RAG_PROMPTS
 from caso_uso_llm.log import log
 from caso_uso_llm.paths import DATA, RESULTS
-from caso_uso_llm.pipeline import NAMES, QUEUE, run
+from caso_uso_llm.pipeline import NAMES, PROMPT, QUEUE, run
 from caso_uso_llm.rag import kb
 
 SESSION_QUEUE = RESULTS / "cola_app.jsonl"  # reseñas a revisión procesadas en la app
@@ -49,6 +50,7 @@ NO_HOTEL = "Sin ficha (hotel no registrado)"
 
 log("Cargando el clasificador (3 semillas de mRoBERTa en CPU)")
 CLASSIFIER = SentimentEnsemble()
+GEN_PROMPT = PROMPT  # main() lo cambia con --prompt
 HOTELS = {f"{h['id']} · {h['nombre']} ({h['ciudad']})": h["id"] for h in kb.fichas().values()}
 
 
@@ -76,6 +78,7 @@ def save_live(it: dict, nick: str) -> None:
         "hotel": it["hotel"], "resena": it["review"],
         "sentimiento": it["sentiment"], "confianza": it["confidence"],
         "decision": it["decision"], "motivos": it["reasons"], "respuesta": it.get("response"),
+        "prompt": GEN_PROMPT,
         "juez": {k: v["cumple"] for k, v in (it.get("judge") or {}).items()},
     })  # fmt: skip
 
@@ -162,7 +165,7 @@ def _respond(nick: str, consent: bool, hotel_label: str, title: str, text: str):
     item_id = f"app-{datetime.now():%Y%m%d-%H%M%S}"
     # El nick va solo en meta: el pipeline no lo usa en ningún prompt.
     it = run([{"id": item_id, "hotel": hotel, "title": title, "text": text,
-               "meta": {"grupo": "app", "nick": nick}}], CLASSIFIER)[0]  # fmt: skip
+               "meta": {"grupo": "app", "nick": nick}}], CLASSIFIER, GEN_PROMPT)[0]  # fmt: skip
     save_live(it, nick)
     if it["decision"] == "revisión humana":
         it["fecha"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -333,7 +336,10 @@ def main() -> None:
         "un túnel de Cloudflare: Defender bloquea frpc, el binario del túnel de Gradio)",
     )
     ap.add_argument("--port", type=int, default=7860)
+    ap.add_argument("--prompt", default=PROMPT, choices=RAG_PROMPTS, help="prompt del generador")
     args = ap.parse_args()
+    global GEN_PROMPT
+    GEN_PROMPT = args.prompt
     auth = None
     if args.share or args.auth:
         user, password = os.environ.get("DEMO_USER"), os.environ.get("DEMO_PASS")
@@ -344,6 +350,7 @@ def main() -> None:
         auth = (user, password)
     keep_awake()
     warm_up()
+    log(f"prompt del generador: {GEN_PROMPT}")
     demo = build()
     demo.queue(default_concurrency_limit=1, max_size=20)  # una reseña a la vez: una sola GPU
     demo.launch(server_name="127.0.0.1", server_port=args.port, share=args.share, auth=auth,
