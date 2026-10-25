@@ -197,6 +197,9 @@ def _respond(nick: str, consent: bool, hotel_label: str, title: str, text: str):
 def pending() -> list[dict]:
     demo = json.loads(QUEUE.read_text(encoding="utf-8")) if QUEUE.exists() else []
     items = [it for it in demo + _jsonl(SESSION_QUEUE) if it["decision"] == "revisión humana"]
+    # Los casos sintéticos ya los evalúan el juez y las comprobaciones: la revisión humana se
+    # reserva para texto escrito por personas (demo en vivo y reseñas reales del AHR).
+    items = [it for it in items if it.get("meta", {}).get("grupo") != "sintético"]
     done = {d["id"] for d in _jsonl(DECISIONS)}
     return [it for it in items if it["id"] not in done]
 
