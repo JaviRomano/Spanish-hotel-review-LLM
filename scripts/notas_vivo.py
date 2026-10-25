@@ -5,10 +5,13 @@ decisión con motivos y veredicto del juez. Para cada una: valoración, dos marc
 expresiones hechas, copia trozos literales de la reseña) y notas. Guarda en el navegador y
 exporta data/live/notas_vivo.csv (separador «;», UTF-8 con BOM).
 
-Uso: uv run python scripts/notas_vivo.py
+Uso: uv run python scripts/notas_vivo.py [--prompt v8]
+  --prompt: solo las reseñas respondidas con ese prompt (las anteriores a que se guardara el
+  prompt son v6) -> data/live/notas_vivo_v8.html y notas_vivo_v8.csv
 """
 # ruff: noqa: E501  (CSS y JavaScript en línea)
 
+import argparse
 import html
 import json
 from pathlib import Path
@@ -44,7 +47,7 @@ details{margin-top:6px}
 """
 
 JS = r"""
-const KEY = "notas_vivo_v1";
+const KEY = "__KEY__";
 const st = (() => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } })();
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} };
 const get = id => (st[id] = st[id] || {});
@@ -76,7 +79,7 @@ document.getElementById("exp").onclick = () => {
   for (const id of IDS) { const s = get(id); L.push([q(id), q(NICKS[id]), q(s.valoracion), s.repite ? 1 : 0, s.copia ? 1 : 0, q(s.notas)].join(";")); }
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob(["﻿" + L.join("\n") + "\n"], {type: "text/csv;charset=utf-8"}));
-  a.download = "notas_vivo.csv"; a.click();
+  a.download = "__CSV__"; a.click();
 };
 paint();
 """
@@ -118,7 +121,16 @@ def card(r: dict) -> str:
 
 
 def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--prompt", help="solo las reseñas respondidas con este prompt")
+    args = ap.parse_args()
     rows = [json.loads(line) for line in SRC.read_text(encoding="utf-8").splitlines() if line]
+    out, key, csv_name = OUT, "notas_vivo_v1", "notas_vivo.csv"
+    if args.prompt:
+        rows = [r for r in rows if r.get("prompt", "v6") == args.prompt]
+        out = OUT.with_name(f"notas_vivo_{args.prompt}.html")
+        key, csv_name = f"notas_vivo_{args.prompt}", f"notas_vivo_{args.prompt}.csv"
+    js = JS.replace("__KEY__", key).replace("__CSV__", csv_name)
     doc = (
         "<!doctype html><html lang=es><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'>"
         f"<title>Notas de la demo en vivo</title><style>{CSS}</style><body>"
@@ -126,10 +138,10 @@ def main() -> None:
         "<button id=exp>Descargar notas (CSV)</button></header>"
         + "".join(card(r) for r in rows)
         + f"<script>const IDS={json.dumps([r['id'] for r in rows])};"
-        f"const NICKS={json.dumps({r['id']: r['nick'] for r in rows}, ensure_ascii=False)};{JS}</script></body></html>"
+        f"const NICKS={json.dumps({r['id']: r['nick'] for r in rows}, ensure_ascii=False)};{js}</script></body></html>"
     )
-    OUT.write_text(doc, encoding="utf-8")
-    print(OUT)
+    out.write_text(doc, encoding="utf-8")
+    print(out)
 
 
 if __name__ == "__main__":
