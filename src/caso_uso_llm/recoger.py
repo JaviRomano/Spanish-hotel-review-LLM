@@ -87,10 +87,10 @@ def submit(nick: str, consent: bool, hotel_label: str, title: str, text: str):
 def build() -> gr.Blocks:
     with gr.Blocks(title="LLM de respuesta a reseñas - JR0mano") as demo:
         gr.Markdown(
-            "# LLM de respuesta a reseñas - JR0mano\nPipeline local: clasificador mRoBERTa, RAG con la "
-            "ficha del hotel, generador Qwen 27B, guardarraíles y juez Gemma 12B. Los hoteles y "
-            "sus fichas son **ficticios**.\n\nAhora estamos **recogiendo reseñas**: escribe la "
-            "tuya y se guardará para responderla más adelante, junto con las demás."
+            "# LLM de respuesta a reseñas de hotel\nPipeline local: clasificador mRoBERTa, RAG con "
+            "la ficha del hotel, generador Qwen 27B, guardarraíles y juez Gemma 12B. Los datos de "
+            "hoteles son ficticios.\n\nEstoy recogiendo reseñas para entrenar el LLM: escribe la "
+            "tuya y se guardará para responderla más adelante."
         )
         hotel = gr.Dropdown([*HOTELS, NO_HOTEL], value=next(iter(HOTELS)), label="Hotel")
         nick = gr.Textbox(label="Tu nick (no tu nombre)", max_lines=1)
