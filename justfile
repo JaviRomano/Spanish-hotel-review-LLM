@@ -99,3 +99,8 @@ replay:
 #   cloudflared tunnel --url http://127.0.0.1:7860     (Defender bloquea el túnel de Gradio)
 app-live:
     python -m caso_uso_llm.app --auth
+
+# Demo en modo recogida: solo el formulario, sin modelos; guarda en data/live/resenas_recogidas.jsonl
+# (DEMO_USER y DEMO_PASS en el entorno; publicarla con el mismo túnel que app-live)
+recoger:
+    python -m caso_uso_llm.recoger --auth

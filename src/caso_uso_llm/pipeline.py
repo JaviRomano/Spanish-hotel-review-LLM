@@ -210,13 +210,26 @@ def read_csv(path: str) -> list[dict]:
     ]  # fmt: skip
 
 
+def read_jsonl(path: str) -> list[dict]:
+    """Reseñas de la demo en modo recogida (recoger.py): el nick va solo en meta."""
+    rows = [json.loads(x) for x in (ROOT / path).read_text(encoding="utf-8").splitlines() if x]
+    return [
+        {"id": r["id"], "hotel": r.get("hotel"), "title": r.get("title", ""), "text": r["text"],
+         "meta": {"grupo": "recogida", "nick": r.get("nick", "")}}
+        for r in rows if r["text"].strip()
+    ]  # fmt: skip
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--csv", help="CSV con columnas id, hotel (opcional), title, text")
+    ap.add_argument("--jsonl", help="reseñas recogidas (data/live/resenas_recogidas.jsonl)")
     ap.add_argument("--out", help="JSON de salida (por defecto, la cola de la demostración)")
     ap.add_argument("--prompt", default=PROMPT, choices=RAG_PROMPTS, help="prompt del generador")
     args = ap.parse_args()
-    items = read_csv(args.csv) if args.csv else demo_items()
+    items = (
+        read_csv(args.csv) if args.csv else read_jsonl(args.jsonl) if args.jsonl else demo_items()
+    )
     if not items:
         raise SystemExit("No hay reseñas con texto en el CSV.")
     out_path = ROOT / args.out if args.out else QUEUE
