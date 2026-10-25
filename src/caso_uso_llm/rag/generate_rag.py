@@ -279,7 +279,8 @@ def write_report() -> None:
     L = [
         "# Fase 5 · Generación con RAG",
         "",
-        f"Generado por `uv run just rag-generar` · `{MODEL}` vía Ollama, temperatura 0 · prompt "
+        f"Generado por `uv run just rag-generar` · `{MODEL}` vía Ollama, temperatura 0 (v8: 0,6 con "
+        "semilla fija por reseña) · prompt "
         f"{BASE} (sin contexto) frente a {', '.join(runs)} (mismas reglas + ficha, {K_POLICIES} "
         f"políticas y {K_EXAMPLES} respuestas aprobadas recuperadas). No editar a mano.",
         "",
