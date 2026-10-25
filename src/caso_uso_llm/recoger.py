@@ -10,7 +10,8 @@ ninguna respuesta: se procesan después, en lote, cuando haya suficientes:
 Sin cola ni JSON a la vista: quien escribe solo ve el formulario y la confirmación. La palabra
 clave de apagado (DEMO_KILL) cierra la app y el túnel, como en app.py.
 
-Uso: DEMO_USER y DEMO_PASS en el entorno; uv run python -m caso_uso_llm.recoger --auth
+Uso: uv run just recoger   (sin contraseña: no hay modelos ni datos que proteger; con --auth,
+DEMO_USER y DEMO_PASS)
 """
 
 import json
@@ -86,9 +87,10 @@ def submit(nick: str, consent: bool, hotel_label: str, title: str, text: str):
 def build() -> gr.Blocks:
     with gr.Blocks(title="Reseñas de hotel") as demo:
         gr.Markdown(
-            "# Escribe una reseña de hotel\nEstamos recogiendo reseñas para evaluar un sistema que "
-            "las clasifica y propone una respuesta. Los hoteles son **ficticios**: elige uno e "
-            "inventa tu estancia, buena, mala o regular. Las respuestas se generan más adelante."
+            "# Respuestas a reseñas de hotel\nPipeline local: clasificador mRoBERTa, RAG con la "
+            "ficha del hotel, generador Qwen 27B, guardarraíles y juez Gemma 12B. Los hoteles y "
+            "sus fichas son **ficticios**.\n\nAhora estamos **recogiendo reseñas**: escribe la "
+            "tuya y se guardará para responderla más adelante, junto con las demás."
         )
         hotel = gr.Dropdown([*HOTELS, NO_HOTEL], value=next(iter(HOTELS)), label="Hotel")
         nick = gr.Textbox(label="Tu nick (no tu nombre)", max_lines=1)

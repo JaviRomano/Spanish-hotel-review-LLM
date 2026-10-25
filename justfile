@@ -101,6 +101,6 @@ app-live:
     python -m caso_uso_llm.app --auth
 
 # Demo en modo recogida: solo el formulario, sin modelos; guarda en data/live/resenas_recogidas.jsonl
-# (DEMO_USER y DEMO_PASS en el entorno; publicarla con el mismo túnel que app-live)
+# (sin contraseña; --auth la pide con DEMO_USER y DEMO_PASS). Se publica con el mismo túnel que app-live
 recoger:
-    python -m caso_uso_llm.recoger --auth
+    python -m caso_uso_llm.recoger
