@@ -86,6 +86,7 @@ def test_los_prompts_rag_son_v4_mas_su_bloque_de_contexto():
         assert RESPONSE_PROMPTS[v] == RESPONSE_PROMPTS["v4"] + "\n\n" + CONTEXTOS[v]
     assert CONTEXTOS["v6"].startswith(CONTEXTOS["v5"])
     assert CONTEXTOS["v7"].startswith(CONTEXTOS["v6"])
+    assert CONTEXTOS["v8"].startswith(CONTEXTOS["v7"])
 
 
 def test_ficha_checks_importe_y_fuente_interna():
@@ -100,4 +101,23 @@ def test_ficha_checks_importe_y_fuente_interna():
         "cifra_inventada": [],
         "contradice": False,
         "estancia_inexistente": False,
+        "higiene": [],
+        "copia_literal": [],
     }
+
+
+def test_v8_sin_citas_un_ejemplo_y_semilla_por_resena():
+    from caso_uso_llm.rag.generate_rag import context_user, options_for
+    from caso_uso_llm.rag.kb import respuestas
+
+    analysis = {"sentimiento": "negativo", "peticiones": [],
+                "aspectos": [{"categoria": "limpieza", "polaridad": "negativa",
+                              "cita": "las sábanas olían fatal"}]}  # fmt: skip
+    exs = respuestas()[:2]
+    v8 = context_user("Las sábanas olían fatal.", analysis, None, [], exs, "v8")
+    v7 = context_user("Las sábanas olían fatal.", analysis, None, [], exs, "v7")
+    assert "«las sábanas olían fatal»" in v7 and "«las sábanas olían fatal»" not in v8
+    assert v8.count("Respuesta aprobada:") == 1 and v7.count("Respuesta aprobada:") == 2
+    assert options_for("v7", "x") is None
+    a, b = options_for("v8", "reseña uno"), options_for("v8", "reseña uno")
+    assert a == b and a["temperature"] == 0.6 and a["seed"] != options_for("v8", "otra")["seed"]

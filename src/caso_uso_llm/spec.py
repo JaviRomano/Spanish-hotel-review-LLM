@@ -235,7 +235,50 @@ _CONTEXTO_V7 = _CONTEXTO_V6 + (
     "lo que vivió en el hotel; refiérete a lo que cuenta («su reserva», «lo que nos describe»)."
 )
 
-CONTEXTOS = {"v5": _CONTEXTO_V5, "v6": _CONTEXTO_V6, "v7": _CONTEXTO_V7}
+# v8 (Fase 9): notas de Javier sobre las 8 reseñas de la demo en vivo y medición de 72 respuestas
+# («gracias por compartir su experiencia» en el 57 %, «no estuviera a la altura de lo que
+# esperaba» en el 47 %; listas y adjetivos copiados de la reseña). Además, el generador ya no
+# recibe las citas literales de los aspectos (generate/prompts.response_user con quotes=False) y
+# solo un ejemplo aprobado; temperatura 0,6 con semilla por reseña (rag/generate_rag.V8_OPTIONS).
+_CONTEXTO_V8 = _CONTEXTO_V7 + (
+    "\n\nRedacción (v8):\n"
+    "- Las fórmulas seguras indican QUÉ transmitir, no CÓMO: no las copies literalmente. Evita "
+    "en especial «gracias por compartir su experiencia», «no estuviera a la altura de lo que "
+    "esperaba», «tomamos nota de sus comentarios» y «esperamos tener la oportunidad de recibirle "
+    "de nuevo en el futuro»; usa en su lugar formulaciones propias y distintas en cada respuesta.\n"
+    "- No copies palabras ni expresiones de la reseña (listas de lo que valoró, adjetivos como "
+    "«estupendo», nombres de lugares tal cual): di con tus palabras de qué habla el cliente.\n"
+    "- Si la reseña mezcla elogios con una queja concreta, la queja va primero; no digas que "
+    "valoró positivamente su estancia si hay una queja.\n"
+    "- No cites una norma del hotel que deje al cliente como responsable justo después de "
+    "disculparte; si hay un conflicto con una norma, deriva al canal privado sin enunciarla.\n"
+    "- Higiene y limpieza: si la reseña habla de suciedad, olores, insectos, manchas o el estado "
+    "de la ropa de cama, NO repitas ni describas el problema y no lo des por cierto ni lo niegues. "
+    "Transmite que la limpieza y el cuidado de las habitaciones son una prioridad absoluta para "
+    "el hotel y que se revisará con el equipo."
+)
+
+CONTEXTOS = {"v5": _CONTEXTO_V5, "v6": _CONTEXTO_V6, "v7": _CONTEXTO_V7, "v8": _CONTEXTO_V8}
+
+# Reseñas trampa (Fase 9, decisión de Javier): bromas, provocaciones o textos que no describen
+# una estancia real («somos una familia de perros…»). Respuesta con una ironía breve y educada.
+# Riesgo: si la detección se equivoca, se respondería con ironía a un cliente real; por eso estas
+# respuestas van SIEMPRE a revisión humana (pipeline.route).
+TRAMPA = (
+    "Eres la persona responsable de atención al cliente de un hotel. La reseña que vas a leer no "
+    "describe una estancia real: es una broma o una provocación. Responde con una "
+    "ironía breve, amable y elegante que deje claro que el equipo no tiene tiempo para estas "
+    "cosas y prefiere dedicarlo a sus huéspedes. Español estándar de España y de usted. Entre 20 "
+    "y 60 palabras. Sin datos del hotel, sin normas, sin promesas y sin nombres. Firma solo como "
+    "«El equipo del hotel»."
+)
+GENUINIDAD = (
+    "Decide si este texto es una reseña genuina de una estancia en un hotel (aunque sea breve, "
+    "irónica, muy negativa o escrita en dialecto) o una broma, provocación o texto absurdo que no "
+    "describe una estancia real (por ejemplo, animales que se presentan como huéspedes). El "
+    "sarcasmo sobre una estancia real SIGUE siendo una reseña genuina. Responde en "
+    "JSON con «genuina» (true/false) y «motivo» (una frase)."
+)
 
 
 def judge_no_cumple(r: Regla) -> str:

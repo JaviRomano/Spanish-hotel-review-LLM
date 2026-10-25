@@ -63,11 +63,12 @@
       "id": "resp-limpieza",
       "hotel": "h05",
       "resena": "Encontramos pelos en las sábanas y el lavabo estaba sucio. Para lo que cuesta, esperaba más limpieza.",
-      "respuesta": "Estimado cliente:\n\nGracias por su comentario. Lamentamos que la limpieza de la habitación no estuviera a la altura, especialmente en lo que nos describe sobre las sábanas y el lavabo. Lo trasladaremos al equipo para que lo tenga en cuenta.\n\nAgradecemos que nos lo haya hecho saber.\n\nEl equipo del hotel",
+      "respuesta": "Estimado cliente:\n\nGracias por escribirnos. Para nosotros, la limpieza y el cuidado de cada habitación son una prioridad absoluta, así que revisaremos con el equipo lo que nos describe.\n\nLe agradecemos que nos lo haya hecho saber.\n\nEl equipo del hotel",
       "revision": {
-        "estado": "aprobada",
-        "por": "Javier",
-        "fecha": "2026-10-22"
+        "estado": "corregida",
+        "por": "Javier (criterio)",
+        "fecha": "2026-10-25",
+        "nota_interna": "Reescrita por la decisión de higiene: no repetir ni describir el problema (antes: «Lamentamos que la limpieza no estuviera a la altura… las sábanas y el lavabo»). Pendiente de que Javier la revise."
       }
     },
     {

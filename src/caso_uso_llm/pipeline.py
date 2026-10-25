@@ -38,8 +38,8 @@ from caso_uso_llm.classify.datasets import load_ahr_ood
 from caso_uso_llm.evals.judge import JUDGE_MODEL, judge
 from caso_uso_llm.evals.rubric import IDS, criterios
 from caso_uso_llm.generate import checks as C
-from caso_uso_llm.generate.prompts import RESPONSE_PROMPTS
-from caso_uso_llm.generate.run import CACHE, MODEL, Cache, analyze, respond
+from caso_uso_llm.generate.prompts import RAG_PROMPTS
+from caso_uso_llm.generate.run import CACHE, MODEL, Cache, analyze
 from caso_uso_llm.log import log
 from caso_uso_llm.ollama_gpu import require_gpu
 from caso_uso_llm.paths import EVALS, RESULTS, ROOT
@@ -48,8 +48,8 @@ from caso_uso_llm.rag.generate_rag import (
     K_EXAMPLES,
     K_POLICIES,
     RAG_CASES,
-    context_user,
     ficha_checks,
+    generate_reply,
 )
 from caso_uso_llm.rag.retrieve import Embedder, Retriever
 from caso_uso_llm.seed import DEFAULT_SEED
@@ -82,6 +82,8 @@ ALERTS = {
     "longitud o firma": lambda c: not (c["length_ok"] and c["signature_ok"]),
     "nombre de una persona en la respuesta": lambda c: bool(c.get("nombres")),
     "habla de una estancia que no hubo": lambda c: c.get("estancia_inexistente", False),
+    "menciona un problema de higiene u olor": lambda c: bool(c.get("higiene")),
+    "copia 4+ palabras de la reseña": lambda c: bool(c.get("copia_literal")),
 }
 NAMES = {c.id: c.nombre for c in criterios(RUBRIC)}
 
@@ -90,12 +92,14 @@ def ficha(hotel: str | None) -> str:
     return kb.ficha_texto(hotel) if hotel else "No disponible."
 
 
-def run(items: list[dict], classifier: "SentimentEnsemble | None" = None) -> list[dict]:
+def run(
+    items: list[dict], classifier: "SentimentEnsemble | None" = None, prompt: str = PROMPT
+) -> list[dict]:
     """items: dicts con id, text y opcionalmente title, hotel y meta (se copia tal cual).
 
     `classifier`: ensamble ya cargado (la app lo carga una vez; tarda ~25 s).
     """
-    log(f"{len(items)} reseñas · umbral de confianza {THRESHOLD} · prompt {PROMPT} · juez {RUBRIC}")
+    log(f"{len(items)} reseñas · umbral de confianza {THRESHOLD} · prompt {prompt} · juez {RUBRIC}")
     out = [{**it, "hotel": it.get("hotel") or None, "reasons": []} for it in items]
 
     log("[2] Sentimiento (mRoBERTa, 3 semillas, CPU)")
@@ -121,8 +125,9 @@ def run(items: list[dict], classifier: "SentimentEnsemble | None" = None) -> lis
             it.update(analysis=None, response=None, reasons=["análisis inválido"])
             continue
         p, e = ctx[it["id"]]
-        user = context_user(it["review"], analysis, it["hotel"], p, e)
-        response = respond(RESPONSE_PROMPTS[PROMPT], user, cache)
+        gen = generate_reply(prompt, it["review"], analysis, it["hotel"], p, e, cache)
+        response = gen["response"]
+        it["genuina"], it["motivo_trampa"] = gen["genuina"], gen.get("motivo_trampa", "")
         checks = C.run_checks(response, analysis["aspectos"])
         checks.update(ficha_checks(response, it["review"], it["hotel"]))
         checks["nombres"] = C.person_names(response, it["review"])
@@ -149,6 +154,8 @@ def run(items: list[dict], classifier: "SentimentEnsemble | None" = None) -> lis
 def route(it: dict) -> list[str]:
     if it["response"] is None:
         return []
+    if it.get("genuina") is False:  # reseña trampa: respuesta irónica, nunca sin revisión
+        return [f"posible reseña trampa ({it.get('motivo_trampa', '')})"]
     r = []
     if it["sentiment"] in REVIEW_LABELS:
         r.append({"negativo": "reseña negativa", "neutral": "reseña neutral"}[it["sentiment"]])
@@ -207,12 +214,13 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--csv", help="CSV con columnas id, hotel (opcional), title, text")
     ap.add_argument("--out", help="JSON de salida (por defecto, la cola de la demostración)")
+    ap.add_argument("--prompt", default=PROMPT, choices=RAG_PROMPTS, help="prompt del generador")
     args = ap.parse_args()
     items = read_csv(args.csv) if args.csv else demo_items()
     if not items:
         raise SystemExit("No hay reseñas con texto en el CSV.")
     out_path = ROOT / args.out if args.out else QUEUE
-    out = run(items)
+    out = run(items, prompt=args.prompt)
     queue = [it for it in out if it["decision"] == "revisión humana"]
     out_path.write_text(
         json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8", newline="\n"

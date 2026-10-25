@@ -125,3 +125,76 @@ STAY = re.compile(r"\bsu (?:estancia|visita|experiencia en (?:el|nuestro) hotel)
 def presupposed_stay(response: str, review: str) -> bool:
     """La reseña dice que el cliente no llegó a alojarse y la respuesta habla de «su estancia»."""
     return bool(NO_STAY.search(review) and STAY.search(response))
+
+
+# Higiene (Fase 9, decisión de Javier): la respuesta no debe transmitir que pudo haber un problema
+# de higiene u olores. Cualquier término de este tipo manda la respuesta a revisión.
+HYGIENE = re.compile(
+    r"\b(ol[oí]a\w*|olores?|huel[ea]\w*|mal olor|sucio\w*|sucia\w*|suciedad|pelos?|cucarachas?|"
+    r"chinches?|insectos?|bichos?|moho|humedad|manchas?|mugre|hongos?|coliflor\w*)\b",
+    re.IGNORECASE,
+)
+
+
+def hygiene_terms(response: str) -> list[str]:
+    return sorted({m.group(0).lower() for m in HYGIENE.finditer(response)})
+
+
+_STOP = frozenset(
+    [
+        "el",
+        "la",
+        "los",
+        "las",
+        "un",
+        "una",
+        "unos",
+        "unas",
+        "de",
+        "del",
+        "al",
+        "a",
+        "en",
+        "y",
+        "o",
+        "que",
+        "por",
+        "para",
+        "con",
+        "sin",
+        "su",
+        "sus",
+        "se",
+        "lo",
+        "le",
+        "les",
+        "nos",
+        "muy",
+        "mas",
+        "más",
+        "es",
+        "fue",
+        "era",
+        "como",
+        "pero",
+        "ya",
+        "me",
+        "mi",
+    ]
+)
+
+
+def copied_from_review(response: str, review: str, n: int = 4) -> list[str]:
+    """Secuencias de n palabras copiadas de la reseña con al menos dos palabras con contenido
+    (Fase 9: «el desayuno, la limpieza y las instalaciones», «las vistas a la Alhambra»)."""
+    tok = lambda t: re.findall(r"\w+", t.lower())  # noqa: E731
+    review_grams = {tuple(g) for g in _ngrams(tok(review), n)}
+    found = []
+    for g in _ngrams(tok(response), n):
+        if tuple(g) in review_grams and sum(w not in _STOP and len(w) > 3 for w in g) >= 2:
+            found.append(" ".join(g))
+    return list(dict.fromkeys(found))
+
+
+def _ngrams(words: list[str], n: int) -> list[list[str]]:
+    return [words[i : i + n] for i in range(len(words) - n + 1)]

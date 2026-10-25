@@ -26,8 +26,8 @@ CANARIES = EVALS / "canaries" / "ficha_v3.json"
 CACHE = RESULTS / "phase6_judge_cache.jsonl"  # la misma caché que el juez de la Fase 6
 OUT = RESULTS / "phase5_juez.json"
 REPORT = ROOT / "reports" / "phase5_juez.md"
-VERSIONS = (BASE, "v5", "v6", "v7")
-PAIRS = ((BASE, "v7"), ("v5", "v7"), ("v6", "v7"))
+VERSIONS = (BASE, "v5", "v6", "v7", "v8")
+PAIRS = ((BASE, "v8"), ("v6", "v8"), ("v7", "v8"))
 NAMES = {c.id: c.nombre for c in criterios(RUBRIC)}
 
 
@@ -53,14 +53,15 @@ def gate(cache: Cache) -> dict:
 
 def load_cases() -> list[dict]:
     """Une v4/v5 (de la ejecución v5) con v6 y v7 (de sus ejecuciones) por id de reseña."""
-    runs = {v: json.loads(results_path(v).read_text(encoding="utf-8")) for v in ("v5", "v6", "v7")}
-    by_id = {v: {r["id"]: r for r in runs[v]} for v in ("v6", "v7")}
+    later = ("v6", "v7", "v8")
+    runs = {v: json.loads(results_path(v).read_text(encoding="utf-8")) for v in ("v5", *later)}
+    by_id = {v: {r["id"]: r for r in runs[v]} for v in later}
     out = []
     for r in runs["v5"]:
         if not r["analysis_valid"]:
             continue
         responses = {BASE: r[BASE]["response"], "v5": r["v5"]["response"]}
-        for v in ("v6", "v7"):
+        for v in later:
             responses[v] = by_id[v][r["id"]][v]["response"]
         out.append({k: r[k] for k in ("id", "kind", "hotel", "review")} | {"responses": responses})
     return out

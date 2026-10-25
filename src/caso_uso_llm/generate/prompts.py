@@ -69,14 +69,19 @@ RESPONSE_PROMPTS = {
     "v5": generator_prompt("v5"),
     "v6": generator_prompt("v6"),
     "v7": generator_prompt("v7"),  # Fase 9: v6 + no presuponer una estancia que no hubo
+    "v8": generator_prompt("v8"),  # Fase 9: variedad, sin copias, higiene, quejas primero
 }
 # Versiones que esperan contexto recuperado: solo las usa rag/generate_rag.py, no `just generar`.
-RAG_PROMPTS = ("v5", "v6", "v7")
+RAG_PROMPTS = ("v5", "v6", "v7", "v8")
+# Versiones que NO reciben las citas literales de los aspectos (para que no las copien).
+NO_QUOTES = ("v8",)
 
 
-def response_user(review: str, analysis: dict) -> str:
+def response_user(review: str, analysis: dict, quotes: bool = True) -> str:
+    """Mensaje del generador. Sin `quotes`, cada aspecto va sin su cita literal (v8)."""
     aspects = "\n".join(
-        f"- {a['categoria']} ({a['polaridad']}): «{a['cita']}»" for a in analysis["aspectos"]
+        f"- {a['categoria']} ({a['polaridad']})" + (f": «{a['cita']}»" if quotes else "")
+        for a in analysis["aspectos"]
     )
     requests = ", ".join(analysis["peticiones"]) or "ninguna"
     return (

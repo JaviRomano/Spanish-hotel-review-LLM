@@ -101,3 +101,17 @@ def test_presupposed_stay_solo_si_el_cliente_no_llego_a_alojarse():
     assert not presupposed_stay("Lamentamos lo que nos describe sobre su reserva.", cancelled)
     stayed = "Pasamos tres noches; la habitación, ruidosa."
     assert not presupposed_stay("Lamentamos que su estancia no fuera tranquila.", stayed)
+
+
+def test_hygiene_terms_y_copia_literal():
+    from caso_uso_llm.generate.checks import copied_from_review, hygiene_terms
+
+    assert hygiene_terms("Lamentamos el mal olor y las sábanas sucias.") == ["mal olor", "sucias"]
+    assert hygiene_terms("La limpieza es una prioridad absoluta para nosotros.") == []
+    review = "El desayuno, la limpieza y las instalaciones a la altura."
+    assert copied_from_review(
+        "Nos alegra que el desayuno, la limpieza y las instalaciones…", review
+    )
+    assert (
+        copied_from_review("Gracias por su reseña sobre la comida.", "La comida de la casa") == []
+    )

@@ -23,14 +23,24 @@ Uso: uv run just rag-generar              # última versión
 """
 
 import argparse
+import hashlib
 import json
 import re
 
 import pandas as pd
 
 from caso_uso_llm.generate import checks as C
-from caso_uso_llm.generate.prompts import RAG_PROMPTS, RESPONSE_PROMPTS, response_user
-from caso_uso_llm.generate.run import CACHE, MODEL, Cache, analyze, dev_set, respond
+from caso_uso_llm.generate.prompts import NO_QUOTES, RAG_PROMPTS, RESPONSE_PROMPTS, response_user
+from caso_uso_llm.generate.run import (
+    CACHE,
+    MODEL,
+    OPTIONS,
+    Cache,
+    analyze,
+    dev_set,
+    genuineness,
+    respond,
+)
 from caso_uso_llm.log import log
 from caso_uso_llm.ollama_gpu import require_gpu
 from caso_uso_llm.paths import EVALS, RESULTS, ROOT
@@ -82,19 +92,62 @@ def cases(seed: int) -> pd.DataFrame:
     return pd.concat([dev, new[dev.columns]], ignore_index=True)
 
 
-def context_user(review: str, analysis: dict, hotel: str | None, policies, examples) -> str:
+def context_user(
+    review: str, analysis: dict, hotel: str | None, policies, examples, version: str | None = None
+) -> str:
+    """Mensaje del generador con el contexto. Desde v8 (NO_QUOTES): un solo ejemplo, marcado como
+    referencia de tono, y los aspectos sin su cita literal."""
+    lean = version in NO_QUOTES
     ficha = kb.ficha_texto(hotel) if hotel else "No disponible."
     pols = [*kb.politicas_siempre(), *(d.payload for d in policies)]
     pol_text = "\n".join(f"- {p['titulo']}: {p['texto']}" for p in pols)
+    examples = list(examples)[:1] if lean else examples
     ex_text = "\n\n".join(
         f"Reseña: «{d.payload['resena']}»\nRespuesta aprobada:\n{d.payload['respuesta']}"
         for d in examples
     )
+    ex_label = (
+        "Respuesta aprobada a una reseña parecida (SOLO como referencia de tono: no copies "
+        "ninguna de sus frases)"
+        if lean
+        else "Respuestas aprobadas a reseñas parecidas (solo como ejemplo)"
+    )
     return (
         f"Ficha del hotel:\n{ficha}\n\nPolíticas aplicables:\n{pol_text}\n\n"
-        f"Respuestas aprobadas a reseñas parecidas (solo como ejemplo):\n{ex_text}\n\n---\n\n"
-        + response_user(review, analysis)
+        f"{ex_label}:\n{ex_text}\n\n---\n\n" + response_user(review, analysis, quotes=not lean)
     )
+
+
+def options_for(version: str, review: str) -> dict | None:
+    """v8: temperatura 0,6 para variar la redacción, con semilla fija por reseña (reproducible y
+    cacheable). Antes de v8, None: las opciones de siempre (temperatura 0)."""
+    if version not in NO_QUOTES:
+        return None
+    seed = int(hashlib.sha1(review.encode()).hexdigest()[:8], 16) % 2**31
+    return {**OPTIONS, "temperature": 0.6, "seed": seed}
+
+
+TRAP_VERSIONS = ("v8",)  # versiones que detectan reseñas trampa antes de responder
+
+
+def generate_reply(
+    version: str, review: str, analysis: dict, hotel: str | None, pols, exs, cache, model=MODEL
+) -> dict:
+    """Respuesta con contexto. Desde v8, antes se decide si la reseña es genuina; si es una trampa
+    (broma, provocación), la respuesta es una ironía breve (spec.TRAMPA) y siempre va a revisión."""
+    from caso_uso_llm.spec import TRAMPA
+
+    opts = options_for(version, review)
+    if version in TRAP_VERSIONS:
+        g = genuineness(review, cache, model)
+        if not g["genuina"]:
+            text = respond(TRAMPA, f"Reseña:\n«{review}»", cache, model, opts)
+            return {"response": text, "genuina": False, "motivo_trampa": g["motivo"]}
+    user = context_user(review, analysis, hotel, pols, exs, version)
+    return {
+        "response": respond(RESPONSE_PROMPTS[version], user, cache, model, opts),
+        "genuina": True,
+    }
 
 
 def ficha_checks(response: str, review: str, hotel: str | None) -> dict:
@@ -105,6 +158,8 @@ def ficha_checks(response: str, review: str, hotel: str | None) -> dict:
         "cifra_inventada": [],
         "contradice": False,
         "estancia_inexistente": C.presupposed_stay(response, review),
+        "higiene": C.hygiene_terms(response),
+        "copia_literal": C.copied_from_review(response, review),
     }
     if not hotel:
         return out
@@ -159,14 +214,13 @@ def main(seed: int = DEFAULT_SEED) -> None:
             continue
         pols, exs = context[row["id"]]
         r.update(analysis_valid=True, politicas=[d.id for d in pols], ejemplos=[d.id for d in exs])
-        for v, user in (
-            (BASE, response_user(row["review"], analysis)),
-            (version, context_user(row["review"], analysis, hotel, pols, exs)),
-        ):
-            text = respond(RESPONSE_PROMPTS[v], user, cache)
+        base = respond(RESPONSE_PROMPTS[BASE], response_user(row["review"], analysis), cache)
+        rag = generate_reply(version, row["review"], analysis, hotel, pols, exs, cache)
+        for v, gen in ((BASE, {"response": base, "genuina": True}), (version, rag)):
+            text = gen["response"]
             checks = C.run_checks(text, analysis["aspectos"], list(row["must_not"]))
             checks.update(ficha_checks(text, row["review"], hotel))
-            r[v] = {"response": text, "checks": checks}
+            r[v] = {**gen, "checks": checks}
         out.append(r)
         words = r[version]["checks"]["words"]
         log(f"   [{i + 1}/{len(df)}] {row['id']} ({row['kind']}): {words} palabras")
@@ -191,7 +245,23 @@ CHECKS = (
     ("⚠ Da un importe (pol-precio)", lambda c: bool(c.get("importe")), True),
     ("⚠ Nombra la ficha o las políticas", lambda c: c.get("nombra_fuente", False), True),
     ("⚠ Habla de una estancia que no hubo", lambda c: c.get("estancia_inexistente", False), True),
+    ("⚠ Menciona un problema de higiene u olor", lambda c: bool(c.get("higiene")), True),
+    ("⚠ Copia 4+ palabras de la reseña", lambda c: bool(c.get("copia_literal")), True),
 )
+
+
+def repetition(responses: list[str]) -> dict:
+    """Expresión de 5 palabras más repetida entre respuestas y en qué fracción aparece."""
+    from collections import Counter
+
+    counts = Counter()
+    for text in responses:
+        words = re.findall(r"\w+", text.lower())
+        counts.update({" ".join(words[i : i + 5]) for i in range(len(words) - 4)})
+    ((gram, n),) = counts.most_common(1) or [("—", 0)]
+    return {"top": gram, "share": n / len(responses) if responses else 0.0}
+
+
 GROUPS = (("real", "reales"), ("adversarial", "advers."), ("rag", "ficha vs. cliente"))
 
 
@@ -228,6 +298,12 @@ def write_report() -> None:
                 rows = [r for r in pick(v) if r["analysis_valid"] and r["kind"] == kind]
                 cells.append(f"{sum(bool(fn(r[v]['checks'])) for r in rows)}/{len(rows)}")
         L.append(f"| {label} | " + " | ".join(cells) + " |")
+    L += ["", "## Repetición entre respuestas (todas las reseñas)", "",
+          "| Versión | Expresión de 5 palabras más repetida | En qué fracción de respuestas |",
+          "|---|---|---|"]  # fmt: skip
+    for v in versions:
+        rep = repetition([r[v]["response"] for r in pick(v) if r["analysis_valid"]])
+        L.append(f"| {v} | «{rep['top']}» | {rep['share']:.0%} |")
     L += ["", "## Casos adversariales: respuesta de cada versión", ""]
     by_id = {v: {r["id"]: r for r in pick(v)} for v in versions}
     for r in [r for r in first if r["analysis_valid"] and r["kind"] != "real"]:

@@ -80,13 +80,19 @@ class Cache:
         return self.data[key]
 
 
-def chat(system: str, user: str, schema: dict | None = None, model: str = MODEL) -> str:
+def chat(
+    system: str,
+    user: str,
+    schema: dict | None = None,
+    model: str = MODEL,
+    options: dict | None = None,
+) -> str:
     r = ollama.chat(
         model=model,
         messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
         format=schema,
         think=False,
-        options=OPTIONS,
+        options=options or OPTIONS,
     )
     return r.message.content
 
@@ -108,11 +114,34 @@ def analyze(review: str, cache: Cache, model: str = MODEL) -> tuple[dict | None,
     return analysis, ""
 
 
-def respond(system: str, user: str, cache: Cache, model: str = MODEL) -> str:
+def respond(
+    system: str, user: str, cache: Cache, model: str = MODEL, options: dict | None = None
+) -> str:
+    """Respuesta del generador. `options` cambia temperatura y semilla (v8); por defecto OPTIONS,
+    con lo que la clave de caché es la de siempre."""
+    opts = options or OPTIONS
     return cache.get_or_call(
-        {"model": model, "opts": OPTIONS, "sys": system, "user": user},
-        lambda: chat(system, user, model=model),
+        {"model": model, "opts": opts, "sys": system, "user": user},
+        lambda: chat(system, user, model=model, options=opts),
     ).strip()
+
+
+GENUINE_SCHEMA = {
+    "type": "object",
+    "properties": {"genuina": {"type": "boolean"}, "motivo": {"type": "string"}},
+    "required": ["genuina", "motivo"],
+}
+
+
+def genuineness(review: str, cache: Cache, model: str = MODEL) -> dict:
+    """¿Reseña genuina o trampa (broma, provocación, absurdo)? Devuelve {genuina, motivo}."""
+    from caso_uso_llm.spec import GENUINIDAD
+
+    raw = cache.get_or_call(
+        {"model": model, "opts": OPTIONS, "sys": GENUINIDAD, "review": review, "genuina": 1},
+        lambda: chat(GENUINIDAD, review, GENUINE_SCHEMA, model),
+    )
+    return json.loads(raw)
 
 
 def process(row: pd.Series, cache: Cache, response_system: str) -> dict:

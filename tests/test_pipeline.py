@@ -74,3 +74,13 @@ def test_nombre_de_persona_en_la_respuesta_va_a_revision():
 
 def test_la_confianza_se_muestra_con_tres_decimales():
     assert route(item(confidence=0.8455)) == [f"confianza 0.846 < {THRESHOLD}"]
+
+
+def test_resena_trampa_va_a_revision_solo_con_ese_motivo():
+    reasons = route(item(genuina=False, motivo_trampa="perros que se presentan como huéspedes"))
+    assert reasons == ["posible reseña trampa (perros que se presentan como huéspedes)"]
+
+
+def test_higiene_y_copia_literal_van_a_revision():
+    for key, value in (("higiene", ["olor"]), ("copia_literal", ["las vistas a la alhambra"])):
+        assert route(item(checks=dict(CLEAN_CHECKS) | {key: value})), key
