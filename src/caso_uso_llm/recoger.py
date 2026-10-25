@@ -89,7 +89,7 @@ def build() -> gr.Blocks:
         gr.Markdown(
             "# LLM de respuesta a reseñas de hotel\nPipeline local: clasificador mRoBERTa, RAG con "
             "la ficha del hotel, generador Qwen 27B, guardarraíles y juez Gemma 12B. Los datos de "
-            "hoteles son ficticios.\n\nEstoy recogiendo reseñas para entrenar el LLM: escribe la "
+            "hoteles son ficticios.\n\nEstoy recogiendo reseñas para evaluar y mejorar el LLM: escribe la "
             "tuya y se guardará para responderla más adelante."
         )
         hotel = gr.Dropdown([*HOTELS, NO_HOTEL], value=next(iter(HOTELS)), label="Hotel")
