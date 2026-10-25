@@ -130,7 +130,7 @@ def presupposed_stay(response: str, review: str) -> bool:
 # Higiene (Fase 9, decisión de Javier): la respuesta no debe transmitir que pudo haber un problema
 # de higiene u olores. Cualquier término de este tipo manda la respuesta a revisión.
 HYGIENE = re.compile(
-    r"\b(ol[oí]a\w*|olores?|huel[ea]\w*|mal olor|sucio\w*|sucia\w*|suciedad|pelos?|cucarachas?|"
+    r"\b(ol[oí]a\w*|olor(?:es)?|huel[ea]\w*|mal olor|sucio\w*|sucia\w*|suciedad|pelos?|cucarachas?|"
     r"chinches?|insectos?|bichos?|moho|humedad|manchas?|mugre|hongos?|coliflor\w*)\b",
     re.IGNORECASE,
 )

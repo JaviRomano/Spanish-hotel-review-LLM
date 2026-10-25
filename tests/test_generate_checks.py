@@ -108,6 +108,8 @@ def test_hygiene_terms_y_copia_literal():
 
     assert hygiene_terms("Lamentamos el mal olor y las sábanas sucias.") == ["mal olor", "sucias"]
     assert hygiene_terms("La limpieza es una prioridad absoluta para nosotros.") == []
+    # Fase 9: «olores?» no detectaba «olor» suelto (respuesta real a una reseña de colaborador)
+    assert hygiene_terms("Lamentamos que percibiera un olor desagradable.") == ["olor"]
     review = "El desayuno, la limpieza y las instalaciones a la altura."
     assert copied_from_review(
         "Nos alegra que el desayuno, la limpieza y las instalaciones…", review
