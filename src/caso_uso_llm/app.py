@@ -262,11 +262,11 @@ def decide(item_id: str | None, draft: str, notes: str, action: str):
 
 
 def build() -> gr.Blocks:
-    with gr.Blocks(title="LLM de respuesta a reseñas - JR0mano") as demo:
+    with gr.Blocks(title="Respuestas a reseñas de hotel") as demo:
         gr.Markdown(
-            "# LLM de respuesta a reseñas de hotel\nPipeline local: clasificador mRoBERTa, RAG con "
-            "la ficha del hotel, generador Qwen 27B, guardarraíles y juez Gemma 12B. Los datos de "
-            "hoteles son ficticios."
+            "# Respuestas a reseñas de hotel\nPipeline local: clasificador mRoBERTa, RAG con la "
+            "ficha del hotel, generador Qwen 27B, guardarraíles y juez Gemma 12B. Los hoteles y "
+            "sus fichas son **ficticios**."
         )
         with gr.Accordion("¿Qué es esto? Ideas para ponerlo a prueba", open=True):
             gr.Markdown(INTRO)
