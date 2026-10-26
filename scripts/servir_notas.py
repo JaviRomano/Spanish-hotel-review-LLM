@@ -26,13 +26,18 @@ def main() -> None:
     user, password = os.environ.get("DEMO_USER"), os.environ.get("DEMO_PASS")
     if not (user and password):
         raise SystemExit("Hacen falta DEMO_USER y DEMO_PASS.")
-    token = "Basic " + base64.b64encode(f"{user}:{password}".encode()).decode()
+    # Safari codifica el acceso básico en Latin-1, no en UTF-8: con una «ñ» en la contraseña,
+    # solo así coincide. Se aceptan las dos codificaciones.
+    tokens = {
+        "Basic " + base64.b64encode(f"{user}:{password}".encode(enc)).decode()
+        for enc in ("utf-8", "latin-1")
+    }
     page = args.hoja.resolve()
     state, csv = page.with_suffix(".estado.json"), page.with_suffix(".csv")
 
     class Handler(BaseHTTPRequestHandler):
         def _auth(self) -> bool:
-            if self.headers.get("Authorization") == token:
+            if self.headers.get("Authorization") in tokens:
                 return True
             self.send_response(401)
             self.send_header("WWW-Authenticate", 'Basic realm="notas", charset="UTF-8"')
