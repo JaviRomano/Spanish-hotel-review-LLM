@@ -49,7 +49,15 @@ details{margin-top:6px}
 JS = r"""
 const KEY = "__KEY__";
 const st = (() => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } })();
-const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} };
+// Servida por scripts/servir_notas.py (p. ej., desde el móvil por el túnel), las notas también
+// se guardan en el PC: el progreso no depende del navegador ni del enlace del túnel.
+const SERVED = location.protocol.startsWith("http");
+let timer = null;
+const push = () => { if (SERVED) fetch("estado", {method: "POST", body: JSON.stringify(st)}).catch(() => {}); };
+const save = () => {
+  try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {}
+  clearTimeout(timer); timer = setTimeout(push, 800);
+};
 const get = id => (st[id] = st[id] || {});
 function paint() {
   let n = 0;
@@ -65,23 +73,34 @@ document.addEventListener("change", e => {
   get(id)[t.dataset.k] = t.type === "checkbox" ? t.checked : t.value; save(); paint();
 });
 document.addEventListener("input", e => { const t = e.target; if (t.tagName === "TEXTAREA") { get(t.dataset.id).notas = t.value; save(); } });
-for (const id of IDS) {
+function fill() { for (const id of IDS) {
   const s = get(id);
   document.querySelectorAll(`[data-id="${id}"]`).forEach(el => {
     if (el.type === "radio") el.checked = s.valoracion === el.value;
     else if (el.type === "checkbox") el.checked = !!s[el.dataset.k];
     else if (el.tagName === "TEXTAREA") el.value = s.notas || "";
   });
-}
+} }
 const q = s => '"' + String(s ?? "").replace(/"/g, '""') + '"';
 document.getElementById("exp").onclick = () => {
   const L = ["id;nick;valoracion;repite_expresiones;copia_literal;notas"];
   for (const id of IDS) { const s = get(id); L.push([q(id), q(NICKS[id]), q(s.valoracion), s.repite ? 1 : 0, s.copia ? 1 : 0, q(s.notas)].join(";")); }
+  const csv = "﻿" + L.join("\n") + "\n";
+  if (SERVED) {
+    fetch("csv", {method: "POST", body: csv})
+      .then(r => alert(r.ok ? "Notas guardadas en el PC (__CSV__)." : "No se pudo guardar en el PC."))
+      .catch(() => alert("No se pudo guardar en el PC."));
+    return;
+  }
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob(["﻿" + L.join("\n") + "\n"], {type: "text/csv;charset=utf-8"}));
+  a.href = URL.createObjectURL(new Blob([csv], {type: "text/csv;charset=utf-8"}));
   a.download = "__CSV__"; a.click();
 };
-paint();
+fill(); paint();
+if (SERVED) fetch("estado").then(r => r.ok ? r.json() : {}).then(srv => {
+  for (const [id, v] of Object.entries(srv || {})) st[id] = Object.assign({}, v, st[id] || {});
+  fill(); paint();
+}).catch(() => {});
 """
 
 
@@ -123,6 +142,7 @@ def card(r: dict) -> str:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--prompt", help="solo las reseñas respondidas con este prompt")
+    ap.add_argument("--desde", help="solo las reseñas desde esta fecha (AAAA-MM-DD)")
     args = ap.parse_args()
     rows = [json.loads(line) for line in SRC.read_text(encoding="utf-8").splitlines() if line]
     out, key, csv_name = OUT, "notas_vivo_v1", "notas_vivo.csv"
@@ -130,6 +150,11 @@ def main() -> None:
         rows = [r for r in rows if r.get("prompt", "v6") == args.prompt]
         out = OUT.with_name(f"notas_vivo_{args.prompt}.html")
         key, csv_name = f"notas_vivo_{args.prompt}", f"notas_vivo_{args.prompt}.csv"
+    if args.desde:
+        rows = [r for r in rows if r["fecha"] >= args.desde]
+        tag = args.desde.replace("-", "")
+        out = out.with_name(f"{out.stem}_{tag}.html")
+        key, csv_name = f"{key}_{tag}", csv_name.replace(".csv", f"_{tag}.csv")
     js = JS.replace("__KEY__", key).replace("__CSV__", csv_name)
     doc = (
         "<!doctype html><html lang=es><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'>"
