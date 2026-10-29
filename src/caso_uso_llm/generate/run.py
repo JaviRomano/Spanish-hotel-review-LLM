@@ -18,6 +18,7 @@ import ollama
 import pandas as pd
 from pydantic import ValidationError
 
+from caso_uso_llm import timing
 from caso_uso_llm.classify.datasets import load
 from caso_uso_llm.generate import checks as C
 from caso_uso_llm.generate.prompts import (
@@ -77,7 +78,16 @@ class Cache:
                 f.write(
                     json.dumps({"key": key, "value": self.data[key]}, ensure_ascii=False) + "\n"
                 )
+        else:
+            timing.record_cache_hit("llm")
         return self.data[key]
+
+
+class NoCache:
+    """Misma interfaz que Cache, pero siempre llama y nunca lee ni escribe (medir latencia)."""
+
+    def get_or_call(self, payload: dict, fn):
+        return fn()
 
 
 def chat(
@@ -94,6 +104,7 @@ def chat(
         think=False,
         options=options or OPTIONS,
     )
+    timing.record_ollama(r, "chat", model)
     return r.message.content
 
 

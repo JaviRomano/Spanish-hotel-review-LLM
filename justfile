@@ -90,6 +90,11 @@ app:
 modelo-pequeno *ARGS:
     python -m caso_uso_llm.rag.small_model {{ARGS}}
 
+# Fase 9: latencia por etapa del uso interactivo (sin caché; carga frente a inferencia)
+#   -> results/latencia_*.jsonl + reports/phase9_latencia.md. Ej.: just latencia --reps 3
+latencia *ARGS:
+    python -m caso_uso_llm.latency {{ARGS}}
+
 # Demo en modo repetición: reconstruye casos.json y la abre (sin modelos; http://127.0.0.1:7861)
 replay:
     python scripts/build_replay.py

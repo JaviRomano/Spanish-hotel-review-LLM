@@ -36,12 +36,13 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
+from caso_uso_llm import timing
 from caso_uso_llm.classify.datasets import load_ahr_ood
 from caso_uso_llm.evals.judge import JUDGE_MODEL, judge
 from caso_uso_llm.evals.rubric import IDS, criterios
 from caso_uso_llm.generate import checks as C
 from caso_uso_llm.generate.prompts import RAG_PROMPTS
-from caso_uso_llm.generate.run import CACHE, MODEL, Cache, analyze
+from caso_uso_llm.generate.run import CACHE, MODEL, Cache, NoCache, analyze
 from caso_uso_llm.log import log
 from caso_uso_llm.ollama_gpu import require_gpu
 from caso_uso_llm.paths import DATA_LIVE, EVALS, RESULTS, ROOT
@@ -110,11 +111,15 @@ def run(
     classifier: "SentimentEnsemble | None" = None,
     prompt: str = PROMPT,
     live: bool = False,
+    no_cache: bool = False,
 ) -> list[dict]:
     """items: dicts con id, text y opcionalmente title, hotel y meta (se copia tal cual).
 
     `classifier`: ensamble ya cargado (la app lo carga una vez; tarda ~25 s).
     `live`: reseñas de terceros; las llamadas al LLM se cachean en data/live (fuera de git).
+    `no_cache`: medir latencia; ninguna llamada al LLM lee ni escribe la caché de resultados y
+    los embeddings de estas reseñas se piden de nuevo a Ollama (los de kb/ salen del disco,
+    como en la demo). Cada paso se mide con timing.stage si la medición está activada.
     """
     gen_cache, judge_cache = caches(live)
     if live:
@@ -125,49 +130,62 @@ def run(
     log("[2] Sentimiento (mRoBERTa, 3 semillas, CPU)")
     from caso_uso_llm.classify.infer import SentimentEnsemble, prepare
 
-    texts = [prepare(it["text"], it.get("title", "")) for it in out]
-    classifier = classifier or SentimentEnsemble()
-    for it, text, p in zip(out, texts, classifier.predict(texts), strict=True):
+    with timing.stage("normalizacion"):
+        texts = [prepare(it["text"], it.get("title", "")) for it in out]
+    with timing.stage("clasificador"):
+        classifier = classifier or SentimentEnsemble()
+        preds = classifier.predict(texts)
+    for it, text, p in zip(out, texts, preds, strict=True):
         it.update(review=text, sentiment=p.label, confidence=p.confidence, probs=p.probs)
 
     log("[4] Recuperación (políticas híbrida, ejemplos densa)")
-    embedder = Embedder(keep_alive=0)
-    pols, exs = Retriever(kb.politicas(), embedder), Retriever(kb.respuestas(), embedder)
-    ctx = {it["id"]: (pols.search(it["review"], K_POLICIES, "hibrida"),
-                      exs.search(it["review"], K_EXAMPLES, "densa")) for it in out}  # fmt: skip
+    with timing.stage("embeddings"):
+        embedder = Embedder(keep_alive=0, persist=not no_cache)
+        if no_cache:
+            embedder.forget(texts)
+        pols, exs = Retriever(kb.politicas(), embedder), Retriever(kb.respuestas(), embedder)
+        ctx = {it["id"]: (pols.search(it["review"], K_POLICIES, "hibrida"),
+                          exs.search(it["review"], K_EXAMPLES, "densa")) for it in out}  # fmt: skip
 
     log(f"[3][5] Aspectos y respuesta ({MODEL})")
-    require_gpu(MODEL)
-    cache = Cache(gen_cache)
+    with timing.stage("carga_generador"):
+        require_gpu(MODEL)
+    cache = NoCache() if no_cache else Cache(gen_cache)
     for i, it in enumerate(out, 1):
-        analysis, error = analyze(it["review"], cache)
+        with timing.stage("analisis"):
+            analysis, error = analyze(it["review"], cache)
         if analysis is None:
             it.update(analysis=None, response=None, reasons=["análisis inválido"])
             continue
         p, e = ctx[it["id"]]
-        gen = generate_reply(prompt, it["review"], analysis, it["hotel"], p, e, cache)
+        with timing.stage("respuesta"):
+            gen = generate_reply(prompt, it["review"], analysis, it["hotel"], p, e, cache)
         response = gen["response"]
         it["genuina"], it["motivo_trampa"] = gen["genuina"], gen.get("motivo_trampa", "")
-        checks = C.run_checks(response, analysis["aspectos"])
-        checks.update(ficha_checks(response, it["review"], it["hotel"]))
-        checks["nombres"] = C.person_names(response, it["review"])
+        with timing.stage("checks"):
+            checks = C.run_checks(response, analysis["aspectos"])
+            checks.update(ficha_checks(response, it["review"], it["hotel"]))
+            checks["nombres"] = C.person_names(response, it["review"])
         it.update(analysis=analysis, response=response, checks=checks,
                   politicas=[d.id for d in p], ejemplos=[d.id for d in e])  # fmt: skip
         if i % 10 == 0:
             log(f"   {i}/{len(out)}")
 
     log(f"[6] Juez {JUDGE_MODEL} (rúbrica {RUBRIC}, con ficha)")
-    require_gpu(JUDGE_MODEL)
-    jcache = Cache(judge_cache)
-    for it in out:
-        if it["response"] is not None:
-            v = judge(it["review"], it["response"], jcache, RUBRIC, ficha(it["hotel"]))
-            it["judge"] = {k: v[k] for k in IDS}
+    with timing.stage("carga_juez"):
+        require_gpu(JUDGE_MODEL)
+    jcache = NoCache() if no_cache else Cache(judge_cache)
+    with timing.stage("juez"):
+        for it in out:
+            if it["response"] is not None:
+                v = judge(it["review"], it["response"], jcache, RUBRIC, ficha(it["hotel"]))
+                it["judge"] = {k: v[k] for k in IDS}
 
     log("[7] Enrutado")
-    for it in out:
-        it["reasons"] += route(it)
-        it["decision"] = "revisión humana" if it["reasons"] else "publicable"
+    with timing.stage("enrutado"):
+        for it in out:
+            it["reasons"] += route(it)
+            it["decision"] = "revisión humana" if it["reasons"] else "publicable"
     return out
 
 

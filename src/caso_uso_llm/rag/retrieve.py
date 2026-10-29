@@ -18,6 +18,7 @@ from collections.abc import Sequence
 
 import numpy as np
 
+from caso_uso_llm import timing
 from caso_uso_llm.paths import DATA_INTERIM
 from caso_uso_llm.rag.kb import Doc
 
@@ -120,9 +121,10 @@ class BM25:
 class Embedder:
     """Embeddings de Ollama con caché en disco (clave: modelo + texto)."""
 
-    def __init__(self, model: str = EMBED_MODEL, keep_alive: int | None = None):
+    def __init__(self, model: str = EMBED_MODEL, keep_alive: int | None = None, persist=True):
         self.model = model
         self.keep_alive = keep_alive  # 0: Ollama descarga el modelo tras cada llamada
+        self.persist = persist  # False: los embeddings nuevos se quedan en memoria (medir latencia)
         self.path = DATA_INTERIM / f"embeddings_{model}.jsonl"
         self.cache: dict[str, list[float]] = {}
         if self.path.exists():
@@ -138,16 +140,23 @@ class Embedder:
         if missing:
             import ollama
 
-            vecs = ollama.embed(
-                model=self.model, input=missing, keep_alive=self.keep_alive
-            ).embeddings
-            self.path.parent.mkdir(parents=True, exist_ok=True)
-            with self.path.open("a", encoding="utf-8", newline="\n") as f:
-                for t, v in zip(missing, vecs, strict=True):
-                    self.cache[self._key(t)] = list(v)
-                    f.write(json.dumps({"key": self._key(t), "vec": list(v)}) + "\n")
+            r = ollama.embed(model=self.model, input=missing, keep_alive=self.keep_alive)
+            timing.record_ollama(r, "embed", self.model)
+            for t, v in zip(missing, r.embeddings, strict=True):
+                self.cache[self._key(t)] = list(v)
+            if self.persist:
+                self.path.parent.mkdir(parents=True, exist_ok=True)
+                with self.path.open("a", encoding="utf-8", newline="\n") as f:
+                    for t in missing:
+                        f.write(json.dumps({"key": self._key(t), "vec": self.cache[self._key(t)]}))
+                        f.write("\n")
         m = np.array([self.cache[self._key(t)] for t in texts], dtype=float)
         return m / np.linalg.norm(m, axis=1, keepdims=True)
+
+    def forget(self, texts: Sequence[str]) -> None:
+        """Olvida estos textos para pedirlos de nuevo a Ollama (medir latencia sin la caché)."""
+        for t in texts:
+            self.cache.pop(self._key(t), None)
 
 
 def rrf(rankings: Sequence[Sequence[int]], k: int = RRF_K) -> list[int]:

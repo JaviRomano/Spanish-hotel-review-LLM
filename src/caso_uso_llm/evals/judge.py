@@ -14,6 +14,7 @@ import json
 
 import ollama
 
+from caso_uso_llm import timing
 from caso_uso_llm.evals.rubric import IDS, RUBRICS, criterios
 from caso_uso_llm.generate.checks import quote_in_review
 
@@ -87,6 +88,7 @@ def _chat(system: str, user: str, schema: dict) -> str:
         think=False,
         options=OPTIONS,
     )
+    timing.record_ollama(r, "chat", JUDGE_MODEL)
     return r.message.content
 
 

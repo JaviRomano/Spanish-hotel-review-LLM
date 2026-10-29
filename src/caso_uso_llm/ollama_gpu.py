@@ -13,6 +13,8 @@ import sys
 
 import ollama
 
+from caso_uso_llm import timing
+
 FIX = (
     "Ollama no está usando la GPU. En Windows con AMD: descarga ollama-windows-amd64-rocm.zip de "
     "la MISMA versión de Ollama (https://github.com/ollama/ollama/releases), extráelo en "
@@ -23,7 +25,8 @@ FIX = (
 
 def gpu_fraction(model: str) -> float:
     """Carga el modelo (si no lo está) y devuelve qué fracción ocupa en la VRAM."""
-    ollama.generate(model=model, prompt="", keep_alive="5m")  # prompt vacío: solo carga
+    r = ollama.generate(model=model, prompt="", keep_alive="5m")  # prompt vacío: solo carga
+    timing.record_ollama(r, "generate", model)  # aquí cae la carga del modelo, no en el chat
     for m in ollama.ps().models:
         if m.model == model or m.name == model:
             return m.size_vram / m.size if m.size else 0.0

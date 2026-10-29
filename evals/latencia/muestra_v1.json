@@ -1,0 +1,75 @@
+{
+ "descripcion": "Muestra fija de la medición de latencia (latency.build_sample, semilla 42, a partir de results/pipeline_cola.json).",
+ "items": [
+  {
+   "id": "adv-4estrellas-queja",
+   "hotel": "h07",
+   "title": "",
+   "text": "Muy buena estancia en general: ubicación perfecta y camas comodísimas. Lo único, el wifi no funcionaba en la habitación y tuvimos que bajar al vestíbulo para conectarnos.",
+   "meta": {
+    "grupo": "sintético",
+    "tipo": "positiva con queja"
+   },
+   "decision_cola": "publicable"
+  },
+  {
+   "id": "adv-ambigua",
+   "hotel": "h03",
+   "title": "",
+   "text": "Hotel correcto para una noche. La habitación limpia pero pequeña, el ruido de la calle se oía bastante y el desayuno justito. El personal amable. Ni fu ni fa.",
+   "meta": {
+    "grupo": "sintético",
+    "tipo": "neutral ambigua"
+   },
+   "decision_cola": "revisión humana"
+  },
+  {
+   "id": "ahr-ahr-2699",
+   "hotel": null,
+   "title": "Precioso hotel",
+   "text": "Muy bonito hotel y súper céntrico, junto a Las Setas, en una muy tranquila calle sin tráfico ni ruidos. Un precioso patio interior que invita al descanso. Muy bien también de precio, que es tema importante.",
+   "meta": {
+    "grupo": "AHR",
+    "rating": 4,
+    "label3": "positivo"
+   },
+   "decision_cola": "publicable"
+  },
+  {
+   "id": "ahr-ahr-2775",
+   "hotel": null,
+   "title": "Si hay algún problema no te dan respuesta",
+   "text": "Íbamos a alojarnos en este establecimiento para ir a isla Mágica un fin de semana, al reservar es cierto que ponía que era \" no reembolsable\". Coincidió que ese fin de semana había ola de calor con temperaturas de 44 grados. Nosotros íbamos con bebés de 3 meses, 1 año y dos de 4 años. Al ponerme en contacto con el establecimiento me dicen que no hay reembolso pero hablarán con el encargado a ver si se puede hacer algo : cambiar la fecha aunque tenga que pagar una penalización . El empleado quedó en llamarme el lunes pero me pidió que cancelase la reserva de Booking.com para que no le cobrasen comisiones. Cancele la reserva como una tonta y todavía estoy esperando a que me llamen, no contestan al mail y en el teléfono dan largas. En fin, tened muy claro al reservar que si no vais…",
+   "meta": {
+    "grupo": "AHR",
+    "rating": 1,
+    "label3": "negativo"
+   },
+   "decision_cola": "revisión humana"
+  },
+  {
+   "id": "ahr-ahr-3525",
+   "hotel": null,
+   "title": "Muy recomendable",
+   "text": "Es al segunda vez que me alojo en este hotel de Malaga. Limpieza perfecta. Camas y almohadas extra cómodas. Wifi fantástico. El personal del hotel súper súper amable. Tiene una ubicación ideal. Cierto es que no está en pleno pleno centro de Malaga pero andando al mismo lo tienes a 5 minutos escasos. Por lo que no estas con todo el follón de gente pasando y turistas que en determinadas horas se aglomeran en el centro. Además es ideal si vas en coche ( tienen parking) porque las salidas hacia la zona de los Álamos y Torremolinos las tiene muy cerca. Calidad precio muy recomendable. Además son hotel que permiten mascotas !! Gran idea para los qu viajamos con nuestros perritos Muy muy recomendable.",
+   "meta": {
+    "grupo": "AHR",
+    "rating": 5,
+    "label3": "positivo"
+   },
+   "decision_cola": "publicable"
+  },
+  {
+   "id": "ahr-ahr-13790",
+   "hotel": null,
+   "title": "sencillo",
+   "text": "Este hotel no está en el centro de la ciudad, pero es en la carretera de Jaén. Es un antiguo edificio con vistas en una gasolinera. seguro que no es la mejor ubicación se puede encontrar, por esta razón el bar está lleno de trabajadores y conductores de camiones pero 'moco ruidoso por la noche. Las habitaciones están bastante limpias pero no tráfico comfortables. Si estás buscando un hotel básico es su lugar",
+   "meta": {
+    "grupo": "AHR",
+    "rating": 3,
+    "label3": "neutral"
+   },
+   "decision_cola": "revisión humana"
+  }
+ ]
+}
