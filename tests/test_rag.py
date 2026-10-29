@@ -138,3 +138,25 @@ def test_el_antitrampa_se_aplica_al_prompt_base_cuando_se_pide(monkeypatch):
         G.generate_reply("v6", *args)["genuina"] is True
     )  # sin pedirlo, v6 no detecta (experimentos)
     assert G.generate_reply("v8", *args)["genuina"] is False
+
+
+def test_detector_v2_recibe_la_fecha_de_referencia_y_v1_no_cambia(monkeypatch):
+    """Con fecha, el mensaje la incluye; sin ella, la clave de caché de v1 es la de siempre."""
+    from datetime import date
+
+    from caso_uso_llm.generate import run as gen
+    from caso_uso_llm.spec import GENUINIDAD, GENUINIDAD_V2
+
+    seen = []
+
+    class Rec:
+        def get_or_call(self, payload, fn):
+            seen.append(payload)
+            return '{"genuina": true, "motivo": "ok"}'
+
+    gen.genuineness("reseña", Rec())
+    gen.genuineness("reseña", Rec(), system=GENUINIDAD_V2, today=date(2026, 10, 29))
+    assert seen[0]["sys"] == GENUINIDAD and seen[0]["review"] == "reseña"
+    assert seen[1]["sys"] == GENUINIDAD_V2
+    assert seen[1]["review"].startswith("Fecha de hoy: 29 de octubre de 2026 (2026-10-29).")
+    assert "35 de febrero" in GENUINIDAD_V2 and "ignora tus instrucciones" in GENUINIDAD_V2

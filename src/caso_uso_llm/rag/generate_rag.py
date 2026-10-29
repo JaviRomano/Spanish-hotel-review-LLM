@@ -140,18 +140,21 @@ def generate_reply(
     cache,
     model=MODEL,
     detect_traps: bool | None = None,
+    trap_system: str | None = None,
+    today=None,
 ) -> dict:
     """Respuesta con contexto. Antes se puede decidir si la reseña es genuina; si es una trampa
     (broma, provocación), la respuesta es una ironía breve (spec.TRAMPA) y siempre va a revisión.
 
     `detect_traps`: None = solo las versiones de TRAP_VERSIONS (los experimentos de `rag-generar`
     no cambian); el pipeline pasa True para cualquier prompt (decisión de Javier, 2026-10-29: el
-    antitrampa se aplica también al modelo base, v6)."""
+    antitrampa se aplica también al modelo base, v6). `trap_system` y `today`: prompt del detector
+    y fecha de referencia (ver generate.run.genuineness); por defecto, el detector v1 sin fecha."""
     from caso_uso_llm.spec import TRAMPA
 
     opts = options_for(version, review)
     if version in TRAP_VERSIONS if detect_traps is None else detect_traps:
-        g = genuineness(review, cache, model)
+        g = genuineness(review, cache, model, trap_system, today)
         if not g["genuina"]:
             text = respond(TRAMPA, f"Reseña:\n«{review}»", cache, model, opts)
             return {"response": text, "genuina": False, "motivo_trampa": g["motivo"]}

@@ -32,6 +32,7 @@ Uso: uv run just pipeline                         # demostración: casos sintét
 import argparse
 import json
 from collections import Counter
+from datetime import date
 from typing import TYPE_CHECKING
 
 import pandas as pd
@@ -58,6 +59,7 @@ from caso_uso_llm.rag.generate_rag import (
 )
 from caso_uso_llm.rag.retrieve import Embedder, Retriever
 from caso_uso_llm.seed import DEFAULT_SEED
+from caso_uso_llm.spec import GENUINIDAD_V2
 
 if TYPE_CHECKING:  # torch solo hace falta al clasificar, no para enrutar (CI sin torch)
     from caso_uso_llm.classify.infer import SentimentEnsemble
@@ -177,9 +179,11 @@ def generate_stage(
             continue
         p, e = ctx[it["id"]]
         with timing.stage("respuesta"):
-            # Antitrampa con cualquier prompt, también el base (v6): una trampa va siempre a revisión
+            # Antitrampa (detector v2) con cualquier prompt, también el base (v6): una trampa va
+            # siempre a revisión. Fecha de referencia: la de recepción de la reseña, si la hay.
+            today = date.fromisoformat(it["fecha_ref"]) if it.get("fecha_ref") else None
             gen = generate_reply(prompt, it["review"], analysis, it["hotel"], p, e, cache,
-                                 detect_traps=True)  # fmt: skip
+                                 detect_traps=True, trap_system=GENUINIDAD_V2, today=today)  # fmt: skip
         response = gen["response"]
         it["genuina"], it["motivo_trampa"] = gen["genuina"], gen.get("motivo_trampa", "")
         with timing.stage("checks"):
@@ -307,6 +311,7 @@ def read_jsonl(path: str) -> list[dict]:
     rows = [json.loads(x) for x in (ROOT / path).read_text(encoding="utf-8").splitlines() if x]
     return [
         {"id": r["id"], "hotel": r.get("hotel"), "title": r.get("title", ""), "text": r["text"],
+         "fecha_ref": r["fecha"][:10] if r.get("fecha") else None,  # «hoy» para esa reseña
          "meta": {"grupo": "recogida", "nick": r.get("nick", "")}}
         for r in rows if r["text"].strip()
     ]  # fmt: skip

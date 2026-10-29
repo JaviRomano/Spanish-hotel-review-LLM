@@ -19,7 +19,7 @@ Uso: uv run just app        # http://127.0.0.1:7860
 import json
 import re
 import threading
-from datetime import datetime
+from datetime import date, datetime
 
 import gradio as gr
 
@@ -110,7 +110,7 @@ def save_live(it: dict, nick: str) -> None:
         "hotel": it["hotel"], "resena": it["review"],
         "sentimiento": it["sentiment"], "confianza": it["confidence"],
         "decision": it["decision"], "motivos": it["reasons"], "respuesta": it.get("response"),
-        "prompt": GEN_PROMPT,
+        "prompt": GEN_PROMPT, "fecha_ref": it.get("fecha_ref"),
         "juez": {k: v["cumple"] for k, v in (it.get("judge") or {}).items()},
     })  # fmt: skip
 
@@ -203,7 +203,10 @@ def _respond(nick: str, consent: bool, hotel_label: str, title: str, text: str):
     _GPU.acquire()
     try:
         # El nick va solo en meta: el pipeline no lo usa en ningún prompt.
+        # Fecha de referencia del detector de trampas: la de ESTA petición (no la del arranque,
+        # que se quedaría vieja si la demo sigue abierta tras la medianoche).
         it = generate_stage([{"id": item_id, "hotel": hotel, "title": title, "text": text,
+                              "fecha_ref": date.today().isoformat(),
                               "meta": {"grupo": "app", "nick": nick}}],
                             CLASSIFIER, GEN_PROMPT, live=True)[0]  # fmt: skip
         result: dict = {}

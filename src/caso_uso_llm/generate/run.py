@@ -144,13 +144,29 @@ GENUINE_SCHEMA = {
 }
 
 
-def genuineness(review: str, cache: Cache, model: str = MODEL) -> dict:
-    """¿Reseña genuina o trampa (broma, provocación, absurdo)? Devuelve {genuina, motivo}."""
+MONTHS = ("enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto",
+          "septiembre", "octubre", "noviembre", "diciembre")  # fmt: skip
+
+
+def genuineness(
+    review: str, cache: Cache, model: str = MODEL, system: str | None = None, today=None
+) -> dict:
+    """¿Reseña genuina o trampa (broma, provocación, absurdo)? Devuelve {genuina, motivo}.
+
+    `system`: prompt del detector (por defecto, spec.GENUINIDAD, v1). `today` (date): fecha de
+    referencia para juzgar las fechas que menciona la reseña; sin ella, el mensaje es la reseña
+    tal cual (la clave de caché de v1 no cambia).
+    """
     from caso_uso_llm.spec import GENUINIDAD
 
+    system = system or GENUINIDAD
+    user = review
+    if today is not None:
+        user = (f"Fecha de hoy: {today.day} de {MONTHS[today.month - 1]} de {today.year} "
+                f"({today.isoformat()}).\n\nReseña:\n{review}")  # fmt: skip
     raw = cache.get_or_call(
-        {"model": model, "opts": OPTIONS, "sys": GENUINIDAD, "review": review, "genuina": 1},
-        lambda: chat(GENUINIDAD, review, GENUINE_SCHEMA, model),
+        {"model": model, "opts": OPTIONS, "sys": system, "review": user, "genuina": 1},
+        lambda: chat(system, user, GENUINE_SCHEMA, model),
     )
     return json.loads(raw)
 
