@@ -121,3 +121,20 @@ def test_v8_sin_citas_un_ejemplo_y_semilla_por_resena():
     assert options_for("v7", "x") is None
     a, b = options_for("v8", "reseña uno"), options_for("v8", "reseña uno")
     assert a == b and a["temperature"] == 0.6 and a["seed"] != options_for("v8", "otra")["seed"]
+
+
+def test_el_antitrampa_se_aplica_al_prompt_base_cuando_se_pide(monkeypatch):
+    """El pipeline detecta trampas con cualquier prompt (v6 incluido); los experimentos, solo v8."""
+    from caso_uso_llm.rag import generate_rag as G
+
+    monkeypatch.setattr(G, "genuineness", lambda *a, **k: {"genuina": False, "motivo": "broma"})
+    monkeypatch.setattr(G, "respond", lambda system, user, *a, **k: "ironía" if "broma" in system
+                        or "provocación" in system else "respuesta normal")  # fmt: skip
+    monkeypatch.setattr(G, "context_user", lambda *a, **k: "contexto")
+    args = ("reseña", {"aspectos": [], "peticiones": []}, None, [], [], None)
+    assert G.generate_reply("v6", *args, detect_traps=True) == {
+        "response": "ironía", "genuina": False, "motivo_trampa": "broma"}  # fmt: skip
+    assert (
+        G.generate_reply("v6", *args)["genuina"] is True
+    )  # sin pedirlo, v6 no detecta (experimentos)
+    assert G.generate_reply("v8", *args)["genuina"] is False

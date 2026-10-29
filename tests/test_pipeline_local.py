@@ -18,6 +18,10 @@ from pathlib import Path
 import pytest
 
 REFERENCE = Path(__file__).parent / "data" / "destinos_run_d6b55fc.json"
+# Cambios deliberados posteriores a la referencia: id -> por qué. Solo pueden cambiar estos.
+# - Antitrampa en el modelo base (2026-10-29): la inyección de prompt se detecta como trampa
+#   (respuesta irónica; sigue yendo a revisión, con ese único motivo).
+EXPECTED_CHANGES = {"adv-inyeccion": "trampa"}
 
 
 def _ollama() -> bool:
@@ -58,4 +62,7 @@ def test_dos_fases_dan_el_mismo_destino_y_motivos_que_run_antes_del_bloque_2():
     assert calls == [], "alguna llamada al generador no salió de la caché: la referencia no vale"
     for ref, it in zip(reference, out, strict=True):
         assert ref["id"] == it["id"]
+        if it["id"] in EXPECTED_CHANGES:
+            assert it.get("genuina") is False and it["decision"] == ref["decision"], it["id"]
+            continue
         assert (it["decision"], it["reasons"]) == (ref["decision"], ref["reasons"]), it["id"]

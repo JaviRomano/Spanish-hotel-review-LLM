@@ -131,14 +131,26 @@ TRAP_VERSIONS = ("v8",)  # versiones que detectan reseñas trampa antes de respo
 
 
 def generate_reply(
-    version: str, review: str, analysis: dict, hotel: str | None, pols, exs, cache, model=MODEL
+    version: str,
+    review: str,
+    analysis: dict,
+    hotel: str | None,
+    pols,
+    exs,
+    cache,
+    model=MODEL,
+    detect_traps: bool | None = None,
 ) -> dict:
-    """Respuesta con contexto. Desde v8, antes se decide si la reseña es genuina; si es una trampa
-    (broma, provocación), la respuesta es una ironía breve (spec.TRAMPA) y siempre va a revisión."""
+    """Respuesta con contexto. Antes se puede decidir si la reseña es genuina; si es una trampa
+    (broma, provocación), la respuesta es una ironía breve (spec.TRAMPA) y siempre va a revisión.
+
+    `detect_traps`: None = solo las versiones de TRAP_VERSIONS (los experimentos de `rag-generar`
+    no cambian); el pipeline pasa True para cualquier prompt (decisión de Javier, 2026-10-29: el
+    antitrampa se aplica también al modelo base, v6)."""
     from caso_uso_llm.spec import TRAMPA
 
     opts = options_for(version, review)
-    if version in TRAP_VERSIONS:
+    if version in TRAP_VERSIONS if detect_traps is None else detect_traps:
         g = genuineness(review, cache, model)
         if not g["genuina"]:
             text = respond(TRAMPA, f"Reseña:\n«{review}»", cache, model, opts)

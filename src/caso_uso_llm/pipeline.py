@@ -177,7 +177,9 @@ def generate_stage(
             continue
         p, e = ctx[it["id"]]
         with timing.stage("respuesta"):
-            gen = generate_reply(prompt, it["review"], analysis, it["hotel"], p, e, cache)
+            # Antitrampa con cualquier prompt, también el base (v6): una trampa va siempre a revisión
+            gen = generate_reply(prompt, it["review"], analysis, it["hotel"], p, e, cache,
+                                 detect_traps=True)  # fmt: skip
         response = gen["response"]
         it["genuina"], it["motivo_trampa"] = gen["genuina"], gen.get("motivo_trampa", "")
         with timing.stage("checks"):
