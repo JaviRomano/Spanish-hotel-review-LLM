@@ -6,6 +6,7 @@ ninguna respuesta: se procesan después, en lote, cuando haya suficientes:
 
     uv run python -m caso_uso_llm.pipeline --jsonl data/live/resenas_recogidas.jsonl \
         --prompt v8 --out data/live/recogidas_v8.json
+(con --jsonl, la caché del LLM también va a data/live: el repositorio no guarda nada de ellas).
 
 Sin cola ni JSON a la vista: quien escribe solo ve el formulario y la confirmación. La palabra
 clave de apagado (DEMO_KILL) cierra la app y el túnel, como en app.py.

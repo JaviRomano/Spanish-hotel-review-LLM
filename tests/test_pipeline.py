@@ -84,3 +84,15 @@ def test_resena_trampa_va_a_revision_solo_con_ese_motivo():
 def test_higiene_y_copia_literal_van_a_revision():
     for key, value in (("higiene", ["olor"]), ("copia_literal", ["las vistas a la alhambra"])):
         assert route(item(checks=dict(CLEAN_CHECKS) | {key: value})), key
+
+
+def test_las_resenas_de_terceros_no_se_cachean_en_el_repositorio():
+    from caso_uso_llm.paths import DATA_LIVE, ROOT
+    from caso_uso_llm.pipeline import caches
+
+    ignored = (ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()
+    assert "data/live/" in ignored
+    for path in caches(live=True):
+        assert path.is_relative_to(DATA_LIVE)
+    for path in caches(live=False):
+        assert not path.is_relative_to(DATA_LIVE)

@@ -25,6 +25,8 @@ reseña obligaría a recargarlos cada vez.
 
 Uso: uv run just pipeline                         # demostración: casos sintéticos + 40 del AHR
      uv run just pipeline --csv entrada.csv       # columnas: id, hotel (opcional), title, text
+     uv run just pipeline --csv terceros.csv --vivo --out data/live/x.json  # reseñas de terceros
+     uv run just pipeline --jsonl data/live/resenas_recogidas.jsonl          # siempre en data/live
 """
 
 import argparse
@@ -42,7 +44,7 @@ from caso_uso_llm.generate.prompts import RAG_PROMPTS
 from caso_uso_llm.generate.run import CACHE, MODEL, Cache, analyze
 from caso_uso_llm.log import log
 from caso_uso_llm.ollama_gpu import require_gpu
-from caso_uso_llm.paths import EVALS, RESULTS, ROOT
+from caso_uso_llm.paths import DATA_LIVE, EVALS, RESULTS, ROOT
 from caso_uso_llm.rag import kb
 from caso_uso_llm.rag.generate_rag import (
     K_EXAMPLES,
@@ -64,6 +66,12 @@ THRESHOLD = json.loads((RESULTS / "phase3b_realista.json").read_text(encoding="u
     "solo_confianza"
 ]["threshold"]
 QUEUE = RESULTS / "pipeline_cola.json"
+# Reseñas de terceros (demo en vivo, recogidas): su caché y su salida van fuera de git, como su
+# texto. El consentimiento cubre guardarlas para evaluar el sistema, no publicarlas en el repo, y
+# la caché guarda citas literales de la reseña (análisis) y las respuestas.
+LIVE_CACHE = DATA_LIVE / "cache_generador.jsonl"
+LIVE_JUDGE_CACHE = DATA_LIVE / "cache_juez.jsonl"
+LIVE_QUEUE = DATA_LIVE / "pipeline_vivo.json"
 REPORT = ROOT / "reports" / "phase5_pipeline.md"
 AHR_PER_RATING = 8
 REVIEW_LABELS = ("negativo", "neutral")  # sentimientos que nunca se publican sin revisión
@@ -92,13 +100,25 @@ def ficha(hotel: str | None) -> str:
     return kb.ficha_texto(hotel) if hotel else "No disponible."
 
 
+def caches(live: bool) -> tuple:
+    """Rutas de la caché del generador y del juez: las versionadas o las de terceros."""
+    return (LIVE_CACHE, LIVE_JUDGE_CACHE) if live else (CACHE, JUDGE_CACHE)
+
+
 def run(
-    items: list[dict], classifier: "SentimentEnsemble | None" = None, prompt: str = PROMPT
+    items: list[dict],
+    classifier: "SentimentEnsemble | None" = None,
+    prompt: str = PROMPT,
+    live: bool = False,
 ) -> list[dict]:
     """items: dicts con id, text y opcionalmente title, hotel y meta (se copia tal cual).
 
     `classifier`: ensamble ya cargado (la app lo carga una vez; tarda ~25 s).
+    `live`: reseñas de terceros; las llamadas al LLM se cachean en data/live (fuera de git).
     """
+    gen_cache, judge_cache = caches(live)
+    if live:
+        DATA_LIVE.mkdir(parents=True, exist_ok=True)
     log(f"{len(items)} reseñas · umbral de confianza {THRESHOLD} · prompt {prompt} · juez {RUBRIC}")
     out = [{**it, "hotel": it.get("hotel") or None, "reasons": []} for it in items]
 
@@ -118,7 +138,7 @@ def run(
 
     log(f"[3][5] Aspectos y respuesta ({MODEL})")
     require_gpu(MODEL)
-    cache = Cache(CACHE)
+    cache = Cache(gen_cache)
     for i, it in enumerate(out, 1):
         analysis, error = analyze(it["review"], cache)
         if analysis is None:
@@ -138,7 +158,7 @@ def run(
 
     log(f"[6] Juez {JUDGE_MODEL} (rúbrica {RUBRIC}, con ficha)")
     require_gpu(JUDGE_MODEL)
-    jcache = Cache(JUDGE_CACHE)
+    jcache = Cache(judge_cache)
     for it in out:
         if it["response"] is not None:
             v = judge(it["review"], it["response"], jcache, RUBRIC, ficha(it["hotel"]))
@@ -226,19 +246,29 @@ def main() -> None:
     ap.add_argument("--jsonl", help="reseñas recogidas (data/live/resenas_recogidas.jsonl)")
     ap.add_argument("--out", help="JSON de salida (por defecto, la cola de la demostración)")
     ap.add_argument("--prompt", default=PROMPT, choices=RAG_PROMPTS, help="prompt del generador")
+    ap.add_argument(
+        "--vivo",
+        action="store_true",
+        help="el CSV es de terceros: caché y salida en data/live (con --jsonl, siempre)",
+    )
     args = ap.parse_args()
     items = (
         read_csv(args.csv) if args.csv else read_jsonl(args.jsonl) if args.jsonl else demo_items()
     )
     if not items:
         raise SystemExit("No hay reseñas con texto en el CSV.")
-    out_path = ROOT / args.out if args.out else QUEUE
-    out = run(items, prompt=args.prompt)
+    live = bool(args.jsonl) or args.vivo
+    out_path = ROOT / args.out if args.out else LIVE_QUEUE if live else QUEUE
+    if live and not out_path.resolve().is_relative_to(DATA_LIVE):
+        raise SystemExit(
+            f"Reseñas de terceros: la salida tiene que ir en {DATA_LIVE} (fuera de git)."
+        )
+    out = run(items, prompt=args.prompt, live=live)
     queue = [it for it in out if it["decision"] == "revisión humana"]
     out_path.write_text(
         json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8", newline="\n"
     )
-    if not args.csv:
+    if not (args.csv or args.jsonl):  # el informe es el de la demostración (sintéticos + AHR)
         write_report(out)
     log(
         f"OK: {len(out) - len(queue)} publicables, {len(queue)} a revisión → {out_path.relative_to(ROOT)}"

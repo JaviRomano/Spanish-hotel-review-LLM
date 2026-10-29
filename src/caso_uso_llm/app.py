@@ -188,7 +188,7 @@ def _respond(nick: str, consent: bool, hotel_label: str, title: str, text: str):
     item_id = f"app-{datetime.now():%Y%m%d-%H%M%S}"
     # El nick va solo en meta: el pipeline no lo usa en ningún prompt.
     it = run([{"id": item_id, "hotel": hotel, "title": title, "text": text,
-               "meta": {"grupo": "app", "nick": nick}}], CLASSIFIER, GEN_PROMPT)[0]  # fmt: skip
+               "meta": {"grupo": "app", "nick": nick}}], CLASSIFIER, GEN_PROMPT, live=True)[0]  # fmt: skip
     save_live(it, nick)
     if it["decision"] == "revisión humana":
         it["fecha"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")

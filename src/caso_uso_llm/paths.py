@@ -8,6 +8,7 @@ DATA = ROOT / "data"
 DATA_RAW = DATA / "raw"  # inmutable
 DATA_INTERIM = DATA / "interim"  # generado por scripts
 DATA_PROCESSED = DATA / "processed"  # generado por scripts
+DATA_LIVE = DATA / "live"  # texto de terceros con consentimiento (demo en vivo); fuera de git
 MODELS = ROOT / "models"  # pesos locales, fuera de git
 RESULTS = ROOT / "results"
 EVALS = ROOT / "evals"
