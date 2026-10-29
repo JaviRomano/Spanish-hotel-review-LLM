@@ -116,17 +116,21 @@ def ollama_version() -> str:
         return "desconocida"
 
 
-def measure(reps: int, prompt: str) -> Path:
+def measure(reps: int, prompt: str, variant: str = "base") -> Path:
+    """`variant`: «base» (la app muestra todo al final) o «A» (juez asíncrono: el borrador se ve
+    al acabar generate_stage). El cálculo y el orden de los modelos son los mismos; A guarda
+    además `visible_s`, así que una ejecución de A da las dos cifras de cada reseña, pareadas."""
     from caso_uso_llm.classify.infer import SentimentEnsemble
     from caso_uso_llm.ollama_gpu import require_gpu
-    from caso_uso_llm.pipeline import run
+    from caso_uso_llm.pipeline import generate_stage, judge_stage
 
     sample = load_sample()
-    path = RESULTS / f"latencia_{prompt}_{datetime.now():%Y%m%d-%H%M}.jsonl"
+    suffix = "" if variant == "base" else f"_{variant}"
+    path = RESULTS / f"latencia_{prompt}{suffix}_{datetime.now():%Y%m%d-%H%M}.jsonl"
     meta = {"id": "_meta", "fecha": datetime.now().isoformat(timespec="seconds"),
             "ollama": ollama_version(), "generador": MODEL, "juez": JUDGE_MODEL,
             "embeddings": EMBED_MODEL, "prompt": prompt, "rubrica": RUBRIC, "reps": reps,
-            "muestra": SAMPLE.relative_to(ROOT).as_posix()}  # fmt: skip
+            "variante": variant, "muestra": SAMPLE.relative_to(ROOT).as_posix()}  # fmt: skip
     path.write_text(json.dumps(meta, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
     timing.enable(path, after_stage=loaded_models)
     log(f"Latencia: {len(sample)} reseñas × {reps} repeticiones, prompt {prompt} → {path.name}")
@@ -147,10 +151,13 @@ def measure(reps: int, prompt: str) -> Path:
             timing.begin(item["id"], rep=rep, posicion=pos, grupo=item["meta"]["grupo"],
                          decision_cola=item["decision_cola"])  # fmt: skip
             t0 = time.perf_counter()
-            it = run([{k: item[k] for k in ("id", "hotel", "title", "text", "meta")}],
-                     classifier, prompt, no_cache=True)[0]  # fmt: skip
-            rec = timing.end(total_s=time.perf_counter() - t0, decision=it["decision"],
-                             sentimiento=it["sentiment"])  # fmt: skip
+            out = generate_stage([{k: item[k] for k in ("id", "hotel", "title", "text", "meta")}],
+                                 classifier, prompt, no_cache=True)  # fmt: skip
+            visible = time.perf_counter() - t0  # en A, aquí ya se ve el borrador
+            it = judge_stage(out, no_cache=True)[0]
+            total = time.perf_counter() - t0
+            rec = timing.end(total_s=total, visible_s=visible if variant == "A" else total,
+                             decision=it["decision"], sentimiento=it["sentiment"])  # fmt: skip
             log(f"rep {rep + 1}/{reps} · {pos + 1}/{len(sample)} {item['id']}: "
                 f"{rec['total_s']:.1f} s · {it['decision']}")  # fmt: skip
     timing.enable(None)
@@ -192,6 +199,71 @@ def split_review(rec: dict, meta: dict) -> dict:
     infer = sum(c["prompt_eval"] + c["eval"] for c in rec["llamadas"] if not c["cached"])
     return {"total": rec["total_s"], "carga": load, "inferencia": infer,
             "resto": rec["total_s"] - load - infer}  # fmt: skip
+
+
+BOOT = 10_000
+
+
+def _boot_median(xs, ys=None, seed: int = DEFAULT_SEED) -> tuple[float, float]:
+    """IC 95 % bootstrap de la mediana de xs (pareado) o de median(xs) - median(ys) (independientes)."""
+    rng = np.random.default_rng(seed)
+    xs = np.asarray(xs)
+    if ys is None:
+        stats = [np.median(rng.choice(xs, len(xs))) for _ in range(BOOT)]
+    else:
+        ys = np.asarray(ys)
+        stats = [np.median(rng.choice(xs, len(xs))) - np.median(rng.choice(ys, len(ys)))
+                 for _ in range(BOOT)]  # fmt: skip
+    return float(np.percentile(stats, 2.5)), float(np.percentile(stats, 97.5))
+
+
+def _rows(f: Path) -> tuple[dict, list[dict]]:
+    rs = [json.loads(x) for x in f.read_text(encoding="utf-8").splitlines() if x]
+    meta = next(r for r in rs if r["id"] == "_meta")
+    return meta, [r for r in rs if not r["id"].startswith("_") and r["posicion"] > 0]
+
+
+def compare_variants() -> list[str]:
+    """Base frente a A (juez asíncrono), con la medición de A más reciente.
+
+    A y base hacen el mismo cálculo en el mismo orden; solo cambia cuándo se ve el borrador. Por
+    eso cada reseña de la ejecución de A da las dos cifras (pareadas): visible en A = al acabar
+    generate_stage; visible en base = al final, con el veredicto. Control: el total de A frente
+    al de la última ejecución base (independientes), para ver que A no añade coste.
+    """
+    runs = {}
+    for f in sorted(RESULTS.glob("latencia_*.jsonl")):
+        meta, rr = _rows(f)
+        runs.setdefault(meta.get("variante", "base"), []).append((f, meta, rr))
+    if "A" not in runs:
+        return []
+    fa, _, ra = runs["A"][-1]
+    L = ["", "## Juez asíncrono (variante A) frente a la base", "",
+         f"Ejecución de A: `{fa.name}` ({len(ra)} reseñas sin contar la primera de cada "
+         "repetición). Mediana / p90 [mínimo–máximo] en segundos. Diferencia = base − A, con IC "
+         f"95 % bootstrap pareado ({BOOT} remuestras); con n tan pequeño, el IC es orientativo.",
+         "", "| Reseñas | n | Visible en base | Visible en A | Ahorro hasta ver el borrador (IC 95 %) | "
+         "Hasta el veredicto (A) |", "|---|---|---|---|---|---|"]  # fmt: skip
+    rng_ = lambda xs: f"{_fmt(xs)} [{min(xs):.1f}–{max(xs):.1f}]"  # noqa: E731
+    for label, rr in (("Todas", ra), *((f"Destino {d}", [r for r in ra if r["decision"] == d])
+                                        for d in (PUB, REV))):  # fmt: skip
+        if not rr:
+            continue
+        base_vis = [r["total_s"] for r in rr]
+        a_vis = [r["visible_s"] for r in rr]
+        saved = [b - a for b, a in zip(base_vis, a_vis, strict=True)]
+        lo, hi = _boot_median(saved)
+        L.append(f"| {label} | {len(rr)} | {rng_(base_vis)} | {rng_(a_vis)} | "
+                 f"{_q(saved, 50):.1f} ({lo:.1f}–{hi:.1f}) | {rng_(base_vis)} |")  # fmt: skip
+    if "base" in runs:
+        fb, _, rb = runs["base"][-1]
+        tb, ta = [r["total_s"] for r in rb], [r["total_s"] for r in ra]
+        lo, hi = _boot_median(ta, tb)
+        L += ["", f"Control (independientes): tiempo hasta el veredicto en A ({_fmt(ta)}) frente a "
+              f"la base `{fb.name}` ({_fmt(tb)}); diferencia de medianas A − base "
+              f"{_q(ta, 50) - _q(tb, 50):+.1f} s (IC 95 % {lo:+.1f} a {hi:+.1f}). A no cambia el "
+              "trabajo, solo cuándo se muestra el borrador."]  # fmt: skip
+    return L
 
 
 def write_report(path: Path) -> None:
@@ -305,11 +377,13 @@ def write_report(path: Path) -> None:
     else:
         L.append("Todas las reseñas acabaron con el mismo destino que en la cola cacheada.")
 
+    L += compare_variants()
     L += ["", "## Todas las mediciones (results/latencia_*.jsonl)", "",
           "Reseñas sin contar la primera de cada repetición. Cargas del generador por reseña: 2 "
           "indica la doble carga (precarga con otro contexto y recarga en el análisis).", "",
-          "| Fichero | Fecha | Ollama | Prompt | n | Total | Carga | % carga | Cargas del generador |",
-          "|---|---|---|---|---|---|---|---|---|"]  # fmt: skip
+          "| Fichero | Fecha | Ollama | Prompt | Variante | n | Total | Carga | % carga | "
+          "Cargas del generador |",
+          "|---|---|---|---|---|---|---|---|---|---|"]  # fmt: skip
     for f in sorted(RESULTS.glob("latencia_*.jsonl")):
         rs = [json.loads(x) for x in f.read_text(encoding="utf-8").splitlines() if x]
         m = next(r for r in rs if r["id"] == "_meta")
@@ -318,7 +392,8 @@ def write_report(path: Path) -> None:
         tot, car = [x["total"] for x in parts], [x["carga"] for x in parts]
         gen = [sum(fm == m["generador"] for _, fm, _ in loads(r, m)) for r in rr]
         share = sum(car) / sum(tot) if tot else float("nan")
-        L.append(f"| `{f.name}` | {m['fecha'][:16]} | {m['ollama']} | {m['prompt']} | {len(rr)} | "
+        L.append(f"| `{f.name}` | {m['fecha'][:16]} | {m['ollama']} | {m['prompt']} | "
+                 f"{m.get('variante', 'base')} | {len(rr)} | "
                  f"{_q(tot, 50):.1f} | {_q(car, 50):.1f} | {share:.0%} | {_q(gen, 50):.0f} |")  # fmt: skip
 
     L += ["", "## Limitaciones", "",
@@ -340,9 +415,15 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--reps", type=int, default=3)
     ap.add_argument("--prompt", default=PROMPT, choices=RAG_PROMPTS)
+    ap.add_argument(
+        "--variante",
+        default="base",
+        choices=("base", "A"),
+        help="A: juez asíncrono (mide también el tiempo hasta ver el borrador)",
+    )
     ap.add_argument("--informe", help="solo regenera el informe a partir de este JSONL")
     args = ap.parse_args()
-    path = ROOT / args.informe if args.informe else measure(args.reps, args.prompt)
+    path = ROOT / args.informe if args.informe else measure(args.reps, args.prompt, args.variante)
     write_report(path)
 
 

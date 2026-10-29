@@ -96,3 +96,61 @@ def test_las_resenas_de_terceros_no_se_cachean_en_el_repositorio():
         assert path.is_relative_to(DATA_LIVE)
     for path in caches(live=False):
         assert not path.is_relative_to(DATA_LIVE)
+
+
+# --- Juez asíncrono (Bloque 2): nada se publica ni se aprueba sin veredicto del juez -----------
+
+
+def test_sin_veredicto_del_juez_queda_pendiente_y_no_se_puede_aprobar():
+    import pytest
+
+    from caso_uso_llm.pipeline import PENDING, can_approve, destination
+
+    it = item(id="x", reasons=[])
+    del it["judge"]
+    assert destination(it) == PENDING
+    assert not can_approve(it)
+    with pytest.raises(ValueError, match="sin veredicto"):
+        route(it)
+
+
+def test_sin_veredicto_nunca_es_publicable_aunque_todo_lo_demas_este_limpio():
+    from caso_uso_llm.pipeline import PUBLISH, destination
+
+    it = item(id="x", reasons=[])
+    assert destination(it) == PUBLISH
+    del it["judge"]
+    assert destination(it) != PUBLISH
+
+
+def test_trampa_o_analisis_invalido_no_esperan_al_juez_y_van_a_revision():
+    from caso_uso_llm.pipeline import REVIEW, can_approve, destination
+
+    trap = item(id="t", reasons=[], genuina=False, motivo_trampa="broma")
+    del trap["judge"]
+    invalid = {"id": "i", "response": None, "reasons": ["análisis inválido"]}
+    for it in (trap, invalid):
+        assert destination(it) == REVIEW and can_approve(it)
+
+
+def _cola():
+    import json
+
+    from caso_uso_llm.pipeline import QUEUE
+
+    return json.loads(QUEUE.read_text(encoding="utf-8"))
+
+
+def test_equivalencia_del_enrutado_en_dos_fases_con_la_cola_de_la_demostracion():
+    """54 casos guardados por el pipeline: motivos y destino idénticos con pre + juez."""
+    from caso_uso_llm.pipeline import PENDING, destination, judge_reasons, pre_judge_reasons
+
+    cola = _cola()
+    assert len(cola) == 54
+    for stored in cola:
+        it = {**stored, "reasons": []}
+        assert pre_judge_reasons(it) + judge_reasons(it) == stored["reasons"], stored["id"]
+        assert destination(it) == stored["decision"], stored["id"]
+        sin_juez = {k: v for k, v in it.items() if k != "judge"}
+        if it["response"] is not None and it.get("genuina") is not False:
+            assert destination(sin_juez) == PENDING, stored["id"]

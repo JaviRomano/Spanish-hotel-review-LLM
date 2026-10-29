@@ -28,7 +28,16 @@ from caso_uso_llm.evals.rubric import IDS
 from caso_uso_llm.generate.prompts import RAG_PROMPTS
 from caso_uso_llm.log import log
 from caso_uso_llm.paths import DATA, RESULTS
-from caso_uso_llm.pipeline import NAMES, PROMPT, QUEUE, run
+from caso_uso_llm.pipeline import (
+    NAMES,
+    PROMPT,
+    QUEUE,
+    REVIEW,
+    can_approve,
+    generate_stage,
+    judge_stage,
+    pre_judge_reasons,
+)
 from caso_uso_llm.rag import kb
 
 SESSION_QUEUE = RESULTS / "cola_app.jsonl"  # reseñas a revisión procesadas en la app
@@ -109,6 +118,9 @@ def save_live(it: dict, nick: str) -> None:
 # Cola visible: cuántas reseñas hay enviadas y sin terminar (la que se procesa incluida).
 _PENDING = 0
 _LOCK = threading.Lock()
+# Una reseña a la vez en la GPU, juez incluido: lo suelta el hilo del juez al terminar, aunque
+# la persona cierre la pestaña y Gradio cancele la función.
+_GPU = threading.Lock()
 
 
 def enqueue() -> str:
@@ -160,6 +172,7 @@ def is_kill(text: str) -> bool:
 
 
 def respond(nick: str, consent: bool, hotel_label: str, title: str, text: str):
+    """Generador: primero el borrador (con el juez pendiente) y después el veredicto."""
     global _PENDING
     if is_kill(text):  # palabra clave de apagado: no se procesa ni se guarda como reseña
         threading.Thread(target=shutdown, daemon=True).start()
@@ -168,9 +181,10 @@ def respond(nick: str, consent: bool, hotel_label: str, title: str, text: str):
         off = (
             "### 🔌 Demo apagada\nLos modelos se descargan de la GPU y el enlace deja de funcionar."
         )
-        return "", None, "", "", "", off
+        yield "", None, "", "", "", off
+        return
     try:
-        return _respond(nick, consent, hotel_label, title, text)
+        yield from _respond(nick, consent, hotel_label, title, text)
     finally:
         with _LOCK:
             _PENDING = max(0, _PENDING - 1)
@@ -186,14 +200,44 @@ def _respond(nick: str, consent: bool, hotel_label: str, title: str, text: str):
         raise gr.Error("Escribe o pega una reseña.")
     hotel = HOTELS.get(hotel_label)
     item_id = f"app-{datetime.now():%Y%m%d-%H%M%S}"
-    # El nick va solo en meta: el pipeline no lo usa en ningún prompt.
-    it = run([{"id": item_id, "hotel": hotel, "title": title, "text": text,
-               "meta": {"grupo": "app", "nick": nick}}], CLASSIFIER, GEN_PROMPT, live=True)[0]  # fmt: skip
-    save_live(it, nick)
-    if it["decision"] == "revisión humana":
-        it["fecha"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        it["nick"] = it.get("meta", {}).get("nick", "")
-        _append(SESSION_QUEUE, it)
+    _GPU.acquire()
+    try:
+        # El nick va solo en meta: el pipeline no lo usa en ningún prompt.
+        it = generate_stage([{"id": item_id, "hotel": hotel, "title": title, "text": text,
+                              "meta": {"grupo": "app", "nick": nick}}],
+                            CLASSIFIER, GEN_PROMPT, live=True)[0]  # fmt: skip
+        result: dict = {}
+        worker = threading.Thread(target=_finish, args=(it, nick, result))
+        worker.start()  # desde aquí, el hilo suelta _GPU al terminar
+    except BaseException:
+        _GPU.release()
+        raise
+    yield render(it, hotel)  # borrador visible; el destino es «pendiente de juez»
+    worker.join()
+    if "error" in result:
+        raise gr.Error(f"El juez falló: {result['error']}")
+    yield render(it, hotel)
+
+
+def _finish(it: dict, nick: str, result: dict) -> None:
+    """Juez, enrutado y guardado. En un hilo para que termine aunque Gradio cancele la función:
+    si no, una reseña podría quedarse sin juzgar y fuera de la cola."""
+    try:
+        judge_stage([it], live=True)
+        save_live(it, nick)
+        if it["decision"] == REVIEW:
+            it["fecha"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            it["nick"] = it.get("meta", {}).get("nick", "")
+            _append(SESSION_QUEUE, it)
+    except Exception as e:  # noqa: BLE001
+        result["error"] = str(e)
+        log(f"{it['id']}: el juez falló ({e})")
+    finally:
+        _GPU.release()
+
+
+def render(it: dict, hotel: str | None) -> tuple:
+    """Salidas de la interfaz. Mientras falta el veredicto, nada se muestra como publicable."""
     probs = " · ".join(f"{k} {v:.2f}" for k, v in it["probs"].items())
     sentiment = f"**{it['sentiment']}** (confianza {it['confidence']:.2f}) — {probs}"
     if it.get("response") is None:
@@ -202,6 +246,12 @@ def _respond(nick: str, consent: bool, hotel_label: str, title: str, text: str):
         f"**Ficha:** {'sí, ' + hotel if hotel else 'no disponible'}\n\n"
         f"**Políticas:** {', '.join(it['politicas'])}\n\n**Ejemplos:** {', '.join(it['ejemplos'])}"
     )
+    if not can_approve(it):
+        known = pre_judge_reasons(it)
+        decision = "### ⏳ Pendiente del juez\nNo se publica hasta que termine el juez."
+        if known:
+            decision += "\n\nYa se sabe que irá a revisión:\n" + "\n".join(f"- {r}" for r in known)
+        return sentiment, it["analysis"], context, it["response"], "⏳ Evaluando…", decision
     judge = "\n".join(
         f"- {'✅' if it['judge'][k]['cumple'] else '❌'} {NAMES[k]}"
         + ("" if it["judge"][k]["cumple"] else f": «{it['judge'][k]['evidencia']}»")
@@ -251,6 +301,8 @@ def decide(item_id: str | None, draft: str, notes: str, action: str):
     if not item_id:
         raise gr.Error("No hay ninguna reseña seleccionada.")
     it = next(x for x in pending() if x["id"] == item_id)
+    if not can_approve(it):
+        raise gr.Error("Esta reseña aún no tiene el veredicto del juez.")
     _append(DECISIONS, {
         "id": item_id, "fecha": datetime.now().isoformat(timespec="seconds"), "accion": action,
         "borrador_original": it.get("response"), "respuesta_final": draft if action != "descartada" else None,

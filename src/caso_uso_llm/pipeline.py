@@ -77,6 +77,7 @@ LIVE_JUDGE_CACHE = DATA_LIVE / "cache_juez.jsonl"
 LIVE_QUEUE = DATA_LIVE / "pipeline_vivo.json"
 REPORT = ROOT / "reports" / "phase5_pipeline.md"
 AHR_PER_RATING = 8
+PUBLISH, REVIEW, PENDING = "publicable", "revisión humana", "pendiente de juez"
 REVIEW_LABELS = ("negativo", "neutral")  # sentimientos que nunca se publican sin revisión
 
 # Comprobaciones deterministas que mandan la respuesta a revisión (nombre legible -> función).
@@ -115,7 +116,22 @@ def run(
     live: bool = False,
     no_cache: bool = False,
 ) -> list[dict]:
-    """items: dicts con id, text y opcionalmente title, hotel y meta (se copia tal cual).
+    """Pipeline completo: generate_stage + judge_stage (ver sus docstrings)."""
+    out = generate_stage(items, classifier, prompt, live, no_cache)
+    return judge_stage(out, live, no_cache)
+
+
+def generate_stage(
+    items: list[dict],
+    classifier: "SentimentEnsemble | None" = None,
+    prompt: str = PROMPT,
+    live: bool = False,
+    no_cache: bool = False,
+) -> list[dict]:
+    """Pasos [1]–[5] y comprobaciones deterministas. Ninguna reseña sale de aquí publicable: las
+    que tienen respuesta quedan en PENDING hasta que judge_stage añade el veredicto.
+
+    items: dicts con id, text y opcionalmente title, hotel y meta (se copia tal cual).
 
     `classifier`: ensamble ya cargado (la app lo carga una vez; tarda ~25 s).
     `live`: reseñas de terceros; las llamadas al LLM se cachean en data/live (fuera de git).
@@ -123,7 +139,7 @@ def run(
     los embeddings de estas reseñas se piden de nuevo a Ollama (los de kb/ salen del disco,
     como en la demo). Cada paso se mide con timing.stage si la medición está activada.
     """
-    gen_cache, judge_cache = caches(live)
+    gen_cache, _ = caches(live)
     if live:
         DATA_LIVE.mkdir(parents=True, exist_ok=True)
     log(f"{len(items)} reseñas · umbral de confianza {THRESHOLD} · prompt {prompt} · juez {RUBRIC}")
@@ -172,7 +188,14 @@ def run(
                   politicas=[d.id for d in p], ejemplos=[d.id for d in e])  # fmt: skip
         if i % 10 == 0:
             log(f"   {i}/{len(out)}")
+    for it in out:
+        it["decision"] = destination(it)
+    return out
 
+
+def judge_stage(out: list[dict], live: bool = False, no_cache: bool = False) -> list[dict]:
+    """Pasos [6]–[7]: veredicto del juez y enrutado final de la salida de generate_stage."""
+    _, judge_cache = caches(live)
     log(f"[6] Juez {JUDGE_MODEL} (rúbrica {RUBRIC}, con ficha)")
     with timing.stage("carga_juez"):
         require_gpu(JUDGE_MODEL, JUDGE_OPTIONS["num_ctx"])
@@ -187,11 +210,12 @@ def run(
     with timing.stage("enrutado"):
         for it in out:
             it["reasons"] += route(it)
-            it["decision"] = "revisión humana" if it["reasons"] else "publicable"
+            it["decision"] = REVIEW if it["reasons"] else PUBLISH
     return out
 
 
-def route(it: dict) -> list[str]:
+def pre_judge_reasons(it: dict) -> list[str]:
+    """Motivos de revisión que se conocen antes del juez."""
     if it["response"] is None:
         return []
     if it.get("genuina") is False:  # reseña trampa: respuesta irónica, nunca sin revisión
@@ -209,8 +233,34 @@ def route(it: dict) -> list[str]:
     if it["analysis"]["peticiones"]:
         r.append("el cliente pide: " + "; ".join(it["analysis"]["peticiones"]))
     r += [name for name, fn in ALERTS.items() if fn(it["checks"])]
-    r += [f"juez: {NAMES[k]}" for k in IDS if not it["judge"][k]["cumple"]]
     return r
+
+
+def judge_reasons(it: dict) -> list[str]:
+    """Criterios que suspende el juez. Sin veredicto no hay enrutado posible: error explícito."""
+    if it["response"] is None or it.get("genuina") is False:
+        return []
+    if "judge" not in it:
+        raise ValueError(f"{it['id']}: sin veredicto del juez; el destino es «{PENDING}»")
+    return [f"juez: {NAMES[k]}" for k in IDS if not it["judge"][k]["cumple"]]
+
+
+def route(it: dict) -> list[str]:
+    return pre_judge_reasons(it) + judge_reasons(it)
+
+
+def destination(it: dict) -> str:
+    """Destino de una reseña sin modificarla: PENDING mientras falte el veredicto del juez, de
+    modo que nada se publica antes de que el juez termine."""
+    needs_judge = it.get("response") is not None and it.get("genuina") is not False
+    if needs_judge and "judge" not in it:
+        return PENDING
+    return REVIEW if it["reasons"] or route(it) else PUBLISH
+
+
+def can_approve(it: dict) -> bool:
+    """Una persona solo puede aprobar (o el sistema publicar) una reseña con veredicto del juez."""
+    return destination(it) != PENDING
 
 
 def demo_items(seed: int = DEFAULT_SEED) -> list[dict]:

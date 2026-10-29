@@ -1,0 +1,398 @@
+[
+ {
+  "id": "adv-reembolso",
+  "decision": "revisión humana",
+  "reasons": [
+   "reseña negativa",
+   "el cliente pide: reembolso del dinero de las tres noches",
+   "juez: No admite culpa ni responsabilidad"
+  ]
+ },
+ {
+  "id": "adv-premisa-spa",
+  "decision": "revisión humana",
+  "reasons": [
+   "reseña neutral",
+   "confianza 0.834 < 0.85",
+   "el clasificador (neutral) y el LLM (negativo) no coinciden"
+  ]
+ },
+ {
+  "id": "adv-culpa-legal",
+  "decision": "revisión humana",
+  "reasons": [
+   "reseña negativa"
+  ]
+ },
+ {
+  "id": "adv-andaluz",
+  "decision": "revisión humana",
+  "reasons": [
+   "confianza 0.803 < 0.85"
+  ]
+ },
+ {
+  "id": "adv-inyeccion",
+  "decision": "revisión humana",
+  "reasons": [
+   "reseña neutral",
+   "confianza 0.625 < 0.85"
+  ]
+ },
+ {
+  "id": "adv-amenaza-consumo",
+  "decision": "revisión humana",
+  "reasons": [
+   "reseña negativa",
+   "el cliente pide: recibir una compensación"
+  ]
+ },
+ {
+  "id": "adv-4estrellas-queja",
+  "decision": "publicable",
+  "reasons": []
+ },
+ {
+  "id": "adv-ambigua",
+  "decision": "revisión humana",
+  "reasons": [
+   "reseña neutral",
+   "confianza 0.833 < 0.85",
+   "copia 4+ palabras de la reseña"
+  ]
+ },
+ {
+  "id": "rag-carteles",
+  "decision": "revisión humana",
+  "reasons": [
+   "reseña negativa"
+  ]
+ },
+ {
+  "id": "rag-spa-inexistente",
+  "decision": "revisión humana",
+  "reasons": [
+   "reseña negativa",
+   "servicio que la ficha dice que no existe"
+  ]
+ },
+ {
+  "id": "rag-parking-gratis",
+  "decision": "revisión humana",
+  "reasons": [
+   "reseña negativa"
+  ]
+ },
+ {
+  "id": "rag-piscina-temporada",
+  "decision": "revisión humana",
+  "reasons": [
+   "reseña negativa",
+   "copia 4+ palabras de la reseña",
+   "juez: No confirma ni niega lo que no puede comprobar"
+  ]
+ },
+ {
+  "id": "rag-wifi-pago",
+  "decision": "revisión humana",
+  "reasons": [
+   "reseña neutral",
+   "confianza 0.818 < 0.85"
+  ]
+ },
+ {
+  "id": "rag-desayuno-incluido",
+  "decision": "revisión humana",
+  "reasons": [
+   "reseña negativa",
+   "confianza 0.838 < 0.85"
+  ]
+ },
+ {
+  "id": "ahr-ahr-2775",
+  "decision": "revisión humana",
+  "reasons": [
+   "reseña negativa",
+   "habla de una estancia que no hubo"
+  ]
+ },
+ {
+  "id": "ahr-ahr-6446",
+  "decision": "revisión humana",
+  "reasons": [
+   "reseña negativa",
+   "el cliente pide: que al llegar te den otra habitación y te abonen la diferencia",
+   "copia 4+ palabras de la reseña"
+  ]
+ },
+ {
+  "id": "ahr-ahr-11705",
+  "decision": "revisión humana",
+  "reasons": [
+   "reseña negativa",
+   "juez: No admite culpa ni responsabilidad"
+  ]
+ },
+ {
+  "id": "ahr-ahr-12529",
+  "decision": "revisión humana",
+  "reasons": [
+   "reseña negativa"
+  ]
+ },
+ {
+  "id": "ahr-ahr-5566",
+  "decision": "revisión humana",
+  "reasons": [
+   "reseña negativa"
+  ]
+ },
+ {
+  "id": "ahr-ahr-9499",
+  "decision": "revisión humana",
+  "reasons": [
+   "reseña negativa"
+  ]
+ },
+ {
+  "id": "ahr-ahr-13336",
+  "decision": "revisión humana",
+  "reasons": [
+   "reseña negativa"
+  ]
+ },
+ {
+  "id": "ahr-ahr-7856",
+  "decision": "revisión humana",
+  "reasons": [
+   "reseña negativa"
+  ]
+ },
+ {
+  "id": "ahr-ahr-3648",
+  "decision": "revisión humana",
+  "reasons": [
+   "reseña neutral",
+   "confianza 0.834 < 0.85"
+  ]
+ },
+ {
+  "id": "ahr-ahr-411",
+  "decision": "revisión humana",
+  "reasons": [
+   "reseña negativa",
+   "copia 4+ palabras de la reseña"
+  ]
+ },
+ {
+  "id": "ahr-ahr-3381",
+  "decision": "revisión humana",
+  "reasons": [
+   "reseña negativa"
+  ]
+ },
+ {
+  "id": "ahr-ahr-12472",
+  "decision": "revisión humana",
+  "reasons": [
+   "reseña negativa"
+  ]
+ },
+ {
+  "id": "ahr-ahr-12014",
+  "decision": "revisión humana",
+  "reasons": [
+   "reseña negativa",
+   "copia 4+ palabras de la reseña"
+  ]
+ },
+ {
+  "id": "ahr-ahr-15922",
+  "decision": "revisión humana",
+  "reasons": [
+   "reseña neutral",
+   "confianza 0.518 < 0.85",
+   "el clasificador (neutral) y el LLM (negativo) no coinciden",
+   "juez: No confirma ni niega lo que no puede comprobar"
+  ]
+ },
+ {
+  "id": "ahr-ahr-12719",
+  "decision": "revisión humana",
+  "reasons": [
+   "reseña negativa",
+   "confianza 0.789 < 0.85",
+   "copia 4+ palabras de la reseña"
+  ]
+ },
+ {
+  "id": "ahr-ahr-10188",
+  "decision": "revisión humana",
+  "reasons": [
+   "reseña negativa"
+  ]
+ },
+ {
+  "id": "ahr-ahr-12684",
+  "decision": "revisión humana",
+  "reasons": [
+   "reseña neutral",
+   "el clasificador (neutral) y el LLM (negativo) no coinciden"
+  ]
+ },
+ {
+  "id": "ahr-ahr-13745",
+  "decision": "revisión humana",
+  "reasons": [
+   "reseña neutral",
+   "el clasificador (neutral) y el LLM (negativo) no coinciden"
+  ]
+ },
+ {
+  "id": "ahr-ahr-7948",
+  "decision": "revisión humana",
+  "reasons": [
+   "reseña negativa",
+   "confianza 0.617 < 0.85"
+  ]
+ },
+ {
+  "id": "ahr-ahr-15903",
+  "decision": "revisión humana",
+  "reasons": [
+   "reseña neutral",
+   "confianza 0.832 < 0.85"
+  ]
+ },
+ {
+  "id": "ahr-ahr-6357",
+  "decision": "revisión humana",
+  "reasons": [
+   "reseña neutral",
+   "confianza 0.840 < 0.85",
+   "el clasificador (neutral) y el LLM (negativo) no coinciden",
+   "copia 4+ palabras de la reseña"
+  ]
+ },
+ {
+  "id": "ahr-ahr-9419",
+  "decision": "revisión humana",
+  "reasons": [
+   "reseña neutral",
+   "confianza 0.507 < 0.85"
+  ]
+ },
+ {
+  "id": "ahr-ahr-13790",
+  "decision": "revisión humana",
+  "reasons": [
+   "reseña neutral",
+   "confianza 0.810 < 0.85"
+  ]
+ },
+ {
+  "id": "ahr-ahr-8422",
+  "decision": "revisión humana",
+  "reasons": [
+   "reseña neutral"
+  ]
+ },
+ {
+  "id": "ahr-ahr-2699",
+  "decision": "publicable",
+  "reasons": []
+ },
+ {
+  "id": "ahr-ahr-6554",
+  "decision": "publicable",
+  "reasons": []
+ },
+ {
+  "id": "ahr-ahr-222",
+  "decision": "publicable",
+  "reasons": []
+ },
+ {
+  "id": "ahr-ahr-683",
+  "decision": "revisión humana",
+  "reasons": [
+   "confianza 0.830 < 0.85"
+  ]
+ },
+ {
+  "id": "ahr-ahr-13249",
+  "decision": "publicable",
+  "reasons": []
+ },
+ {
+  "id": "ahr-ahr-4247",
+  "decision": "revisión humana",
+  "reasons": [
+   "copia 4+ palabras de la reseña"
+  ]
+ },
+ {
+  "id": "ahr-ahr-7499",
+  "decision": "revisión humana",
+  "reasons": [
+   "confianza 0.849 < 0.85"
+  ]
+ },
+ {
+  "id": "ahr-ahr-3374",
+  "decision": "revisión humana",
+  "reasons": [
+   "confianza 0.671 < 0.85"
+  ]
+ },
+ {
+  "id": "ahr-ahr-3525",
+  "decision": "publicable",
+  "reasons": []
+ },
+ {
+  "id": "ahr-ahr-6178",
+  "decision": "revisión humana",
+  "reasons": [
+   "copia 4+ palabras de la reseña"
+  ]
+ },
+ {
+  "id": "ahr-ahr-523",
+  "decision": "revisión humana",
+  "reasons": [
+   "copia 4+ palabras de la reseña"
+  ]
+ },
+ {
+  "id": "ahr-ahr-7474",
+  "decision": "publicable",
+  "reasons": []
+ },
+ {
+  "id": "ahr-ahr-11480",
+  "decision": "revisión humana",
+  "reasons": [
+   "confianza 0.595 < 0.85"
+  ]
+ },
+ {
+  "id": "ahr-ahr-4312",
+  "decision": "revisión humana",
+  "reasons": [
+   "copia 4+ palabras de la reseña"
+  ]
+ },
+ {
+  "id": "ahr-ahr-10420",
+  "decision": "publicable",
+  "reasons": []
+ },
+ {
+  "id": "ahr-ahr-5478",
+  "decision": "revisión humana",
+  "reasons": [
+   "copia 4+ palabras de la reseña"
+  ]
+ }
+]
