@@ -53,12 +53,20 @@ def app(monkeypatch, tmp_path):
             it["decision"] = "publicable"
         return out
 
+    # Rutas reales a una carpeta temporal: si algo se escapa de los dobles, no llega a data/live
+    monkeypatch.setattr(app_module, "LIVE_LOG", tmp_path / "resenas_vivo.jsonl")
+    monkeypatch.setattr(app_module, "SESSION_QUEUE", tmp_path / "cola_app.jsonl")
     monkeypatch.setattr(app_module, "generate_stage", fake_generate)
     monkeypatch.setattr(app_module, "judge_stage", fake_judge)
     monkeypatch.setattr(app_module, "save_live", lambda it, nick: saved.append(it["id"]))
     monkeypatch.setattr(app_module, "_append", lambda path, it: queued.append(it["id"]))
     monkeypatch.setattr(app_module, "is_kill", lambda text: False)
-    return app_module, saved, judge_go
+    yield app_module, saved, judge_go
+    # El hilo del juez tiene que acabar ANTES de deshacer los dobles: si un test falla a mitad, el
+    # hilo seguiría vivo y, al despertar, llamaría a las funciones reales (pasó el 2026-10-29).
+    judge_go.set()
+    assert app_module._GPU.acquire(timeout=10), "el hilo del juez no terminó"
+    app_module._GPU.release()
 
 
 def test_primero_el_borrador_con_el_juez_pendiente_y_despues_el_veredicto(app):
