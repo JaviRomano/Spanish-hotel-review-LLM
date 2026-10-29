@@ -200,7 +200,8 @@ def main(seed: int = DEFAULT_SEED) -> None:
     log(f"Modelo {MODEL} · {BASE} sin contexto frente a {version} con contexto · {len(df)} reseñas")
     context = retrieve_all(df)
     log(f"Contexto recuperado para {len(context)} reseñas; empieza la generación")
-    require_gpu(MODEL)  # después de recuperar: bge-m3 ya se ha descargado de la GPU
+    # después de recuperar: bge-m3 ya se ha descargado de la GPU
+    require_gpu(MODEL, OPTIONS["num_ctx"])
     cache = Cache(CACHE)
     out = []
     for i, row in df.iterrows():

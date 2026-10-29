@@ -22,10 +22,11 @@ import time
 import ollama
 
 from caso_uso_llm.evals.judge import JUDGE_MODEL, compare, judge
+from caso_uso_llm.evals.judge import OPTIONS as JUDGE_OPTIONS
 from caso_uso_llm.evals.rubric import IDS
 from caso_uso_llm.generate import checks as C
 from caso_uso_llm.generate.prompts import RESPONSE_PROMPTS
-from caso_uso_llm.generate.run import CACHE, MODEL, Cache, analyze, respond
+from caso_uso_llm.generate.run import CACHE, MODEL, OPTIONS, Cache, analyze, respond
 from caso_uso_llm.log import log
 from caso_uso_llm.ollama_gpu import require_gpu
 from caso_uso_llm.paths import RESULTS, ROOT
@@ -62,7 +63,7 @@ def vram(model: str) -> dict:
 def generate(model: str, seed: int) -> dict:
     df = cases(seed)
     context = retrieve_all(df)
-    require_gpu(model)
+    require_gpu(model, OPTIONS["num_ctx"])
     cache = Cache(CACHE)
     rows = []
     for i, row in df.iterrows():
@@ -89,7 +90,7 @@ def generate(model: str, seed: int) -> dict:
 
 
 def evaluate(small: dict) -> dict:
-    require_gpu(JUDGE_MODEL)
+    require_gpu(JUDGE_MODEL, JUDGE_OPTIONS["num_ctx"])
     jcache = Cache(JUDGE_CACHE)
     g = gate(jcache)
     big = {r["id"]: r for r in json.loads(rag_results(PROMPT).read_text(encoding="utf-8"))}

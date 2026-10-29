@@ -19,6 +19,7 @@ import random
 from collections import Counter
 
 from caso_uso_llm.evals.judge import JUDGE_MODEL, LATEST, compare, judge
+from caso_uso_llm.evals.judge import OPTIONS as JUDGE_OPTIONS
 from caso_uso_llm.evals.rubric import CRITERIOS, IDS, RUBRICS, rubric_markdown
 from caso_uso_llm.generate.run import Cache
 from caso_uso_llm.log import log
@@ -182,7 +183,7 @@ def export_calibration(p4: dict) -> None:
 
 
 def main() -> None:
-    require_gpu(JUDGE_MODEL)
+    require_gpu(JUDGE_MODEL, JUDGE_OPTIONS["num_ctx"])
     cache = Cache(CACHE)
     p4 = phase4_responses()
     results = {}

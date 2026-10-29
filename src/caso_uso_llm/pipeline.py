@@ -39,10 +39,12 @@ import pandas as pd
 from caso_uso_llm import timing
 from caso_uso_llm.classify.datasets import load_ahr_ood
 from caso_uso_llm.evals.judge import JUDGE_MODEL, judge
+from caso_uso_llm.evals.judge import OPTIONS as JUDGE_OPTIONS
 from caso_uso_llm.evals.rubric import IDS, criterios
 from caso_uso_llm.generate import checks as C
 from caso_uso_llm.generate.prompts import RAG_PROMPTS
 from caso_uso_llm.generate.run import CACHE, MODEL, Cache, NoCache, analyze
+from caso_uso_llm.generate.run import OPTIONS as GEN_OPTIONS
 from caso_uso_llm.log import log
 from caso_uso_llm.ollama_gpu import require_gpu
 from caso_uso_llm.paths import DATA_LIVE, EVALS, RESULTS, ROOT
@@ -149,7 +151,7 @@ def run(
 
     log(f"[3][5] Aspectos y respuesta ({MODEL})")
     with timing.stage("carga_generador"):
-        require_gpu(MODEL)
+        require_gpu(MODEL, GEN_OPTIONS["num_ctx"])
     cache = NoCache() if no_cache else Cache(gen_cache)
     for i, it in enumerate(out, 1):
         with timing.stage("analisis"):
@@ -173,7 +175,7 @@ def run(
 
     log(f"[6] Juez {JUDGE_MODEL} (rúbrica {RUBRIC}, con ficha)")
     with timing.stage("carga_juez"):
-        require_gpu(JUDGE_MODEL)
+        require_gpu(JUDGE_MODEL, JUDGE_OPTIONS["num_ctx"])
     jcache = NoCache() if no_cache else Cache(judge_cache)
     with timing.stage("juez"):
         for it in out:

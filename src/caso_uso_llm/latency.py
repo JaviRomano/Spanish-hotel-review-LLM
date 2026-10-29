@@ -33,8 +33,10 @@ import numpy as np
 
 from caso_uso_llm import timing
 from caso_uso_llm.evals.judge import JUDGE_MODEL
+from caso_uso_llm.evals.judge import OPTIONS as JUDGE_OPTIONS
 from caso_uso_llm.generate.prompts import RAG_PROMPTS
 from caso_uso_llm.generate.run import MODEL
+from caso_uso_llm.generate.run import OPTIONS as GEN_OPTIONS
 from caso_uso_llm.log import log
 from caso_uso_llm.paths import EVALS, RESULTS, ROOT
 from caso_uso_llm.pipeline import PROMPT, QUEUE, RUBRIC
@@ -42,6 +44,7 @@ from caso_uso_llm.rag.retrieve import EMBED_MODEL
 from caso_uso_llm.seed import DEFAULT_SEED
 
 SAMPLE = EVALS / "latencia" / "muestra_v1.json"
+GEN_CTX, JUDGE_CTX = GEN_OPTIONS["num_ctx"], JUDGE_OPTIONS["num_ctx"]
 REPORT = ROOT / "reports" / "phase9_latencia.md"
 PUB, REV = "publicable", "revisión humana"
 STAGES = ("normalizacion", "clasificador", "embeddings", "carga_generador", "analisis",
@@ -135,9 +138,10 @@ def measure(reps: int, prompt: str) -> Path:
     for rep in range(reps):
         unload_all()
         timing.begin("_warm_up", rep=rep)
-        for model, name in ((JUDGE_MODEL, "warm_up_juez"), (MODEL, "warm_up_generador")):
+        for model, ctx, name in ((JUDGE_MODEL, JUDGE_CTX, "warm_up_juez"),
+                                 (MODEL, GEN_CTX, "warm_up_generador")):  # fmt: skip
             with timing.stage(name):
-                require_gpu(model)
+                require_gpu(model, ctx)
         timing.end()
         for pos, item in enumerate(sample):
             timing.begin(item["id"], rep=rep, posicion=pos, grupo=item["meta"]["grupo"],
@@ -300,6 +304,22 @@ def write_report(path: Path) -> None:
         L += [f"- `{i}`: cola «{a}» → medido «{b}»" for i, a, b in changed]
     else:
         L.append("Todas las reseñas acabaron con el mismo destino que en la cola cacheada.")
+
+    L += ["", "## Todas las mediciones (results/latencia_*.jsonl)", "",
+          "Reseñas sin contar la primera de cada repetición. Cargas del generador por reseña: 2 "
+          "indica la doble carga (precarga con otro contexto y recarga en el análisis).", "",
+          "| Fichero | Fecha | Ollama | Prompt | n | Total | Carga | % carga | Cargas del generador |",
+          "|---|---|---|---|---|---|---|---|---|"]  # fmt: skip
+    for f in sorted(RESULTS.glob("latencia_*.jsonl")):
+        rs = [json.loads(x) for x in f.read_text(encoding="utf-8").splitlines() if x]
+        m = next(r for r in rs if r["id"] == "_meta")
+        rr = [r for r in rs if not r["id"].startswith("_") and r["posicion"] > 0]
+        parts = [split_review(r, m) for r in rr]
+        tot, car = [x["total"] for x in parts], [x["carga"] for x in parts]
+        gen = [sum(fm == m["generador"] for _, fm, _ in loads(r, m)) for r in rr]
+        share = sum(car) / sum(tot) if tot else float("nan")
+        L.append(f"| `{f.name}` | {m['fecha'][:16]} | {m['ollama']} | {m['prompt']} | {len(rr)} | "
+                 f"{_q(tot, 50):.1f} | {_q(car, 50):.1f} | {share:.0%} | {_q(gen, 50):.0f} |")  # fmt: skip
 
     L += ["", "## Limitaciones", "",
           f"- Muestra pequeña ({n_items} reseñas, {len(rest)} medidas sin contar la primera de cada "

@@ -6,7 +6,7 @@ Ollama pasó a la CPU sin avisar: cada respuesta del 27B tardaba ~130 s en vez d
 único rastro estaba en el log del servidor (`library=cpu`). Esta comprobación lo convierte en
 un error visible.
 
-Uso: `require_gpu(MODEL)` al empezar un script, o `uv run just gpu-ollama`.
+Uso: `require_gpu(MODEL, OPTIONS["num_ctx"])` al empezar un script, o `uv run just gpu-ollama`.
 """
 
 import sys
@@ -23,9 +23,15 @@ FIX = (
 )
 
 
-def gpu_fraction(model: str) -> float:
-    """Carga el modelo (si no lo está) y devuelve qué fracción ocupa en la VRAM."""
-    r = ollama.generate(model=model, prompt="", keep_alive="5m")  # prompt vacío: solo carga
+def gpu_fraction(model: str, num_ctx: int | None = None) -> float:
+    """Carga el modelo (si no lo está) y devuelve qué fracción ocupa en la VRAM.
+
+    `num_ctx`: el contexto con que se llamará después al modelo. Si la precarga usa otro (sin él,
+    el de por defecto: 32 768), Ollama recarga el modelo en la primera llamada: dos cargas por
+    reseña en el pipeline, ~30 s de ~75 (reports/phase9_latencia.md).
+    """
+    options = {"num_ctx": num_ctx} if num_ctx else None
+    r = ollama.generate(model=model, prompt="", keep_alive="5m", options=options)  # solo carga
     timing.record_ollama(r, "generate", model)  # aquí cae la carga del modelo, no en el chat
     for m in ollama.ps().models:
         if m.model == model or m.name == model:
@@ -33,8 +39,8 @@ def gpu_fraction(model: str) -> float:
     raise RuntimeError(f"{model} no aparece entre los modelos cargados en Ollama")
 
 
-def require_gpu(model: str, minimum: float = 0.99) -> None:
-    frac = gpu_fraction(model)
+def require_gpu(model: str, num_ctx: int | None = None, minimum: float = 0.99) -> None:
+    frac = gpu_fraction(model, num_ctx)
     if frac < minimum:
         raise RuntimeError(f"{model}: solo el {frac:.0%} está en la GPU. {FIX}")
 

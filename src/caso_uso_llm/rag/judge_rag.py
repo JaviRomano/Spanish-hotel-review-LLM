@@ -13,6 +13,7 @@ Uso: uv run just rag-juez
 import json
 
 from caso_uso_llm.evals.judge import JUDGE_MODEL, compare, judge
+from caso_uso_llm.evals.judge import OPTIONS as JUDGE_OPTIONS
 from caso_uso_llm.evals.rubric import IDS, criterios
 from caso_uso_llm.generate.run import Cache
 from caso_uso_llm.log import log
@@ -68,7 +69,7 @@ def load_cases() -> list[dict]:
 
 
 def main() -> None:
-    require_gpu(JUDGE_MODEL)
+    require_gpu(JUDGE_MODEL, JUDGE_OPTIONS["num_ctx"])
     cache = Cache(CACHE)
     log(f"Juez {JUDGE_MODEL} · rúbrica {RUBRIC} (con ficha)")
     g = gate(cache)

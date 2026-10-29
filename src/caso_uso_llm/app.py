@@ -341,11 +341,16 @@ def keep_awake() -> None:
 def warm_up() -> None:
     """Carga el generador y el juez antes de la primera reseña y comprueba que están en la GPU."""
     from caso_uso_llm.evals.judge import JUDGE_MODEL
-    from caso_uso_llm.generate.run import MODEL
+    from caso_uso_llm.evals.judge import OPTIONS as JUDGE_OPTIONS
+    from caso_uso_llm.generate.run import MODEL, OPTIONS
     from caso_uso_llm.ollama_gpu import require_gpu
 
-    for model in (JUDGE_MODEL, MODEL):  # el generador queda cargado: es el primero que se usa
-        require_gpu(model)
+    # Con el mismo num_ctx que las llamadas: si no, la primera reseña los recargaría
+    for model, opts in (
+        (JUDGE_MODEL, JUDGE_OPTIONS),
+        (MODEL, OPTIONS),
+    ):  # el generador queda cargado
+        require_gpu(model, opts["num_ctx"])
         log(f"{model}: en la GPU")
 
 

@@ -113,3 +113,21 @@ def test_la_precarga_sin_metricas_cuenta_como_carga():
         "inferencia": 4.0,
         "resto": 1.0,
     }
+
+
+def test_la_precarga_usa_el_contexto_de_las_llamadas(monkeypatch):
+    """Si la precarga usa otro num_ctx, Ollama recarga el modelo en la primera llamada."""
+    import ollama
+
+    from caso_uso_llm import ollama_gpu
+    from caso_uso_llm.evals.judge import OPTIONS as JUDGE_OPTIONS
+    from caso_uso_llm.generate.run import OPTIONS
+
+    seen = []
+    monkeypatch.setattr(ollama, "generate", lambda **k: seen.append(k["options"]) or resp())
+    monkeypatch.setattr(
+        ollama, "ps", lambda: resp(models=[resp(model="m", name="m", size=1, size_vram=1)])
+    )
+    ollama_gpu.require_gpu("m", OPTIONS["num_ctx"])
+    ollama_gpu.require_gpu("m", JUDGE_OPTIONS["num_ctx"])
+    assert seen == [{"num_ctx": OPTIONS["num_ctx"]}, {"num_ctx": JUDGE_OPTIONS["num_ctx"]}]

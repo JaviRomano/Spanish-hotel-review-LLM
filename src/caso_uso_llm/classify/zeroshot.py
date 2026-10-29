@@ -185,7 +185,7 @@ def evaluate_ahr(cache: dict[str, str], seed: int) -> dict | None:
 
 def main(seed: int = DEFAULT_SEED) -> None:
     log(f"Modelo {MODEL} vía Ollama · opciones {OPTIONS}")
-    require_gpu(MODEL)
+    require_gpu(MODEL, OPTIONS["num_ctx"])
     df = load()
     test = eval_sets(df)["coah_test"]
     sfu = load_sfu_hoteles()

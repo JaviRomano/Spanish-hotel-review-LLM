@@ -178,7 +178,7 @@ def main(seed: int = DEFAULT_SEED) -> None:
     dev = dev_set(seed)
     n_real, n_adv = (dev.kind == "real").sum(), (dev.kind == "adversarial").sum()
     log(f"Modelo {MODEL} · prompt {version} · {n_real} reales + {n_adv} adversariales")
-    require_gpu(MODEL)
+    require_gpu(MODEL, OPTIONS["num_ctx"])
     cache = Cache(CACHE)
     results = []
     for i, row in dev.iterrows():
