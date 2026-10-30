@@ -35,8 +35,6 @@ evals/gold/calibracion_vista.html
 kb/revision.html
 
 # Decisiones de la persona que revisa y cola de la app (trabajo humano, no resultados reproducibles)
-results/revision_humana.jsonl
-results/cola_app.jsonl
 evals/demo/formulario.html
 
 # Ficheros que crea Gradio al intentar el enlace compartido
@@ -44,3 +42,6 @@ evals/demo/formulario.html
 
 # Reseñas escritas por personas en la demo en vivo (con consentimiento; fuera de git)
 data/live/
+
+# Documento técnico para consultas externas (no forma parte del repo)
+docs/ARQUITECTURA_TECNICA.md

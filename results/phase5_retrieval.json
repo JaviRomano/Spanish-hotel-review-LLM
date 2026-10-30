@@ -69,12 +69,12 @@
       "top5": [
        "pol-incidentes",
        "pol-elogios",
-       "pol-reubicacion",
        "pol-personal",
-       "pol-limpieza"
+       "pol-limpieza",
+       "pol-reubicacion"
       ],
       "recall@1": 0.0,
-      "recall@3": 0.5,
+      "recall@3": 1.0,
       "recall@5": 1.0,
       "mrr": 0.5
      },
@@ -108,7 +108,7 @@
        "pol-averias",
        "pol-compensaciones",
        "pol-personal",
-       "pol-limpieza"
+       "pol-reembolsos"
       ],
       "recall@1": 0.3333333333333333,
       "recall@3": 1.0,
@@ -126,7 +126,7 @@
        "pol-instrucciones",
        "pol-reubicacion",
        "pol-ruido",
-       "pol-compensaciones"
+       "pol-limpieza"
       ],
       "recall@1": 0.5,
       "recall@3": 0.5,
@@ -141,8 +141,8 @@
       ],
       "top5": [
        "pol-ruido",
-       "pol-reubicacion",
        "pol-limpieza",
+       "pol-reubicacion",
        "pol-precio",
        "pol-compensaciones"
       ],
@@ -159,15 +159,15 @@
       ],
       "top5": [
        "pol-instrucciones",
-       "pol-limpieza",
        "pol-reclamaciones-oficiales",
        "pol-reembolsos",
-       "pol-precio"
+       "pol-precio",
+       "pol-ruido"
       ],
       "recall@1": 0.0,
-      "recall@3": 0.0,
+      "recall@3": 0.5,
       "recall@5": 0.5,
-      "mrr": 0.25
+      "mrr": 0.3333333333333333
      },
      {
       "id": "q02",
@@ -195,9 +195,9 @@
       "top5": [
        "pol-reembolsos",
        "pol-incidentes",
-       "pol-limpieza",
        "pol-reclamaciones-oficiales",
-       "pol-precio"
+       "pol-precio",
+       "pol-ruido"
       ],
       "recall@1": 1.0,
       "recall@3": 1.0,
@@ -228,15 +228,15 @@
       ],
       "top5": [
        "pol-compensaciones",
-       "pol-limpieza",
-       "pol-reubicacion",
        "pol-instrucciones",
-       "pol-ruido"
+       "pol-reubicacion",
+       "pol-ruido",
+       "pol-averias"
       ],
       "recall@1": 0.0,
       "recall@3": 0.0,
       "recall@5": 1.0,
-      "mrr": 0.2
+      "mrr": 0.25
      },
      {
       "id": "q06",
@@ -279,16 +279,16 @@
        "pol-averias"
       ],
       "top5": [
-       "pol-limpieza",
        "pol-averias",
        "pol-compensaciones",
        "pol-reembolsos",
-       "pol-incidentes"
+       "pol-incidentes",
+       "pol-reclamaciones-oficiales"
       ],
-      "recall@1": 0.0,
+      "recall@1": 1.0,
       "recall@3": 1.0,
       "recall@5": 1.0,
-      "mrr": 0.5
+      "mrr": 1.0
      },
      {
       "id": "q09",
@@ -297,10 +297,10 @@
       ],
       "top5": [
        "pol-averias",
-       "pol-limpieza",
        "pol-reclamaciones-oficiales",
        "pol-reembolsos",
-       "pol-precio"
+       "pol-precio",
+       "pol-ruido"
       ],
       "recall@1": 1.0,
       "recall@3": 1.0,
@@ -350,8 +350,8 @@
        "pol-mascotas",
        "pol-personal",
        "pol-averias",
-       "pol-limpieza",
-       "pol-reclamaciones-oficiales"
+       "pol-reclamaciones-oficiales",
+       "pol-reembolsos"
       ],
       "recall@1": 1.0,
       "recall@3": 1.0,
@@ -382,9 +382,9 @@
       ],
       "top5": [
        "pol-reubicacion",
+       "pol-servicios",
        "pol-averias",
        "pol-ruido",
-       "pol-servicios",
        "pol-mascotas"
       ],
       "recall@1": 1.0,
@@ -452,9 +452,9 @@
       "top5": [
        "pol-acusaciones",
        "pol-servicios",
+       "pol-limpieza",
        "pol-mascotas",
-       "pol-precio",
-       "pol-salud-alergias"
+       "pol-precio"
       ],
       "recall@1": 1.0,
       "recall@3": 1.0,
@@ -470,8 +470,8 @@
        "pol-salud-alergias",
        "pol-compensaciones",
        "pol-incidentes",
-       "pol-servicios",
-       "pol-mascotas"
+       "pol-limpieza",
+       "pol-servicios"
       ],
       "recall@1": 0.0,
       "recall@3": 0.0,
@@ -485,15 +485,15 @@
       ],
       "top5": [
        "pol-ruido",
+       "pol-limpieza",
        "pol-compensaciones",
        "pol-incidentes",
-       "pol-objetos-perdidos",
-       "pol-mascotas"
+       "pol-objetos-perdidos"
       ],
       "recall@1": 0.0,
       "recall@3": 0.0,
       "recall@5": 0.0,
-      "mrr": 0.125
+      "mrr": 0.1111111111111111
      },
      {
       "id": "q21",
@@ -543,8 +543,8 @@
        "pol-ruido",
        "pol-precio",
        "pol-reubicacion",
-       "pol-limpieza",
-       "pol-servicios"
+       "pol-servicios",
+       "pol-limpieza"
       ],
       "recall@1": 0.0,
       "recall@3": 0.0,
@@ -578,7 +578,7 @@
        "pol-reubicacion",
        "pol-ruido",
        "pol-incidentes",
-       "pol-precio"
+       "pol-servicios"
       ],
       "recall@1": 0.0,
       "recall@3": 0.0,
@@ -631,9 +631,9 @@
       "top5": [
        "pol-averias",
        "pol-reclamaciones-oficiales",
-       "pol-limpieza",
        "pol-ruido",
-       "pol-incidentes"
+       "pol-incidentes",
+       "pol-objetos-perdidos"
       ],
       "recall@1": 0.3333333333333333,
       "recall@3": 0.6666666666666666,
@@ -651,7 +651,7 @@
        "pol-ruido",
        "pol-reubicacion",
        "pol-precio",
-       "pol-limpieza"
+       "pol-servicios"
       ],
       "recall@1": 0.5,
       "recall@3": 0.5,
@@ -668,12 +668,12 @@
        "pol-ruido",
        "pol-precio",
        "pol-reubicacion",
-       "pol-servicios",
-       "pol-salud-alergias"
+       "pol-salud-alergias",
+       "pol-elogios"
       ],
       "recall@1": 0.5,
       "recall@3": 0.5,
-      "recall@5": 0.5,
+      "recall@5": 1.0,
       "mrr": 1.0
      },
      {
@@ -686,8 +686,8 @@
        "pol-reubicacion",
        "pol-reembolsos",
        "pol-precio",
-       "pol-ruido",
-       "pol-servicios"
+       "pol-servicios",
+       "pol-ruido"
       ],
       "recall@1": 0.0,
       "recall@3": 0.5,
@@ -702,8 +702,8 @@
       ],
       "top5": [
        "pol-incidentes",
-       "pol-limpieza",
        "pol-averias",
+       "pol-limpieza",
        "pol-objetos-perdidos",
        "pol-salud-alergias"
       ],
@@ -789,9 +789,9 @@
       "top5": [
        "pol-ruido",
        "pol-reubicacion",
-       "pol-limpieza",
        "pol-precio",
-       "pol-objetos-perdidos"
+       "pol-objetos-perdidos",
+       "pol-compensaciones"
       ],
       "recall@1": 0.0,
       "recall@3": 0.0,
@@ -806,9 +806,9 @@
       "top5": [
        "pol-averias",
        "pol-reubicacion",
-       "pol-limpieza",
        "pol-ruido",
-       "pol-incidentes"
+       "pol-incidentes",
+       "pol-objetos-perdidos"
       ],
       "recall@1": 1.0,
       "recall@3": 1.0,
@@ -821,16 +821,16 @@
        "pol-averias"
       ],
       "top5": [
-       "pol-limpieza",
        "pol-ruido",
        "pol-averias",
+       "pol-limpieza",
        "pol-reubicacion",
        "pol-objetos-perdidos"
       ],
       "recall@1": 0.0,
       "recall@3": 1.0,
       "recall@5": 1.0,
-      "mrr": 0.3333333333333333
+      "mrr": 0.5
      },
      {
       "id": "q10",
@@ -927,7 +927,7 @@
        "pol-incidentes",
        "pol-reubicacion",
        "pol-averias",
-       "pol-limpieza"
+       "pol-ruido"
       ],
       "recall@1": 1.0,
       "recall@3": 1.0,
@@ -962,7 +962,7 @@
        "pol-compensaciones",
        "pol-precio",
        "pol-instrucciones",
-       "pol-servicios"
+       "pol-salud-alergias"
       ],
       "recall@1": 0.0,
       "recall@3": 0.5,
@@ -977,14 +977,14 @@
       "top5": [
        "pol-reubicacion",
        "pol-precio",
-       "pol-servicios",
        "pol-acusaciones",
+       "pol-servicios",
        "pol-ruido"
       ],
       "recall@1": 0.0,
-      "recall@3": 0.0,
+      "recall@3": 1.0,
       "recall@5": 1.0,
-      "mrr": 0.25
+      "mrr": 0.3333333333333333
      },
      {
       "id": "q19",
@@ -994,9 +994,9 @@
       "top5": [
        "pol-precio",
        "pol-elogios",
+       "pol-servicios",
        "pol-ruido",
-       "pol-reubicacion",
-       "pol-salud-alergias"
+       "pol-reubicacion"
       ],
       "recall@1": 0.0,
       "recall@3": 1.0,
@@ -1010,8 +1010,8 @@
       ],
       "top5": [
        "pol-elogios",
-       "pol-personal",
        "pol-limpieza",
+       "pol-personal",
        "pol-precio",
        "pol-compensaciones"
       ],
@@ -1029,8 +1029,8 @@
       "top5": [
        "pol-ruido",
        "pol-compensaciones",
-       "pol-precio",
        "pol-servicios",
+       "pol-precio",
        "pol-averias"
       ],
       "recall@1": 0.5,
@@ -1047,8 +1047,8 @@
        "pol-objetos-perdidos",
        "pol-incidentes",
        "pol-ruido",
-       "pol-limpieza",
-       "pol-averias"
+       "pol-averias",
+       "pol-reubicacion"
       ],
       "recall@1": 0.0,
       "recall@3": 1.0,
@@ -1069,7 +1069,7 @@
        "pol-reubicacion",
        "pol-compensaciones",
        "pol-reembolsos",
-       "pol-instrucciones"
+       "pol-limpieza"
       ],
       "recall@1": 0.0,
       "recall@3": 0.3333333333333333,
@@ -1100,8 +1100,8 @@
       ],
       "top5": [
        "pol-incidentes",
-       "pol-averias",
        "pol-servicios",
+       "pol-averias",
        "pol-reubicacion",
        "pol-precio"
       ],
@@ -1118,10 +1118,10 @@
       ],
       "top5": [
        "pol-elogios",
-       "pol-reubicacion",
        "pol-personal",
        "pol-ruido",
-       "pol-incidentes"
+       "pol-reubicacion",
+       "pol-limpieza"
       ],
       "recall@1": 0.5,
       "recall@3": 1.0,
@@ -1139,7 +1139,7 @@
        "pol-compensaciones",
        "pol-elogios",
        "pol-acusaciones",
-       "pol-reembolsos"
+       "pol-servicios"
       ],
       "recall@1": 0.5,
       "recall@3": 1.0,
@@ -1156,9 +1156,9 @@
       "top5": [
        "pol-reclamaciones-oficiales",
        "pol-averias",
-       "pol-limpieza",
+       "pol-ruido",
        "pol-compensaciones",
-       "pol-ruido"
+       "pol-personal"
       ],
       "recall@1": 0.3333333333333333,
       "recall@3": 0.6666666666666666,
@@ -1191,8 +1191,8 @@
       ],
       "top5": [
        "pol-ruido",
-       "pol-reubicacion",
        "pol-precio",
+       "pol-reubicacion",
        "pol-limpieza",
        "pol-elogios"
       ],
@@ -1212,7 +1212,7 @@
        "pol-precio",
        "pol-ruido",
        "pol-instrucciones",
-       "pol-reubicacion"
+       "pol-servicios"
       ],
       "recall@1": 0.5,
       "recall@3": 0.5,
@@ -1247,7 +1247,7 @@
        "pol-ruido",
        "pol-precio",
        "pol-incidentes",
-       "pol-objetos-perdidos"
+       "pol-reclamaciones-oficiales"
       ],
       "recall@1": 1.0,
       "recall@3": 1.0,
@@ -1277,16 +1277,16 @@
        "pol-ruido"
       ],
       "top5": [
-       "pol-reubicacion",
        "pol-ruido",
+       "pol-reubicacion",
        "pol-compensaciones",
-       "pol-limpieza",
+       "pol-instrucciones",
        "pol-averias"
       ],
-      "recall@1": 0.0,
+      "recall@1": 1.0,
       "recall@3": 1.0,
       "recall@5": 1.0,
-      "mrr": 0.5
+      "mrr": 1.0
      },
      {
       "id": "q06",
@@ -1313,10 +1313,10 @@
       ],
       "top5": [
        "pol-compensaciones",
-       "pol-ruido",
        "pol-instrucciones",
+       "pol-ruido",
        "pol-personal",
-       "pol-limpieza"
+       "pol-averias"
       ],
       "recall@1": 0.0,
       "recall@3": 0.0,
@@ -1330,10 +1330,10 @@
       ],
       "top5": [
        "pol-averias",
-       "pol-limpieza",
        "pol-incidentes",
        "pol-compensaciones",
-       "pol-ruido"
+       "pol-ruido",
+       "pol-reubicacion"
       ],
       "recall@1": 1.0,
       "recall@3": 1.0,
@@ -1346,16 +1346,16 @@
        "pol-averias"
       ],
       "top5": [
-       "pol-limpieza",
        "pol-averias",
        "pol-ruido",
+       "pol-limpieza",
        "pol-precio",
-       "pol-mascotas"
+       "pol-reclamaciones-oficiales"
       ],
-      "recall@1": 0.0,
+      "recall@1": 1.0,
       "recall@3": 1.0,
       "recall@5": 1.0,
-      "mrr": 0.5
+      "mrr": 1.0
      },
      {
       "id": "q10",
@@ -1366,8 +1366,8 @@
        "pol-reubicacion",
        "pol-reembolsos",
        "pol-objetos-perdidos",
-       "pol-servicios",
-       "pol-salud-alergias"
+       "pol-salud-alergias",
+       "pol-servicios"
       ],
       "recall@1": 0.0,
       "recall@3": 0.0,
@@ -1401,7 +1401,7 @@
        "pol-averias",
        "pol-personal",
        "pol-ruido",
-       "pol-limpieza"
+       "pol-reubicacion"
       ],
       "recall@1": 1.0,
       "recall@3": 1.0,
@@ -1433,9 +1433,9 @@
       "top5": [
        "pol-reubicacion",
        "pol-ruido",
+       "pol-servicios",
        "pol-averias",
-       "pol-precio",
-       "pol-servicios"
+       "pol-precio"
       ],
       "recall@1": 1.0,
       "recall@3": 1.0,
@@ -1521,7 +1521,7 @@
        "pol-precio",
        "pol-servicios",
        "pol-compensaciones",
-       "pol-reubicacion"
+       "pol-limpieza"
       ],
       "recall@1": 0.0,
       "recall@3": 0.0,
@@ -1534,16 +1534,16 @@
        "pol-elogios"
       ],
       "top5": [
+       "pol-limpieza",
        "pol-ruido",
        "pol-compensaciones",
        "pol-elogios",
-       "pol-incidentes",
-       "pol-precio"
+       "pol-incidentes"
       ],
       "recall@1": 0.0,
-      "recall@3": 1.0,
+      "recall@3": 0.0,
       "recall@5": 1.0,
-      "mrr": 0.3333333333333333
+      "mrr": 0.25
      },
      {
       "id": "q21",
@@ -1571,8 +1571,8 @@
       "top5": [
        "pol-incidentes",
        "pol-compensaciones",
+       "pol-averias",
        "pol-ruido",
-       "pol-limpieza",
        "pol-servicios"
       ],
       "recall@1": 1.0,

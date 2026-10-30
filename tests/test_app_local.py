@@ -56,6 +56,7 @@ def app(monkeypatch, tmp_path):
     # Rutas reales a una carpeta temporal: si algo se escapa de los dobles, no llega a data/live
     monkeypatch.setattr(app_module, "LIVE_LOG", tmp_path / "resenas_vivo.jsonl")
     monkeypatch.setattr(app_module, "SESSION_QUEUE", tmp_path / "cola_app.jsonl")
+    monkeypatch.setattr(app_module, "DECISIONS", tmp_path / "revision_humana.jsonl")
     monkeypatch.setattr(app_module, "generate_stage", fake_generate)
     monkeypatch.setattr(app_module, "judge_stage", fake_judge)
     monkeypatch.setattr(app_module, "save_live", lambda it, nick: saved.append(it["id"]))

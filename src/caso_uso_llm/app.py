@@ -6,8 +6,8 @@ recuperados, borrador, comprobaciones, veredicto del juez y la decisión con sus
 
 Pestaña «Cola de revisión»: las reseñas que el pipeline no publica (las de la demostración de
 `just pipeline` y las procesadas en la app). Quien revisa puede aprobar el borrador, editarlo
-y aprobarlo, o descartarlo. Cada decisión se guarda en results/revision_humana.jsonl (fuera de
-git: es trabajo de la persona, no un resultado reproducible).
+y aprobarlo, o descartarlo. Cada decisión se guarda en data/live/revision_humana.jsonl (fuera de
+git: es trabajo de la persona sobre texto de terceros, no un resultado reproducible).
 
 Todo es local: el clasificador corre en CPU y el LLM en Ollama. Cada reseña tarda unos segundos
 más la carga de los modelos: generador (27B) y juez (12B) no caben juntos en la VRAM y Ollama
@@ -27,7 +27,7 @@ from caso_uso_llm.classify.infer import SentimentEnsemble
 from caso_uso_llm.evals.rubric import IDS
 from caso_uso_llm.generate.prompts import RAG_PROMPTS
 from caso_uso_llm.log import log
-from caso_uso_llm.paths import DATA, RESULTS
+from caso_uso_llm.paths import DATA
 from caso_uso_llm.pipeline import (
     NAMES,
     PROMPT,
@@ -40,8 +40,10 @@ from caso_uso_llm.pipeline import (
 )
 from caso_uso_llm.rag import kb
 
-SESSION_QUEUE = RESULTS / "cola_app.jsonl"  # reseñas a revisión procesadas en la app
-DECISIONS = RESULTS / "revision_humana.jsonl"
+# Reseñas a revisión procesadas en la app y decisiones de quien revisa: texto de terceros, así que
+# van con el resto de la demo en vivo, en data/live/, nunca en results/.
+SESSION_QUEUE = DATA / "live" / "cola_app.jsonl"
+DECISIONS = DATA / "live" / "revision_humana.jsonl"
 # Reseñas escritas por personas en la demo en vivo, con su nick: conjunto de prueba de producción.
 # Fuera de git (data/live/): texto aportado por terceros con su consentimiento, ya enmascarado.
 LIVE_LOG = DATA / "live" / "resenas_vivo.jsonl"

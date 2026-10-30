@@ -1,7 +1,7 @@
 """Figuras del README a partir de los resultados versionados (no lleva cifras escritas a mano).
 
-1. Efecto del RAG: suspensos del juez con ficha (rúbrica v2g) por versión del prompt, en los
-   dos criterios que cambian (results/phase5_juez.json).
+1. Efecto del RAG: suspensos del juez con ficha por versión del prompt, en los
+   dos criterios que cambian (results/phase5_juez.json, rúbrica v2h).
 2. Enrutado del pipeline: publicables frente a revisión humana por grupo
    (results/pipeline_cola.json).
 
@@ -34,8 +34,8 @@ THEMES = {
 
 T = {
     "en": {
-        "rag_title": "RAG removes implicit blame",
-        "rag_sub": "LLM-judge fails with the hotel fact sheet (rubric v2g), 54 replies per version",
+        "rag_title": "RAG halves implicit blame",
+        "rag_sub": "LLM-judge fails with the hotel fact sheet (rubric v2h), 54 replies per version",
         "crit": ["Admits blame or a cause", "Confirms or denies what\nit cannot verify"],
         "versions": ["v4 · no context", "v5 · RAG", "v6 · RAG, corrected"],
         "route_title": "What the pipeline publishes and what goes to a person",
@@ -45,8 +45,8 @@ T = {
         "x": "replies",
     },
     "es": {
-        "rag_title": "El RAG elimina la culpa implícita",
-        "rag_sub": "Suspensos del juez con la ficha del hotel (rúbrica v2g), 54 respuestas por versión",
+        "rag_title": "El RAG reduce a la mitad la culpa implícita",
+        "rag_sub": "Suspensos del juez con la ficha del hotel (rúbrica v2h), 54 respuestas por versión",
         "crit": ["Admite culpa o una causa", "Confirma o niega lo que\nno puede comprobar"],
         "versions": ["v4 · sin contexto", "v5 · RAG", "v6 · RAG corregido"],
         "route_title": "Qué publica el pipeline y qué pasa a una persona",

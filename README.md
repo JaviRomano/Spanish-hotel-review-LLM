@@ -20,6 +20,7 @@ It is a rebuild of a first attempt (in [`legacy/`](legacy/), tag `v1-original`) 
 | 6. Evaluation | LLM judge with a binary rubric, canaries, position bias and human calibration; used as the regression gate in Phase 5 | Done, first iteration ([results](#llm-judge-evaluating-the-evaluator)); the human calibration is small (24 replies, see its limits) |
 | 7. Distillation (optional) | LoRA on a small model to replace the 27B generator | Not done: out of scope for now, the 27B model runs locally fast enough on the GPU |
 | 8. Service | End-to-end pipeline (CLI and CSV batch) and Gradio demo with a review queue | Done ([demo](#full-pipeline-and-demo)) |
+| 9. Demo and hardening | Live demo with real people, new guardrails from what they wrote, trap detection, latency (75 → 49 s per review), asynchronous judge, replay mode, prompt regression and blind human comparison | Done ([guardrails](#full-pipeline-and-demo), [prompt versions](#prompt-versions-after-v6-why-the-pipeline-stays-on-v6)); a smaller 9B generator was rejected ([report](reports/phase9_qwen3.5-9b.md)) |
 
 ## Why it was rebuilt
 
@@ -108,41 +109,55 @@ A review arrives with its hotel, so **the fact sheet is not searched for**: it g
 
 | Index | BM25 | Dense (bge-m3) | Hybrid (RRF) |
 |---|---|---|---|
-| Policies (17) | 0.66 (0.49–0.80) | 0.74 (0.60–0.87) | **0.80** (0.68–0.92) |
+| Policies (17) | 0.69 (0.53–0.83) | **0.77** (0.64–0.89) | **0.77** (0.63–0.89) |
 | Approved replies (16) | 0.64 (0.46–0.80) | **0.91** (0.82–0.98) | 0.82 (0.68–0.93) |
+
+For policies, the hybrid search ties the dense one on recall@3 but puts the right policy first more often (MRR 0.82 vs 0.72), which is why it is used. The relevance labels were written by Claude and have not been reviewed by a person.
 
 **Generation with context.** The RAG prompts (v5, v6) are prompt v4 plus a block on how to use the context, and a test guarantees there is no other difference: this measures the effect of RAG, not of a different prompt. Besides the Phase 4 adversarial cases, there are 6 cases **where the fact sheet contradicts or qualifies the guest** (what really tests sycophancy: the guest says there were no signs and the fact sheet says there were; they were promised a car park that does not exist).
 
-Judge with the fact sheet (rubric `v2g`), 54 replies per version:
+Judge with the fact sheet (rubric `v2h`), 54 replies per version:
 
 | | v4 (no context) | v5 (RAG) | v6 (RAG, corrected) |
 |---|---|---|---|
-| Fails on "no admission of blame" | 6 | 2 | **0** |
+| Fails on "no admission of blame" | 16 | 9 | **8** |
 | Fails on "neither confirms nor denies" | 3 | **0** | 1 |
-| Fact sheet vs. guest: pass every criterion | 3/6 | **6/6** | 5/6 |
-| Real reviews: pass every criterion | 38/40 | 38/40 | **40/40** |
+| Fact sheet vs. guest: pass every criterion | 2/6 | **4/6** | 3/6 |
+| Real reviews: pass every criterion | 31/40 | 34/40 | **36/40** |
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/rag_en_dark.png">
-  <img alt="Bar chart: LLM-judge fails per prompt version. Admits blame or a cause: v4 6, v5 2, v6 0. Confirms or denies what it cannot verify: v4 3, v5 0, v6 1." src="docs/img/rag_en_light.png" width="720">
+  <img alt="Bar chart: LLM-judge fails per prompt version. Admits blame or a cause: v4 16, v5 9, v6 8. Confirms or denies what it cannot verify: v4 3, v5 0, v6 1." src="docs/img/rag_en_light.png" width="720">
 </picture>
 
-Pairwise, in both orders: v6 beats v4 22 to 6 (26 ties) and v5 beats v6 14 to 6 (34 ties).
+These figures are from rubric v2h and the knowledge base as revised on 2026-10-25. A first run (rubric v2g, earlier knowledge base) gave 6 / 2 / 0 blame fails: the stricter rubric and the revised base show that RAG halves implicit blame rather than removing it.
 
 What it taught:
 
-- **Context removes implicit blame.** Without the fact sheet, the model takes the causes as fact ("the lack of signage", "the lack of response to your calls"); with explicit incident policies, it stops. And it does not use the fact sheet to contradict the guest: to "there were no signs", it does not reply "there were".
+- **Context halves implicit blame, but does not remove it.** Without the fact sheet, the model takes the causes as fact ("the lack of signage", "the lack of response to your calls"); with explicit incident policies it does so half as often. It does not use the fact sheet to contradict the guest: to "there were no signs", it does not reply "there were". But it still adds a purpose after "we will review what happened" that hints at a fault ("…to guarantee the safety of all our guests"), and the judge does not always catch it.
 - **Every prompt patch has side effects.** v6 fixed what it was asked to (mentioning "our fact sheet", giving a price) and, unprompted, started taking "the lack of visible information" as fact in another case. At temperature 0 this is not chance: it is the prompt. That is why every change goes through the judge.
-- **The judge also has to be tested with the fact sheet.** The first rubric with the fact sheet (v2f) failed the correct phrase "lamentamos la confusión que nos describe" (*we are sorry about the confusion you describe*) and did not pass its gate (9/10). Before correcting it (v2g), a **real** canary was added, a reply from the generator itself that subtly confirms the premise, so the fix would not relax the judge: it passes 12/12.
-- **What the judge still misses:** the covert promise ("we hope to resolve this situation" in reply to a refund demand).
+- **The judge also has to be tested with the fact sheet.** The first rubric with the fact sheet (v2f) failed the correct phrase "lamentamos la confusión que nos describe" (*we are sorry about the confusion you describe*) and did not pass its gate (9/10). Before correcting it (v2g), a **real** canary was added, a reply from the generator itself that subtly confirms the premise, so the fix would not relax the judge: it passes 12/12. The current rubric (v2h) adds two more real canaries (a reply that takes as fact a "difference in what was communicated", and one that talks about a stay that never happened) and passes 14/14.
+- **What the judge still misses:** the covert promise ("we hope to resolve this situation" in reply to a refund demand) and some purpose clauses after "we will review" (see above).
 
-> **Limits.** The knowledge base, the adversarial cases, the relevance labels and the canaries are synthetic and written for the project; there are only 6 fact-sheet-vs-guest cases. Rubric v2g was corrected after seeing a result (mitigated by adding a real canary before re-running). No figure in this section has been measured on real reviews and replies from a hotel.
+> **Limits.** The knowledge base, the adversarial cases, the relevance labels and the canaries are synthetic and written for the project; there are only 6 fact-sheet-vs-guest cases. Rubrics v2g and v2h were corrected after seeing a result (mitigated by adding a real canary before re-running). No figure in this section has been measured on real reviews and replies from a hotel.
 
 **Incident: the model was running on the CPU without warning.** An automatic Ollama update removed the AMD support package (ROCm), which on Windows is installed separately, and Ollama fell back to the CPU with no error: each reply from the 27B model took about 130 s instead of 3.5 s. Since then, the scripts that use the LLM check at start-up that the model is fully on the GPU and fail otherwise ([`ollama_gpu.py`](src/caso_uso_llm/ollama_gpu.py)).
 
 ## Full pipeline and demo
 
 [`pipeline.py`](src/caso_uso_llm/pipeline.py) chains every step: normalisation and PII masking → sentiment with the production classifier (3-seed mRoBERTa ensemble, on CPU) → aspects → RAG → reply (prompt v6) → deterministic checks and the judge with the fact sheet → **publish or send to a person**, with the reasons. A reply goes to human review if **any** of these holds: the review is negative or neutral, the classifier's confidence is below 0.85 (threshold chosen on validation), the guest asks for something (a refund, compensation…), a deterministic check fires, or the judge fails a criterion. Report: [`reports/phase5_pipeline.md`](reports/phase5_pipeline.md).
+
+The deterministic checks were added after reading real replies (Phase 9), each for a failure the judge does not catch:
+
+| Sent to review when… | Why |
+|---|---|
+| the classifier and the LLM disagree on the sentiment | the classifier does not understand sarcasm (a sarcastic complaint came out positive, 0.93) |
+| the review looks like a trap (a joke, a provocation, instructions to the system) | an LLM check before generating; the reply is a brief, polite ironic note |
+| the reply uses a person's name from the review | names without a title are not masked yet |
+| the reply mentions hygiene or smells | it must not suggest the hotel had a hygiene problem |
+| the reply copies 4+ words from the review | it sounds like a parrot |
+| the reply talks about "your stay" when the guest never stayed | the judge misses it |
+| the guest claims a service the fact sheet says does not exist | a person checks the reply that informs them |
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/pipeline_en_dark.png">
@@ -152,24 +167,27 @@ What it taught:
 - **Demonstration on 54 reviews** (14 synthetic cases + 40 real AHR reviews never used for training or prompt development): 8 published, all positive, and 46 sent to review. The classifier gets 37/40 of the AHR reviews right. The first run (2026-10-23) published 13; the guardrails added in Phase 9 since then send 5 more to review, mostly for copying 4+ words from the review.
 - **Neutral reviews always go to a person.** In the first run the three neutral reviews that would have been published sat right on the threshold (confidence 0.851), and neutral is the classifier's weakest class.
 - **Reading the published replies:** none admits blame, promises anything or confirms a premise. Some have details a person would fix and the judge does not see: a grammatical slip ("Los tarifas"), an anglicism ("feedback"), an assumption about the nearby beach. And all 8 open the same way ("Estimado cliente: Muchas gracias por compartir su experiencia"): a reader who sees several replies notices.
+- **Reading the replies that go to review:** some would need editing. To "I slipped by the pool and there was no sign", v6 answers "we will review what happened with the greatest care *to guarantee the safety of all our guests*" and "…could not enjoy your stay *with the tranquillity it deserved*": both hint at a fault, and the judge passes them. That is why accidents always go to a person.
 - **Cost:** about 49 s per new review locally (median; [`reports/phase9_latencia.md`](reports/phase9_latencia.md)), most of it loading models, because the 27B generator and the 12B judge do not fit in VRAM together and Ollama swaps them. The demo shows the draft at about 36 s and the judge's verdict when it arrives. In batch mode the pipeline runs in stages (classify all, retrieve all, generate all, judge all) to avoid that.
 
 ### Prompt versions after v6: why the pipeline stays on v6
 
-Two later versions were tried to fix what reading the replies shows (repeated openings, copied phrases, "we will review this *in order to*…", which hints at a fault). Neither was adopted.
+Later versions were tried to fix what reading the replies shows (repeated openings, copied phrases, "we will review this *in order to*…", which hints at a fault). None was adopted. (v7, v6 plus a rule against assuming a stay that never happened, ties with it in [`reports/phase5_juez.md`](reports/phase5_juez.md): 36/40 real reviews pass everything with both.)
 
 - **v8:** more variety (replies that copy 4+ words from the review: 17/40 → 4/40), but the judge fails it on "does not admit blame" 20 times against 8 for v6, and v6 wins the pairwise comparison 25–10.
 - **v9** fixed what it was aimed at, without being worse on safety (no promises, inventions or confirmed premises beyond v6): an alternating greeting ("Hola:" / "Saludos:") instead of "Estimado cliente:" in every reply, and a deterministic cut of the purpose clause after "revisaremos" (15 of 53 replies). It was **not enough**:
   - pairwise judge: v6 wins 26–10 ([`reports/phase9_regresion.md`](reports/phase9_regresion.md));
-  - **blind human rating** of 30 new reviews written by hand (not the development cases; greeting removed from both replies so it would not give away the version): v6 preferred 15 times, v9 10, 3 ties (sign test p = 0.42, not significant on its own); publishable as is: v6 8/30, v9 4/30. Script: [`scripts/comparacion_ciegas.py`](scripts/comparacion_ciegas.py); the reviews and ratings stay out of git;
+  - **blind human rating** of 30 new reviews written by hand (not the development cases; greeting removed from both replies so it would not give away the version): v6 preferred 15 times, v9 10, 3 ties (sign test p = 0.42, not significant on its own); publishable as is: v6 8/30, v9 4/30 ([`reports/phase9_ciegas.md`](reports/phase9_ciegas.md); the reviews and ratings stay out of git);
   - the wording got worse: "nuestro establecimiento", "su anterior afición", "reconocemos su opinión", and a bar service the guest never mentioned.
 - All three measures point the same way, so v6 stays. The fixed opening is a known problem, deferred to the next version together with failures both versions share ("we take note to improve" about things that cannot change, such as room size or the building; assuming a stay when the writer only came in to use the toilet). To avoid overfitting, the prompt is not iterated again on the same cases: the next version waits for more human-rated reviews.
 
-The Gradio demo (`uv run just app`) shows each step for one review and has a review queue where a person approves, edits or discards each draft; every decision is stored for later analysis. The hotels and their fact sheets are fictitious.
+The Gradio demo (`uv run just app`) shows each step for one review and has a review queue where a person approves, edits or discards each draft. The draft appears as soon as it is written and the judge's verdict arrives a few seconds later; nothing is shown as publishable before it. The hotels and their fact sheets are fictitious. Reviews written in the live demo, and the reviewers' decisions, are stored outside git (`data/live/`).
 
-<img alt="Demo: a review about slipping by the pool at a fictitious hotel goes to human review; the draft neither admits the cause nor denies the guest, and the judge passes all 8 criteria." src="docs/img/demo_respuesta.png" width="820">
+There is also a **replay mode** (`uv run just replay`): only Gradio and the pre-computed results of 10 reviews written for the demo, with no models or GPU, to show the pipeline on any machine.
 
-<img alt="Demo: review queue with the reason for each review and the editable draft, with Approve and Discard buttons." src="docs/img/demo_cola.png" width="820">
+<img alt="Demo: a 4-star review that praises the location and the beds but complains about the wifi in the room, at a fictitious hotel. The reply explains, as the fact sheet says, that the stone walls make the wifi patchy in the rooms; the judge passes all 8 criteria and the reply is publishable." src="docs/img/demo_respuesta.png" width="820">
+
+<img alt="Demo: review queue with the reason for each review (all real AHR reviews) and the editable draft of a 4-star review sent to review for low confidence, with Approve and Discard buttons." src="docs/img/demo_cola.png" width="820">
 
 ## Requirements
 
@@ -211,9 +229,20 @@ uv run just rag-juez           # Phase 5: judge with fact sheet, canary gate and
 uv run just gpu-ollama         # checks that Ollama has the whole model on the GPU
 uv run just pipeline           # full pipeline on the demo set (--csv file.csv for your own reviews)
 uv run just app                # Gradio demo with review queue (http://127.0.0.1:7860)
+uv run just app-live           # the same, password-protected, for a live demo with other people
+uv run just replay             # replay mode: pre-computed results, no models or GPU
+uv run just recoger            # form to collect reviews only (no models); answered later in batch
+uv run just latencia           # Phase 9: time per stage (loading vs inference) -> reports/phase9_latencia.md
+uv run just regresion          # Phase 9: prompt versions under the same conditions, safety filter and pairs
+uv run just modelo-pequeno     # Phase 9: smaller generator (qwen3.5:9b) against the 27B
+uv run just check-raw          # verifies the data/raw hashes
+uv run just lint               # ruff check + format --check
 uv run python scripts/acuerdo_anotadores.py  # agreement with the second annotator
 uv run python scripts/calibracion_vista.py   # HTML sheet for blind labelling
+uv run python scripts/comparacion_ciegas.py  # blind A/B sheet of two prompt versions and its result
+uv run python scripts/formulario_tandas.py   # HTML form to write test reviews by hand, 10 at a time
 uv run python scripts/figuras.py             # README charts from the versioned results
+uv run --with playwright python scripts/capturas.py  # demo screenshots (with the app running)
 uv run just                    # lists every recipe
 ```
 
@@ -231,15 +260,18 @@ src/caso_uso_llm/
   pipeline.py  end-to-end pipeline and routing to the review queue · app.py Gradio demo
   spec.py      single specification that produces the prompt and the rubric
   ollama_gpu.py  fails if Ollama does not have the whole model on the GPU
+  timing.py · latency.py  per-stage timing (off unless enabled) and the latency report
   paths.py     absolute paths · seed.py seeds · log.py progress
 kb/            synthetic knowledge base: hotel fact sheets, policies and approved replies
-evals/         adversarial cases, canaries, gold, retrieval queries and calibration labels
-scripts/       utilities (labelling sheet, inter-annotator agreement, GPU, charts, screenshots)
+evals/         adversarial cases, canaries, gold, retrieval queries, calibration labels and the latency sample
+demo_replay/   replay mode: Gradio app and the pre-computed cases it shows
+scripts/       utilities (labelling and comparison sheets, forms, agreement, GPU, charts, screenshots)
 docs/img/      README charts and demo screenshots
-tests/         normalisation, deduplication, split, data invariants, prompt-rubric consistency and routing
+tests/         normalisation, deduplication, split, data invariants, prompt-rubric consistency, routing and the app
 reports/       reports generated by the scripts (not edited by hand)
 results/       results as JSON (including predictions, to regenerate reports)
 data/raw/      immutable raw data, verified by hash
+data/live/     (not in git) reviews written by other people in the live demo and everything derived from them
 legacy/        original project, frozen
 ```
 
@@ -247,7 +279,8 @@ legacy/        original project, frozen
 
 - Versions pinned in `uv.lock`, fixed seeds and datasets downloaded at a pinned commit.
 - The data pipeline is deterministic: two runs, on Windows or WSL, produce byte-identical files. GPU fine-tuning is not (ROCm kernels are not deterministic): that is why several seeds and their ensemble are reported.
-- Every figure in this README comes from a report in `reports/` generated by a script; each report states the command that regenerates it.
+- Every figure in this README comes from a report in `reports/` generated by a script; each report states the command that regenerates it. The exception is the input of the human evaluations: the blind comparison ([`reports/phase9_ciegas.md`](reports/phase9_ciegas.md)) is regenerated from reviews and ratings kept outside git, because they were written by other people; the report only holds the counts.
+- LLM replies are cached by the exact request, so re-running a report reuses them. With Ollama 0.40.7 or later (llama.cpp update), new replies may differ in details from the cached ones.
 
 ## Licence
 
@@ -281,6 +314,7 @@ Es la reconstrucción de un primer intento (en [`legacy/`](legacy/), etiqueta `v
 | 6. Evaluación | Juez LLM con rúbrica binaria, *canaries*, sesgo de posición y calibración humana; usado como prueba de regresión en la Fase 5 | Hecho, primera iteración ([resultados](#juez-llm-evaluar-al-evaluador)); la calibración humana es pequeña (24 respuestas, ver sus límites) |
 | 7. Destilación (opcional) | LoRA sobre un modelo pequeño para sustituir al generador de 27B | No hecha: fuera de alcance por ahora, el modelo de 27B ya va rápido en local con la GPU |
 | 8. Servicio | Pipeline completo (línea de comandos y lotes con CSV) y demo en Gradio con cola de revisión | Hecho ([demo](#pipeline-completo-y-demo)) |
+| 9. Demo y refuerzo | Demo en vivo con personas reales, guardarraíles nuevos a partir de lo que escribieron, detección de trampas, latencia (de 75 a 49 s por reseña), juez asíncrono, modo repetición, regresión de prompts y comparación humana a ciegas | Hecho ([guardarraíles](#pipeline-completo-y-demo), [versiones del prompt](#versiones-del-prompt-posteriores-a-v6-por-qué-se-mantiene-v6)); se descartó un generador más pequeño, de 9B ([informe](reports/phase9_qwen3.5-9b.md)) |
 
 ## Por qué se rehízo
 
@@ -369,41 +403,55 @@ La reseña llega con su hotel, así que **la ficha no se busca**: entra completa
 
 | Índice | BM25 | Densa (bge-m3) | Híbrida (RRF) |
 |---|---|---|---|
-| Políticas (17) | 0,66 (0,49–0,80) | 0,74 (0,60–0,87) | **0,80** (0,68–0,92) |
+| Políticas (17) | 0,69 (0,53–0,83) | **0,77** (0,64–0,89) | **0,77** (0,63–0,89) |
 | Respuestas aprobadas (16) | 0,64 (0,46–0,80) | **0,91** (0,82–0,98) | 0,82 (0,68–0,93) |
+
+En políticas, la híbrida empata con la densa en recall@3, pero pone la política correcta primero más a menudo (MRR 0,82 frente a 0,72), y por eso es la que se usa. Las etiquetas de relevancia las escribió Claude y no las ha revisado una persona.
 
 **Generación con contexto.** Los prompts con RAG (v5, v6) son el prompt v4 más un bloque sobre cómo usar el contexto, y un test garantiza que no hay otra diferencia: así se mide el efecto del RAG y no el de otro prompt. Además de los casos adversariales de la Fase 4, hay 6 casos **en los que la ficha contradice o matiza al cliente** (lo que de verdad pone a prueba la *sycophancy*: dice que no había carteles y la ficha dice que sí; le prometieron un aparcamiento que no existe).
 
-Juez con ficha (rúbrica `v2g`), 54 respuestas por versión:
+Juez con ficha (rúbrica `v2h`), 54 respuestas por versión:
 
 | | v4 (sin contexto) | v5 (RAG) | v6 (RAG corregido) |
 |---|---|---|---|
-| Suspensos en «no admite culpa» | 6 | 2 | **0** |
+| Suspensos en «no admite culpa» | 16 | 9 | **8** |
 | Suspensos en «no confirma ni niega» | 3 | **0** | 1 |
-| Ficha contra cliente: cumplen todos los criterios | 3/6 | **6/6** | 5/6 |
-| Reseñas reales: cumplen todos los criterios | 38/40 | 38/40 | **40/40** |
+| Ficha contra cliente: cumplen todos los criterios | 2/6 | **4/6** | 3/6 |
+| Reseñas reales: cumplen todos los criterios | 31/40 | 34/40 | **36/40** |
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/rag_es_dark.png">
-  <img alt="Gráfica de barras: suspensos del juez por versión del prompt. Admite culpa o una causa: v4 6, v5 2, v6 0. Confirma o niega lo que no puede comprobar: v4 3, v5 0, v6 1." src="docs/img/rag_es_light.png" width="720">
+  <img alt="Gráfica de barras: suspensos del juez por versión del prompt. Admite culpa o una causa: v4 16, v5 9, v6 8. Confirma o niega lo que no puede comprobar: v4 3, v5 0, v6 1." src="docs/img/rag_es_light.png" width="720">
 </picture>
 
-Por pares, en los dos órdenes: v6 gana a v4 22 a 6 (26 empates) y v5 gana a v6 14 a 6 (34 empates).
+Estas cifras son de la rúbrica v2h y de la base de conocimiento revisada el 2026-10-25. Una primera ejecución (rúbrica v2g, base anterior) daba 6 / 2 / 0 suspensos de culpa: con la rúbrica más estricta y la base revisada se ve que el RAG reduce la culpa implícita a la mitad, no que la elimine.
 
 Lo que enseñó:
 
-- **El contexto elimina la culpa implícita.** Sin ficha, el modelo da por ciertas las causas («la ausencia de señalización», «la falta de respuesta ante sus avisos»); con políticas explícitas sobre incidentes, deja de hacerlo. Y no usa la ficha para llevar la contraria al cliente: ante «no había carteles», no responde «sí los había».
+- **El contexto reduce a la mitad la culpa implícita, pero no la elimina.** Sin ficha, el modelo da por ciertas las causas («la ausencia de señalización», «la falta de respuesta ante sus avisos»); con políticas explícitas sobre incidentes lo hace la mitad de veces. No usa la ficha para llevar la contraria al cliente: ante «no había carteles», no responde «sí los había». Pero sigue añadiendo tras «revisaremos lo ocurrido» una finalidad que sugiere un fallo («…para garantizar la seguridad de todos nuestros huéspedes»), y el juez no siempre la detecta.
 - **Cada parche del prompt tiene efectos secundarios.** v6 corrigió lo que se le pidió (nombrar «nuestra ficha», dar un precio) y, sin que nadie lo pidiera, empezó a dar por cierta «la falta de información visible» en otro caso. Con temperatura 0 no es azar: es el prompt. Por eso cada cambio pasa por el juez.
-- **El juez también hay que probarlo con ficha.** La primera rúbrica con ficha (v2f) suspendía la fórmula correcta «lamentamos la confusión que nos describe» y no superó su puerta (9/10). Al corregirla (v2g) se añadió antes un *canary* **real**, una respuesta del propio generador que confirma la premisa de forma sutil, para que la corrección no relajara al juez: supera los 12/12.
-- **Lo que el juez sigue sin ver:** la promesa encubierta («esperamos poder resolver esta situación» ante una petición de reembolso).
+- **El juez también hay que probarlo con ficha.** La primera rúbrica con ficha (v2f) suspendía la fórmula correcta «lamentamos la confusión que nos describe» y no superó su puerta (9/10). Al corregirla (v2g) se añadió antes un *canary* **real**, una respuesta del propio generador que confirma la premisa de forma sutil, para que la corrección no relajara al juez: supera los 12/12. La rúbrica vigente (v2h) añade otros dos *canaries* reales (una respuesta que da por cierta «una diferencia en lo comunicado» y otra que habla de una estancia que no hubo) y supera los 14/14.
+- **Lo que el juez sigue sin ver:** la promesa encubierta («esperamos poder resolver esta situación» ante una petición de reembolso) y algunas finalidades tras «revisaremos» (ver arriba).
 
-> **Límites.** La base de conocimiento, los casos adversariales, las etiquetas de relevancia y los *canaries* son sintéticos y escritos para el proyecto; los casos de ficha contra cliente son 6. La rúbrica v2g se corrigió después de ver un resultado (mitigado con un *canary* real añadido antes de repetir). Ninguna cifra de esta sección se ha medido con reseñas y respuestas reales de un hotel.
+> **Límites.** La base de conocimiento, los casos adversariales, las etiquetas de relevancia y los *canaries* son sintéticos y escritos para el proyecto; los casos de ficha contra cliente son 6. Las rúbricas v2g y v2h se corrigieron después de ver un resultado (mitigado con un *canary* real añadido antes de repetir). Ninguna cifra de esta sección se ha medido con reseñas y respuestas reales de un hotel.
 
 **Incidente: el modelo corría en la CPU sin avisar.** Una actualización automática de Ollama borró el paquete de soporte AMD (ROCm), que en Windows se instala aparte, y Ollama pasó a la CPU sin ningún error: cada respuesta del modelo de 27B tardaba unos 130 s en vez de 3,5 s. Desde entonces, los scripts que usan el LLM comprueban al arrancar que el modelo está entero en la GPU y fallan si no ([`ollama_gpu.py`](src/caso_uso_llm/ollama_gpu.py)).
 
 ## Pipeline completo y demo
 
 [`pipeline.py`](src/caso_uso_llm/pipeline.py) encadena todos los pasos: normalización y enmascarado de datos personales → sentimiento con el clasificador de producción (ensamble de 3 semillas de mRoBERTa, en CPU) → aspectos → RAG → respuesta (prompt v6) → comprobaciones deterministas y juez con ficha → **publicar o pasar a una persona**, con los motivos. Una respuesta va a revisión humana si se cumple **cualquiera** de estas condiciones: la reseña es negativa o neutral, la confianza del clasificador es menor que 0,85 (umbral elegido en validación), el cliente pide algo (un reembolso, una compensación…), salta una comprobación determinista o el juez suspende algún criterio. Informe: [`reports/phase5_pipeline.md`](reports/phase5_pipeline.md).
+
+Las comprobaciones deterministas se añadieron leyendo respuestas reales (Fase 9), cada una para un fallo que el juez no detecta:
+
+| Va a revisión si… | Por qué |
+|---|---|
+| el clasificador y el LLM no coinciden en el sentimiento | el clasificador no entiende el sarcasmo (una queja sarcástica salió positiva, 0,93) |
+| la reseña parece una trampa (una broma, una provocación, instrucciones al sistema) | un LLM lo comprueba antes de generar; la respuesta es una nota irónica breve y cortés |
+| la respuesta usa un nombre de persona de la reseña | los nombres sin tratamiento ni cargo aún no se enmascaran |
+| la respuesta menciona higiene u olores | no debe sugerir que el hotel tuvo un problema de higiene |
+| la respuesta copia 4 o más palabras de la reseña | suena a loro |
+| la respuesta habla de «su estancia» cuando el cliente no llegó a alojarse | el juez no lo ve |
+| el cliente afirma un servicio que la ficha dice que no existe | una persona revisa la respuesta que se lo aclara |
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/pipeline_es_dark.png">
@@ -413,24 +461,27 @@ Lo que enseñó:
 - **Demostración con 54 reseñas** (14 casos sintéticos y 40 reseñas reales del AHR, que no se usaron para entrenar ni para desarrollar los prompts): 8 publicables, todas positivas, y 46 a revisión. El clasificador acierta 37 de las 40 del AHR. La primera ejecución (2026-10-23) daba 13 publicables; los guardarraíles añadidos en la Fase 9 mandan 5 más a revisión, sobre todo por copiar 4 o más palabras de la reseña.
 - **Las neutrales van siempre a una persona.** En la primera ejecución, las tres neutrales que se habrían publicado rozaban el umbral (confianza 0,851), y el neutral es la clase más débil del clasificador.
 - **Leyendo las respuestas publicables:** ninguna admite culpa, promete nada ni confirma una premisa. Algunas tienen detalles que una persona corregiría y el juez no ve: una errata («Los tarifas»), un anglicismo («feedback») o una suposición sobre la playa cercana. Además, las 8 abren igual («Estimado cliente: Muchas gracias por compartir su experiencia»), y quien lea varias respuestas lo nota.
+- **Leyendo las que van a revisión:** algunas habría que editarlas. Ante «me resbalé en la piscina y no había ni un cartel», v6 responde «revisaremos lo ocurrido con la mayor atención *para garantizar la seguridad de todos nuestros huéspedes*» y «…no pudo disfrutar de su estancia *con la tranquilidad debida*»: las dos frases sugieren un fallo, y el juez las aprueba. Por eso los accidentes pasan siempre por una persona.
 - **Coste:** unos 49 s por reseña nueva en local (mediana; [`reports/phase9_latencia.md`](reports/phase9_latencia.md)), la mayor parte en cargar modelos, porque el generador de 27B y el juez de 12B no caben juntos en la VRAM y Ollama los alterna. La demo muestra el borrador a los ~36 s y el veredicto del juez cuando llega. Por lotes, el pipeline va por etapas (clasificar todo, recuperar todo, generar todo, juzgar todo) para evitarlo.
 
 ### Versiones del prompt posteriores a v6: por qué se mantiene v6
 
-Se probaron dos versiones para corregir lo que muestra la lectura de las respuestas: aperturas repetidas, frases copiadas y «revisaremos lo ocurrido *para*…», que sugiere un fallo. No se adoptó ninguna.
+Se probaron varias versiones para corregir lo que muestra la lectura de las respuestas: aperturas repetidas, frases copiadas y «revisaremos lo ocurrido *para*…», que sugiere un fallo. No se adoptó ninguna. (v7, que es v6 más una regla para no presuponer una estancia que no hubo, empata con v6 en [`reports/phase5_juez.md`](reports/phase5_juez.md): 36/40 reseñas reales cumplen todo con las dos.)
 
 - **v8:** más variedad (respuestas que copian 4 o más palabras de la reseña: de 17/40 a 4/40), pero el juez le suspende «no admite culpa» 20 veces frente a 8 de v6, y por pares gana v6, 25 a 10.
 - **v9** corrigió lo que buscaba sin empeorar en seguridad (no promete, inventa ni confirma premisas más que v6): un saludo que alterna entre «Hola:» y «Saludos:» en vez de «Estimado cliente:» en todas las respuestas, y un recorte determinista de la finalidad tras «revisaremos» (15 de 53 respuestas). **No bastó**:
   - juez por pares: gana v6, 26 a 10 ([`reports/phase9_regresion.md`](reports/phase9_regresion.md));
-  - **valoración humana a ciegas** de 30 reseñas nuevas escritas a mano (no son los casos de desarrollo; se quitó el saludo de las dos respuestas para que no delatara la versión): se prefiere v6 15 veces, v9 10, y hay 3 empates (prueba de signos p = 0,42, no significativa por sí sola). Publicables tal cual: v6 8/30, v9 4/30. Script: [`scripts/comparacion_ciegas.py`](scripts/comparacion_ciegas.py); las reseñas y las valoraciones quedan fuera de git;
+  - **valoración humana a ciegas** de 30 reseñas nuevas escritas a mano (no son los casos de desarrollo; se quitó el saludo de las dos respuestas para que no delatara la versión): se prefiere v6 15 veces, v9 10, y hay 3 empates (prueba de signos p = 0,42, no significativa por sí sola). Publicables tal cual: v6 8/30, v9 4/30 ([`reports/phase9_ciegas.md`](reports/phase9_ciegas.md); las reseñas y las valoraciones quedan fuera de git);
   - empeoró la redacción: «nuestro establecimiento», «su anterior afición», «reconocemos su opinión» y un servicio en barra que el cliente no mencionaba.
 - Las tres medidas apuntan en la misma dirección, así que se mantiene v6. La apertura fija es un problema conocido y se aplaza a la siguiente versión, junto con fallos que comparten las dos: «tomamos nota para mejorar» ante lo que no se puede cambiar, como el tamaño de la habitación o el edificio, o suponer una estancia cuando quien escribe solo entró a usar el baño. Para no sobreajustar, no se itera más el prompt sobre los mismos casos: la siguiente versión espera a tener más reseñas valoradas por personas.
 
-La demo en Gradio (`uv run just app`) muestra cada paso para una reseña y tiene una cola de revisión donde una persona aprueba, edita o descarta cada borrador; cada decisión se guarda para analizarla después. Los hoteles y sus fichas son ficticios.
+La demo en Gradio (`uv run just app`) muestra cada paso para una reseña y tiene una cola de revisión donde una persona aprueba, edita o descarta cada borrador. El borrador aparece en cuanto está escrito y el veredicto del juez llega unos segundos después; antes de él no se muestra nada como publicable. Los hoteles y sus fichas son ficticios. Las reseñas escritas en la demo en vivo y las decisiones de quien revisa se guardan fuera de git (`data/live/`).
 
-<img alt="Demo: una reseña sobre un resbalón junto a la piscina de un hotel ficticio va a revisión humana; el borrador no admite la causa ni niega al cliente, y el juez aprueba los 8 criterios." src="docs/img/demo_respuesta.png" width="820">
+Hay además un **modo repetición** (`uv run just replay`): solo Gradio y los resultados ya calculados de 10 reseñas escritas para la demo, sin modelos ni GPU, para enseñar el pipeline en cualquier equipo.
 
-<img alt="Demo: cola de revisión con los motivos de cada reseña y el borrador editable, con los botones Aprobar y Descartar." src="docs/img/demo_cola.png" width="820">
+<img alt="Demo: una reseña de 4 estrellas que elogia la ubicación y las camas y se queja del wifi de la habitación, en un hotel ficticio. La respuesta explica, como dice la ficha, que los muros de piedra hacen irregular el wifi en las habitaciones; el juez aprueba los 8 criterios y la respuesta es publicable." src="docs/img/demo_respuesta.png" width="820">
+
+<img alt="Demo: cola de revisión con los motivos de cada reseña (todas reales del AHR) y el borrador editable de una reseña de 4 estrellas enviada a revisión por confianza baja, con los botones Aprobar y Descartar." src="docs/img/demo_cola.png" width="820">
 
 ## Requisitos
 
@@ -472,9 +523,20 @@ uv run just rag-juez           # Fase 5: juez con ficha, puerta de canaries y pa
 uv run just gpu-ollama         # comprueba que Ollama tiene el modelo entero en la GPU
 uv run just pipeline           # pipeline completo con el conjunto de demostración (--csv fichero.csv para tus reseñas)
 uv run just app                # demo en Gradio con cola de revisión (http://127.0.0.1:7860)
+uv run just app-live           # lo mismo con contraseña, para una demo en vivo con otras personas
+uv run just replay             # modo repetición: resultados ya calculados, sin modelos ni GPU
+uv run just recoger            # solo un formulario para recoger reseñas (sin modelos); se responden después por lotes
+uv run just latencia           # Fase 9: tiempo por etapa (carga frente a inferencia) -> reports/phase9_latencia.md
+uv run just regresion          # Fase 9: versiones del prompt en las mismas condiciones, filtro de seguridad y pares
+uv run just modelo-pequeno     # Fase 9: generador más pequeño (qwen3.5:9b) frente al de 27B
+uv run just check-raw          # verifica los hashes de data/raw
+uv run just lint               # ruff check + format --check
 uv run python scripts/acuerdo_anotadores.py  # acuerdo con el segundo anotador
 uv run python scripts/calibracion_vista.py   # hoja HTML para etiquetar a ciegas
+uv run python scripts/comparacion_ciegas.py  # hoja A/B a ciegas de dos versiones del prompt y su resultado
+uv run python scripts/formulario_tandas.py   # formulario HTML para escribir reseñas de prueba, de 10 en 10
 uv run python scripts/figuras.py             # gráficas del README a partir de los resultados versionados
+uv run --with playwright python scripts/capturas.py  # capturas de la demo (con la app en marcha)
 uv run just                    # lista todas las recetas
 ```
 
@@ -492,15 +554,18 @@ src/caso_uso_llm/
   pipeline.py  pipeline completo y enrutado a la cola de revisión · app.py demo en Gradio
   spec.py      especificación única de la que salen el prompt y la rúbrica
   ollama_gpu.py  falla si Ollama no tiene el modelo entero en la GPU
+  timing.py · latency.py  medición por etapa (inactiva salvo que se active) e informe de latencia
   paths.py     rutas absolutas · seed.py semillas · log.py progreso
 kb/            base de conocimiento sintética: fichas de hotel, políticas y respuestas aprobadas
-evals/         casos adversariales, canaries, gold, consultas de recuperación y etiquetas de calibración
-scripts/       utilidades (hoja de etiquetado, acuerdo entre anotadores, GPU, gráficas, capturas)
+evals/         casos adversariales, canaries, gold, consultas de recuperación, etiquetas de calibración y muestra de latencia
+demo_replay/   modo repetición: app de Gradio y los casos ya calculados que muestra
+scripts/       utilidades (hojas de etiquetado y de comparación, formularios, acuerdo, GPU, gráficas, capturas)
 docs/img/      gráficas del README y capturas de la demo
-tests/         normalización, deduplicación, split, invariantes de los datos, coherencia prompt-rúbrica y enrutado
+tests/         normalización, deduplicación, split, invariantes de los datos, coherencia prompt-rúbrica, enrutado y la app
 reports/       informes generados por los scripts (no se editan a mano)
 results/       resultados en JSON (incluidas las predicciones, para regenerar informes)
 data/raw/      datos crudos inmutables, verificados por hash
+data/live/     (fuera de git) reseñas escritas por otras personas en la demo en vivo y todo lo derivado de ellas
 legacy/        proyecto original, congelado
 ```
 
@@ -508,7 +573,8 @@ legacy/        proyecto original, congelado
 
 - Versiones fijadas en `uv.lock`, semillas fijas y datasets descargados por commit.
 - El pipeline de datos es determinista: dos ejecuciones, en Windows o en WSL, producen los mismos ficheros byte a byte. El *fine-tuning* en GPU no lo es (los kernels de ROCm no son deterministas): por eso se informan varias semillas y su ensamble.
-- Todas las cifras de este README salen de un informe de `reports/` generado por un script; cada informe indica el comando que lo regenera.
+- Todas las cifras de este README salen de un informe de `reports/` generado por un script; cada informe indica el comando que lo regenera. La excepción es la entrada de las evaluaciones humanas: la comparación a ciegas ([`reports/phase9_ciegas.md`](reports/phase9_ciegas.md)) se regenera a partir de reseñas y valoraciones que están fuera de git porque las escribieron otras personas; el informe solo guarda los recuentos.
+- Las respuestas del LLM se guardan en caché por la petición exacta, así que regenerar un informe las reutiliza. Con Ollama 0.40.7 o posterior (actualiza llama.cpp), las respuestas nuevas pueden diferir en detalles de las cacheadas.
 
 ## Licencia
 

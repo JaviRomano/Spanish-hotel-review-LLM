@@ -1,6 +1,6 @@
 [project]
 name = "caso-uso-llm"
-version = "0.2.0"
+version = "2.1.0"
 description = "Clasificación de sentimiento y respuesta automática a reseñas de hotel con LLMs locales."
 readme = "README.md"
 license = "MIT"

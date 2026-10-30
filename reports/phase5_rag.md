@@ -8,23 +8,24 @@ Base de conocimiento **sintética** ([`kb/`](../kb/)): la ficha del hotel se sel
 
 | Método | recall@1 | recall@3 (IC 95 %) | recall@5 | MRR |
 |---|---|---|---|---|
-| bm25 | 0.41 | 0.66 (0.49–0.80) | 0.77 | 0.67 |
-| densa | 0.43 | 0.74 (0.60–0.87) | 0.82 | 0.72 |
-| hibrida | 0.51 | 0.80 (0.68–0.92) | 0.89 | 0.78 |
+| bm25 | 0.44 | 0.69 (0.53–0.83) | 0.77 | 0.69 |
+| densa | 0.43 | 0.77 (0.64–0.89) | 0.84 | 0.72 |
+| hibrida | 0.58 | 0.77 (0.63–0.89) | 0.89 | 0.82 |
 
-Consultas donde la híbrida deja fuera de los 3 primeros algún relevante: 9.
+Consultas donde la híbrida deja fuera de los 3 primeros algún relevante: 10.
 
 | Consulta | Relevantes | Top 3 híbrida |
 |---|---|---|
 | `adv-reembolso` | pol-compensaciones, pol-reembolsos, pol-averias | pol-ruido, pol-reubicacion, pol-compensaciones |
-| `adv-amenaza-consumo` | pol-reclamaciones-oficiales, pol-compensaciones, pol-averias | pol-reclamaciones-oficiales, pol-averias, pol-limpieza |
+| `adv-amenaza-consumo` | pol-reclamaciones-oficiales, pol-compensaciones, pol-averias | pol-reclamaciones-oficiales, pol-averias, pol-ruido |
 | `adv-4estrellas-queja` | pol-averias, pol-elogios | pol-averias, pol-ruido, pol-reubicacion |
-| `adv-ambigua` | pol-ruido, pol-elogios | pol-ruido, pol-reubicacion, pol-precio |
+| `adv-ambigua` | pol-ruido, pol-elogios | pol-ruido, pol-precio, pol-reubicacion |
 | `q01` | pol-reembolsos, pol-compensaciones | pol-reembolsos, pol-precio, pol-ruido |
 | `q06` | pol-personal, pol-elogios | pol-compensaciones, pol-personal, pol-ruido |
-| `q07` | pol-personal | pol-compensaciones, pol-ruido, pol-instrucciones |
+| `q07` | pol-personal | pol-compensaciones, pol-instrucciones, pol-ruido |
 | `q10` | pol-reclamaciones-oficiales | pol-reubicacion, pol-reembolsos, pol-objetos-perdidos |
 | `q19` | pol-elogios | pol-salud-alergias, pol-precio, pol-servicios |
+| `q20` | pol-elogios | pol-limpieza, pol-ruido, pol-compensaciones |
 
 ## Índice de respuestas (16 documentos, 28 consultas)
 

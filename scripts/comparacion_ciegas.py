@@ -11,7 +11,8 @@ exacta (los empates no cuentan), y cuántas respuestas de cada versión se publi
 
 Uso: uv run python scripts/comparacion_ciegas.py hoja --a data/live/tandas_01-03_v6.json \
          --b data/live/tandas_01-03_v9.json --resenas data/live/tandas_01-03.jsonl --tag ciegas_t01-03
-     uv run python scripts/comparacion_ciegas.py resultado --tag ciegas_t01-03
+     uv run python scripts/comparacion_ciegas.py resultado --tag ciegas_t01-03 \
+         --informe reports/phase9_ciegas.md
 """
 # ruff: noqa: E501  (CSS y JavaScript en línea)
 
@@ -163,14 +164,14 @@ def hoja(a_path: Path, b_path: Path, resenas: Path, tag: str) -> None:
     print(f"Hoja: {LIVE / f'{tag}.html'} ({len(mapa)} reseñas) · mapa aparte: {tag}_mapa.json")
 
 
-def resultado(tag: str) -> None:
+def resultado(tag: str, informe: Path | None = None) -> None:
     mapa = json.loads((LIVE / f"{tag}_mapa.json").read_text(encoding="utf-8"))
     with open(LIVE / f"{tag}.csv", encoding="utf-8-sig") as f:
         rows = list(csv.DictReader(f, delimiter=";"))
     versions = sorted({m["A"] for m in mapa.values()} | {m["B"] for m in mapa.values()})
     wins = dict.fromkeys(versions, 0) | {"empate": 0}
     pub = dict.fromkeys(versions, 0)
-    done = 0
+    both = done = 0
     for r in rows:
         m = mapa[r["id"]]
         if r["preferida"]:
@@ -178,6 +179,7 @@ def resultado(tag: str) -> None:
             wins["empate" if r["preferida"] == "empate" else m[r["preferida"]]] += 1
         pub[m["A"]] += r["a_publicable"] == "1"
         pub[m["B"]] += r["b_publicable"] == "1"
+        both += r["a_publicable"] == "1" and r["b_publicable"] == "1"
     v1, v2 = versions
     decided = wins[v1] + wins[v2]
     p = binomtest(wins[v2], decided, 0.5).pvalue if decided else float("nan")
@@ -185,6 +187,32 @@ def resultado(tag: str) -> None:
     print(f"Gana {v1}: {wins[v1]} · gana {v2}: {wins[v2]} · empate: {wins['empate']}")
     print(f"Prueba de signos (sin empates, bilateral): p = {p:.3f}")
     print(f"Publicables tal cual: {v1} {pub[v1]}/{len(mapa)} · {v2} {pub[v2]}/{len(mapa)}")
+    if informe:
+        n = len(mapa)
+        lines = [
+            "# Fase 9 · Comparación humana a ciegas de dos versiones del prompt",
+            "",
+            f"Generado por `uv run python scripts/comparacion_ciegas.py resultado --tag {tag} "
+            f"--informe {informe.relative_to(ROOT).as_posix()}`. No editar a mano.",
+            "",
+            f"- {n} reseñas nuevas escritas a mano (no son casos de desarrollo), respondidas con las "
+            "dos versiones en las mismas condiciones. Las reseñas, las respuestas y las valoraciones "
+            "quedan fuera de git (`data/live/`): aquí solo van los recuentos.",
+            "- Valora una persona. Cada reseña muestra las dos respuestas como A y B en orden "
+            "aleatorio, con ids opacos y sin el saludo (delataba la versión).",
+            "",
+            f"| | {v1} | {v2} |",
+            "|---|---|---|",
+            f"| Preferida | {wins[v1]} | {wins[v2]} |",
+            f"| Publicable tal cual | {pub[v1]}/{n} | {pub[v2]}/{n} |",
+            "",
+            f"- Empates: {wins['empate']}; sin valorar: {n - done}. Publicables las dos: {both}.",
+            f"- Prueba de signos exacta (bilateral, sin empates): p = {p:.2f}. Con {decided} "
+            "comparaciones decididas, solo una preferencia muy clara sería significativa por sí sola.",
+            "",
+        ]
+        informe.write_text("\n".join(lines), encoding="utf-8", newline="\n")
+        print(f"Informe: {informe}")
 
 
 def main() -> None:
@@ -197,11 +225,12 @@ def main() -> None:
     h.add_argument("--tag", required=True)
     r = sub.add_parser("resultado")
     r.add_argument("--tag", required=True)
+    r.add_argument("--informe", type=Path, help="escribe los recuentos en reports/ (sin textos)")
     args = ap.parse_args()
     if args.cmd == "hoja":
         hoja(ROOT / args.a, ROOT / args.b, ROOT / args.resenas, args.tag)
     else:
-        resultado(args.tag)
+        resultado(args.tag, ROOT / args.informe if args.informe else None)
 
 
 if __name__ == "__main__":
