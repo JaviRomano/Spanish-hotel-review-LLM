@@ -51,7 +51,23 @@ juez no basta, y por eso lo serio nunca se publica sin revisión.
 - **¿Cuánto tarda?** ~49 s por reseña en vivo; el borrador se ve a los ~36 s y el juez llega después.
 - **¿Sale algún dato del equipo?** No: todo corre en local (Ollama + GPU AMD).
 
-## 2. Prueba en vivo (cuando alguien la pide por LinkedIn)
+## 2. Peticiones por el formulario
+
+La página es estática: el formulario de «Pedir una prueba en vivo» envía a un Google Form con una
+sola pregunta, `datos`, que guarda el JSON de la petición. Se configura con `FORM_ID` y `FORM_ENTRY`
+en `scripts/build_replay.py`; vacíos, el botón solo muestra el texto con el enlace a LinkedIn.
+
+1. Exporta la hoja de respuestas a CSV (Archivo > Descargar > CSV).
+2. `uv run just formulario ruta/respuestas.csv`: valida, enmascara datos personales y añade a
+   `data/live/resenas_formulario.jsonl`. El contacto va aparte, a `data/live/peticiones_contacto.csv`,
+   y no llega a los modelos. Reimportar el mismo CSV no duplica nada.
+3. `uv run just pipeline --jsonl data/live/resenas_formulario.jsonl`: procesa por lotes, con la caché
+   y la salida en `data/live/`.
+
+El CSV descargado contiene reseñas y contactos de terceros: no lo guardes dentro del repositorio
+salvo en `data/live/`, y borra las respuestas del Form cuando hayas contestado.
+
+## 3. Prueba en vivo (cuando alguien la pide por LinkedIn)
 
 1. Acordar día y hora. Avisar: una reseña tarda ~1 minuto, y lo que escriba se guarda sin su nombre.
 2. Comprobar la GPU: `uv run just gpu-ollama` (si Ollama se actualizó, reinstalar el zip de ROCm de

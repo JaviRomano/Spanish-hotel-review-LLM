@@ -110,6 +110,11 @@ replay:
 app-live:
     python -m caso_uso_llm.app --auth
 
+# Importa las peticiones de la página (CSV del Google Form) -> data/live/resenas_formulario.jsonl
+# Después: just pipeline --jsonl data/live/resenas_formulario.jsonl
+formulario *ARGS:
+    python -m caso_uso_llm.formulario {{ARGS}}
+
 # Demo en modo recogida: solo el formulario, sin modelos; guarda en data/live/resenas_recogidas.jsonl
 # (sin contraseña; --auth la pide con DEMO_USER y DEMO_PASS). Se publica con el mismo túnel que app-live
 recoger:

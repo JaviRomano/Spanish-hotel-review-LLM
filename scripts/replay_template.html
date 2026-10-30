@@ -99,6 +99,24 @@ p { margin: 0; }
 .btn.primary { background: var(--accent); color: var(--accent-ink); border: 1px solid var(--accent); }
 .btn.secondary { background: none; color: var(--accent); border: 1px solid var(--accent); }
 .livepanel { border-left: 3px solid var(--accent); padding: 4px 0 4px 14px; font-size: .95rem; max-width: 70ch; }
+#liveform { display: grid; gap: 12px; }
+#liveform[hidden], #livetext[hidden], .remove[hidden], #addreview[hidden] { display: none; }
+#formreviews { display: grid; gap: 12px; }
+#formreviews fieldset { border: 0; border-top: 1px solid var(--rule); margin: 0; padding: 10px 0 0; display: grid; gap: 8px; min-width: 0; }
+#formreviews legend { font: 600 .72rem var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); padding: 0 8px 0 0; }
+.formrow { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.field { display: grid; gap: 3px; min-width: 0; }
+.field label { font-size: .86rem; font-weight: 700; }
+.field input, .field select, .field textarea { font: inherit; font-size: .95rem; color: var(--ink); background: var(--sheet); border: 1px solid var(--rule); border-radius: 3px; padding: 7px 9px; width: 100%; min-width: 0; }
+.field textarea { min-height: 96px; resize: vertical; }
+.field [aria-invalid="true"] { border-color: var(--fail); }
+.check { display: flex; gap: 8px; align-items: flex-start; font-size: .86rem; }
+.check input { margin-top: 4px; flex: none; }
+.trap { position: absolute; left: -9999px; }
+.remove { justify-self: start; font: inherit; font-size: .84rem; background: none; border: 0; color: var(--accent); text-decoration: underline; padding: 0; cursor: pointer; }
+.formstatus { font-weight: 700; min-height: 1.4em; }
+.formstatus.bad { color: var(--fail); } .formstatus.good { color: var(--pass); }
+#addreview, #sendform { justify-self: start; }
 details.fold { max-width: 70ch; border-top: 1px solid var(--rule); }
 details.fold summary { cursor: pointer; padding: 9px 0; font-weight: 700; color: var(--accent); }
 details.fold ul { margin: 0 0 12px; padding-left: 20px; color: var(--muted); }
@@ -234,7 +252,22 @@ footer { margin-top: 34px; color: var(--muted); font-size: .86rem; border-top: 1
         <a class="btn primary" href="__LINKEDIN__" target="_blank" rel="noopener">Contactar</a>
         <button class="btn secondary" id="livebtn" type="button" aria-expanded="false" aria-controls="livepanel">Pedir una prueba en vivo</button>
       </div>
-      <p class="livepanel" id="livepanel" hidden>Esta página repite resultados ya generados: aquí no se ejecuta ningún modelo. Envíame por <a href="__LINKEDIN__" target="_blank" rel="noopener">LinkedIn</a> hasta 5 reseñas, inventadas o reales sin datos personales, y en una sesión en directo desde mi ordenador verás, para cada una, la respuesta, si se publicaría o pasaría a una persona y por qué, y cuánto tarda.</p>
+      <div class="livepanel" id="livepanel" hidden>
+        <p id="livetext">Esta página repite resultados ya generados: aquí no se ejecuta ningún modelo. Envíame por <a href="__LINKEDIN__" target="_blank" rel="noopener">LinkedIn</a> hasta 5 reseñas, inventadas o reales sin datos personales, y en una sesión en directo desde mi ordenador verás, para cada una, la respuesta, si se publicaría o pasaría a una persona y por qué, y cuánto tarda.</p>
+        <form id="liveform" hidden novalidate>
+          <p>Esta página repite resultados ya generados. Escribe de 1 a 5 reseñas, inventadas o reales sin datos personales. Las pasaré por el sistema en mi ordenador y te enviaré, para cada una, la respuesta, si se publicaría o pasaría a una persona, y por qué.</p>
+          <div id="formreviews"></div>
+          <button class="btn secondary" id="addreview" type="button">Añadir otra reseña</button>
+          <div class="formrow">
+            <div class="field"><label for="f-nick">Nick (no tu nombre)</label><input id="f-nick" maxlength="30" autocomplete="off" required></div>
+            <div class="field"><label for="f-contact">Dónde te envío el resultado</label><input id="f-contact" maxlength="120" placeholder="Perfil de LinkedIn o correo" required></div>
+          </div>
+          <div class="trap" aria-hidden="true"><label for="f-web">No rellenar</label><input id="f-web" tabindex="-1" autocomplete="off"></div>
+          <label class="check"><input id="f-consent" type="checkbox" required> <span>Acepto que mis reseñas y mi contacto se envíen a través de Google Forms y se guarden para evaluar y mejorar el sistema y enviarme el resultado. No se publicarán. No incluyas datos personales en las reseñas.</span></label>
+          <button class="btn primary" id="sendform" type="submit">Enviar reseñas</button>
+          <p class="formstatus" id="formstatus" role="status"></p>
+        </form>
+      </div>
       <div>
         <details class="fold">
           <summary>Qué está demostrado y qué no</summary>
@@ -349,6 +382,60 @@ footer { margin-top: 34px; color: var(--muted); font-size: .86rem; border-top: 1
   $("livebtn").addEventListener("click", () => {
     const open = $("livepanel").hidden; $("livepanel").hidden = !open; $("livebtn").setAttribute("aria-expanded", String(open));
   });
+
+  // Formulario de prueba en vivo: la página es estática y envía a un Google Form (build_replay.py).
+  // Sin Form configurado se queda el texto con el enlace a LinkedIn.
+  if (DATA.formulario) {
+    const MAX = 5, NICK = /^[\p{L}\p{N}_.\-]{2,30}$/u, list = $("formreviews");
+    let serial = 0;
+    $("livetext").hidden = true; $("liveform").hidden = false;
+    const field = (label, control) => { const d = el("div", null, "field"), l = el("label", label); control.id = `f-r${++serial}`; l.htmlFor = control.id; d.append(l, control); return d; };
+    const renumber = () => {
+      [...list.children].forEach((f, i) => { f.querySelector("legend").textContent = `Reseña ${i + 1}`; f.querySelector(".remove").hidden = list.children.length === 1; });
+      $("addreview").hidden = list.children.length >= MAX;
+    };
+    const addReview = () => {
+      const f = el("fieldset"); f.append(el("legend"));
+      const hotel = document.createElement("select"); hotel.append(new Option("Sin hotel concreto", ""));
+      for (const [id, name] of DATA.hoteles) hotel.append(new Option(name, id));
+      const title = el("input"); title.maxLength = 120;
+      const text = el("textarea"); text.maxLength = 2000; text.required = true;
+      const rm = el("button", "Quitar esta reseña", "remove"); rm.type = "button";
+      rm.addEventListener("click", () => { f.remove(); renumber(); list.querySelector("textarea").focus(); });
+      f.append(field("Hotel", hotel), field("Título (opcional)", title), field("Reseña", text), rm);
+      list.append(f); renumber(); return text;
+    };
+    addReview();
+    $("addreview").addEventListener("click", () => addReview().focus());
+    $("liveform").addEventListener("submit", async e => {
+      e.preventDefault();
+      const status = $("formstatus"), say = (msg, cls) => { status.textContent = msg; status.className = "formstatus " + cls; };
+      const texts = [...list.querySelectorAll("textarea")];
+      const checks = [
+        ...texts.map(x => [x, x.value.trim().length > 0, "Escribe el texto de cada reseña."]),
+        [$("f-nick"), NICK.test($("f-nick").value.trim()), "El nick debe tener de 2 a 30 letras, números, punto, guion o guion bajo."],
+        [$("f-contact"), $("f-contact").value.trim().length > 3, "Indica dónde enviarte el resultado."],
+        [$("f-consent"), $("f-consent").checked, "Para enviar hace falta marcar la casilla."],
+      ];
+      checks.forEach(([x, ok]) => x.setAttribute("aria-invalid", String(!ok)));
+      const wrong = checks.find(([, ok]) => !ok);
+      if (wrong) { say(wrong[2], "bad"); wrong[0].focus(); return; }
+      if ($("f-web").value) { say("Enviado. Gracias.", "good"); return; }  // trampa para robots
+      const payload = {consentimiento: true, nick: $("f-nick").value.trim(), contacto: $("f-contact").value.trim(), resenas: [...list.children].map(f => {
+        const [hotel, title, text] = f.querySelectorAll("select, input, textarea");
+        return {hotel: hotel.value, title: title.value.trim(), text: text.value.trim()};
+      })};
+      $("sendform").disabled = true; say("Enviando…", "");
+      try {
+        // Google no deja leer la respuesta (no-cors): solo se sabe que la petición ha salido
+        await fetch(DATA.formulario.url, {method: "POST", mode: "no-cors", body: new URLSearchParams({[DATA.formulario.entry]: JSON.stringify(payload)})});
+        $("liveform").reset(); list.replaceChildren(); addReview();
+        say("Enviado. Gracias: te escribiré al contacto que has dejado.", "good");
+      } catch (err) {
+        say("No se ha podido enviar. Escríbeme por LinkedIn, por favor.", "bad");
+      } finally { $("sendform").disabled = false; }
+    });
+  }
 
   // Selector agrupado por modo de evaluación
   const select = $("case");

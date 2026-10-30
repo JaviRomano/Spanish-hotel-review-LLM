@@ -6,16 +6,23 @@
   calcula el navegador en los dos temas.
 - Teclado: el selector cambia de caso con las flechas y los fragmentos resaltados muestran su
   explicación al enfocarlos con el tabulador.
+- Formulario de prueba en vivo: de punta a punta contra el importador, sin enviar nada a Google.
 
 Playwright no es dependencia del proyecto:
     uv run --with playwright python scripts/verificar_replay.py
 """
 
+import json
 import re
 import sys
+import tempfile
 from pathlib import Path
+from urllib.parse import parse_qs
 
 from playwright.sync_api import sync_playwright
+
+from caso_uso_llm.formulario import parse_row
+from caso_uso_llm.rag import kb
 
 ROOT = Path(__file__).resolve().parents[1]
 PAGE = (ROOT / "docs" / "index.html").as_uri()
@@ -46,6 +53,51 @@ def ratio(a: str, b: str) -> float:
 BG = """el => { let n = el; while (n) { const c = getComputedStyle(n).backgroundColor;
   if (c && !c.startsWith('rgba(0, 0, 0, 0)') && c !== 'transparent') return c; n = n.parentElement; }
   return getComputedStyle(document.body).backgroundColor; }"""
+
+
+def check_form(browser) -> list[str]:
+    """Formulario de punta a punta sin Google: se inyecta una configuración de prueba, se intercepta
+    el envío y el importador debe aceptar lo que sale de la página."""
+    html = (ROOT / "docs" / "index.html").read_text(encoding="utf-8")
+    fake = '"formulario": {"url": "https://docs.google.com/forms/d/e/PRUEBA/formResponse", "entry": "entry.1"}'
+    assert '"formulario": null' in html or '"formulario": {' in html
+    html = re.sub(r'"formulario": (null|\{[^}]*\})', fake, html, count=1)
+    sent, problems = [], []
+    with tempfile.TemporaryDirectory() as tmp:
+        page_file = Path(tmp) / "index.html"
+        page_file.write_text(html, encoding="utf-8")
+        page = browser.new_page(viewport={"width": 380, "height": 840})
+        page.route(
+            "https://docs.google.com/**",
+            lambda r: (sent.append(r.request.post_data), r.fulfill(status=200, body="")),
+        )
+        page.goto(page_file.as_uri())
+        page.click("#livebtn")
+        page.click("#sendform")  # vacío: debe rechazarlo sin enviar
+        if sent or "cada reseña" not in page.inner_text("#formstatus"):
+            problems.append("formulario: envía o no avisa con los campos vacíos")
+        page.locator("#formreviews textarea").first.fill("Primera reseña de prueba.")
+        page.click("#addreview")
+        page.locator("#formreviews textarea").nth(1).fill("Segunda reseña de prueba.")
+        page.locator("#formreviews select").nth(1).select_option(index=1)
+        page.fill("#f-nick", "prueba.1")
+        page.fill("#f-contact", "linkedin.com/in/prueba")
+        page.check("#f-consent")
+        page.click("#sendform")
+        page.wait_for_function("document.getElementById('formstatus').className.includes('good')")
+        overflow = page.evaluate("document.documentElement.scrollWidth") - 380
+        if overflow > 0:
+            problems.append(f"formulario: desborda {overflow} px en móvil")
+        page.close()
+    if len(sent) != 1:
+        return [*problems, f"formulario: {len(sent)} envíos, se esperaba 1"]
+    raw = parse_qs(sent[0])["entry.1"][0]
+    reviews, contact = parse_row("31/10/2026 12:00:00", raw, set(kb.fichas()))
+    if len(reviews) != 2 or contact != "linkedin.com/in/prueba" or reviews[0]["hotel"] is not None:
+        problems.append(
+            f"formulario: el importador no recibe lo enviado: {json.dumps(reviews)[:200]}"
+        )
+    return problems
 
 
 def main() -> int:
@@ -98,6 +150,7 @@ def main() -> int:
         page.focus("mark")
         if not page.locator("mark .tip").first.is_visible():
             problems.append("teclado: el resaltado enfocado no muestra su explicación")
+        problems += check_form(browser)
         browser.close()
 
     shots = sorted(f.name for f in SHOTS.glob("*.png"))

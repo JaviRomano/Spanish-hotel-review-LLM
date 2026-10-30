@@ -39,6 +39,9 @@ REPO = "https://github.com/JaviRomano/Spanish-hotel-review-LLM"
 LINKEDIN = "https://www.linkedin.com/in/franciscojavier-fernandezrumi/"  # contacto y prueba en vivo
 GITHUB = "https://github.com/JaviRomano"
 AUTHOR = "Fco Javier Fdez"
+# Google Form de la prueba en vivo (una pregunta, «datos»). Vacíos: la página solo enlaza a LinkedIn.
+FORM_ID = ""  # lo que va entre /forms/d/e/ y /viewform en el enlace del Form
+FORM_ENTRY = ""  # entry.NNNN del enlace prefilled
 GPU = "AMD RX 7900 XTX"  # README, «Requisitos»: el hardware no está en ningún fichero de config
 GROUP = {
     "propio": "Reseñas propias",
@@ -175,7 +178,13 @@ def main() -> None:
     tour = selection["recorrido"]
     missing = [s["id"] for s in tour if s["id"] not in ids]
     assert not missing, f"el recorrido nombra casos que la página no muestra: {missing}"
-    doc = {"umbral": THRESHOLD, "casos": cases, "recorrido": tour, "stack": stack()}
+    form = None
+    if FORM_ID and FORM_ENTRY:
+        url = f"https://docs.google.com/forms/d/e/{FORM_ID}/formResponse"
+        form = {"url": url, "entry": FORM_ENTRY}
+    hotels = [[k, f"{h['nombre']} ({h['ciudad']})"] for k, h in kb.fichas().items()]
+    doc = {"umbral": THRESHOLD, "casos": cases, "recorrido": tour, "stack": stack(),
+           "formulario": form, "hoteles": hotels}  # fmt: skip
     data = json.dumps(doc, ensure_ascii=False, indent=1)
     # Dentro de <script>, «</» cerraría la etiqueta antes de tiempo
     page = TEMPLATE.read_text(encoding="utf-8").replace("__DATA__", data.replace("</", "<\\/"))
