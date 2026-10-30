@@ -21,10 +21,12 @@ SOURCES = (ROOT / "results" / "demo_propias.json",)  # las reseñas propias, com
 # Más una selección de la demostración, con una nota escrita después de ver la respuesta
 DEMO = ROOT / "results" / "pipeline_cola.json"
 SELECTION = ROOT / "evals" / "demo" / "seleccion_replay.json"
+RATINGS = ROOT / "evals" / "demo" / "valoracion_propias.json"  # del autor, frente a lo esperado
 TEMPLATE = ROOT / "scripts" / "replay_template.html"
 OUT = ROOT / "docs" / "index.html"
 REPO = "https://github.com/JaviRomano/Spanish-hotel-review-LLM"
 LINKEDIN = "https://www.linkedin.com/in/franciscojavier-fernandezrumi/"  # prueba en vivo
+GITHUB = "https://github.com/JaviRomano"  # autoría: JaviRomano
 GROUP = {
     "propio": "Reseñas propias",
     "sintético": "Casos sintéticos",
@@ -39,8 +41,10 @@ def compact(it: dict, names: dict, policies: dict) -> dict:
         "id": it["id"],
         "grupo": GROUP.get(meta.get("grupo"), meta.get("grupo", "")),
         "tipo": meta.get("tipo") or (f"{meta['rating']}★" if meta.get("rating") else ""),
+        "titulo": it.get("title", ""),
         "esperado": meta.get("esperado", ""),
         "nota": "",
+        "valoracion": None,
         "hotel": f"{hotel['nombre']} ({hotel['ciudad']})" if hotel else "Sin ficha",
         "ficha": kb.ficha_texto(it["hotel"]) if hotel else "",
         "review": it["review"],
@@ -70,25 +74,33 @@ def main() -> None:
     names = {c.id: c.nombre for c in criterios(RUBRIC)}
     policies = {d.id: d.payload["titulo"] for d in kb.politicas()}
     selection = json.loads(SELECTION.read_text(encoding="utf-8"))
+    ratings = json.loads(RATINGS.read_text(encoding="utf-8"))["valoraciones"]
     skip = set(selection.get("excluir_propias", []))
     cases = []
     for src in SOURCES:
         if src.exists():
             cases += [
-                compact(it, names, policies)
+                compact(it, names, policies) | {"valoracion": ratings.get(it["id"])}
                 for it in json.loads(src.read_text(encoding="utf-8"))
                 if it["id"] not in skip
             ]
     demo = {it["id"]: it for it in json.loads(DEMO.read_text(encoding="utf-8"))}
     for sel in selection["casos"]:
-        cases.append(compact(demo[sel["id"]], names, policies) | {"nota": sel["nota"]})
-    data = json.dumps({"umbral": THRESHOLD, "casos": cases}, ensure_ascii=False, indent=1)
+        extra = {"nota": sel["nota"], "titulo": sel["titulo"]}
+        cases.append(compact(demo[sel["id"]], names, policies) | extra)
+    ids = {c["id"] for c in cases}
+    tour = selection["recorrido"]
+    missing = [s["id"] for s in tour if s["id"] not in ids]
+    assert not missing, f"el recorrido nombra casos que la página no muestra: {missing}"
+    doc = {"umbral": THRESHOLD, "casos": cases, "recorrido": tour}
+    data = json.dumps(doc, ensure_ascii=False, indent=1)
     # Dentro de <script>, «</» cerraría la etiqueta antes de tiempo
     page = (
         TEMPLATE.read_text(encoding="utf-8")
         .replace("__DATA__", data.replace("</", "<\\/"))
         .replace("__REPO__", REPO)
         .replace("__LINKEDIN__", LINKEDIN)
+        .replace("__GITHUB__", GITHUB)
     )
     OUT.write_text(page, encoding="utf-8", newline="\n")
     print(f"{len(cases)} casos -> {OUT.relative_to(ROOT)}")

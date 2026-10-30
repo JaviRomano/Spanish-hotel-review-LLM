@@ -1,0 +1,11 @@
+{
+ "description": "Valoración del autor (JaviRomano, 2026-10-30) de las respuestas a sus reseñas propias frente a lo que esperaba (escrito antes de generar). Veredicto: cumple | parcial | no_cumple. Solo de las reseñas que muestra la página de repetición.",
+ "valoraciones": {
+  "p01": {"veredicto": "cumple", "motivo": "«La decoración» sonaría mejor que «la estética de la habitación»."},
+  "p02": {"veredicto": "cumple", "motivo": ""},
+  "p08": {"veredicto": "no_cumple", "motivo": "Da por válido el accidente en noviembre, cuando según la ficha la piscina está abierta todo el año y climatizada, y se hace eco de la intención de reclamar daños. Ante una situación seria debe instar directamente a comunicarse por canal privado para resolverlo de forma satisfactoria."},
+  "p09": {"veredicto": "cumple", "motivo": "Al ofrecer el canal privado podría no repetir el motivo y decir «para atenderle mejor»."},
+  "p18": {"veredicto": "cumple", "motivo": ""},
+  "p20": {"veredicto": "cumple", "motivo": "Omite que el cliente creía que el parking era gratuito."}
+ }
+}

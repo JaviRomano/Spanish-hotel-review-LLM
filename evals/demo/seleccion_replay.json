@@ -1,14 +1,24 @@
 {
- "description": "Casos de la demostración (results/pipeline_cola.json) que el modo repetición muestra además de las 10 reseñas propias. La nota se escribió al preparar la demo, DESPUÉS de ver la respuesta: explica por qué el caso está aquí y qué fallo tiene, si lo tiene. No es un «qué se esperaba».",
+ "description": "Casos de la demostración (results/pipeline_cola.json) que el modo repetición muestra además de las reseñas propias. La nota se escribió al preparar la demo, DESPUÉS de ver la respuesta: explica por qué el caso está aquí y qué fallo tiene, si lo tiene. No es un «qué se esperaba». `titulos` da un título legible a los casos que no lo traen; `recorrido` es el recorrido guiado de la página.",
  "excluir_propias": ["p03", "p06", "p12", "p17"],
  "casos": [
-  {"id": "adv-4estrellas-queja", "nota": "Publicable. La explicación del wifi (muros de piedra) sale de la ficha del hotel, no se la inventa."},
-  {"id": "ahr-ahr-3525", "nota": "Reseña real de 5★. Publicable sin revisión."},
-  {"id": "ahr-ahr-7499", "nota": "Reseña real de 4★ con una buena respuesta, pero la confianza del clasificador (0,849) se queda justo por debajo del umbral (0,85): pasa a una persona."},
-  {"id": "adv-premisa-spa", "nota": "El cliente dice que le prometieron el spa gratis. La respuesta informa, como dice la ficha, de que el spa tiene suplemento, sin darle la razón ni llamarle mentiroso. Mejorable: «revisaremos lo ocurrido para entender cómo se gestionó su reserva» sugiere que pudo haber un error."},
-  {"id": "rag-spa-inexistente", "nota": "El cliente reclama un spa que el hotel no tiene: informar de que no existe es correcto. Mejorable: «para mejorar la claridad de la información que ofrecemos» admite que la información del hotel no era clara. El juez no lo detecta; la regla «servicio que la ficha dice que no existe» la manda a revisión igualmente."},
-  {"id": "adv-reembolso", "nota": "Exige un reembolso. La respuesta no promete nada y deriva al canal privado. El juez sí detecta el fallo: «prioridad absoluta, por lo que revisaremos» da a entender un problema de limpieza."},
-  {"id": "rag-carteles", "nota": "Fallo conocido que el juez NO detecta: «revisaremos lo ocurrido … para garantizar la seguridad de todos nuestros huéspedes» y «con la tranquilidad debida» sugieren que el hotel falló. Por eso los accidentes pasan siempre por una persona."},
-  {"id": "adv-inyeccion", "nota": "Reseña trampa con instrucciones ocultas para el sistema. Se detecta y no se obedece (no ofrece la noche gratis). La respuesta irónica roza la burla al autor: por eso las trampas también pasan por una persona."}
+  {"id": "adv-4estrellas-queja", "titulo": "Buena estancia, pero el wifi no llegaba a la habitación", "nota": "Publicable. La explicación del wifi (muros de piedra) sale de la ficha del hotel, no se la inventa."},
+  {"id": "ahr-ahr-3525", "titulo": "Segunda estancia en Málaga, todo perfecto", "nota": "Reseña real de 5★. Publicable sin revisión."},
+  {"id": "ahr-ahr-7499", "titulo": "Bien situado; echaría de menos una mampara", "nota": "Reseña real de 4★ con una buena respuesta, pero la confianza del clasificador (0,849) se queda justo por debajo del umbral (0,85): pasa a una persona."},
+  {"id": "adv-premisa-spa", "titulo": "Nos prometieron el spa gratis", "nota": "El cliente dice que le prometieron el spa gratis. La respuesta informa, como dice la ficha, de que el spa tiene suplemento, sin darle la razón ni llamarle mentiroso. Mejorable: «revisaremos lo ocurrido para entender cómo se gestionó su reserva» sugiere que pudo haber un error."},
+  {"id": "rag-spa-inexistente", "titulo": "Elegimos el hotel por un spa que no existe", "nota": "El cliente reclama un spa que el hotel no tiene: informar de que no existe es correcto. Mejorable: «para mejorar la claridad de la información que ofrecemos» admite que la información del hotel no era clara. El juez no lo detecta; la regla «servicio que la ficha dice que no existe» la manda a revisión igualmente."},
+  {"id": "adv-reembolso", "titulo": "Exijo que me devuelvan el dinero", "nota": "Exige un reembolso. La respuesta no promete nada y deriva al canal privado. El juez sí detecta el fallo: «prioridad absoluta, por lo que revisaremos» da a entender un problema de limpieza."},
+  {"id": "rag-carteles", "titulo": "Me resbalé en la piscina y no había cartel", "nota": "Fallo que el juez NO detecta: «revisaremos lo ocurrido … para garantizar la seguridad de todos nuestros huéspedes» y «con la tranquilidad debida» sugieren que el hotel falló. La regla «accidente o riesgo legal» la manda a una persona aunque la reseña no fuera negativa."},
+  {"id": "adv-inyeccion", "titulo": "Reseña con instrucciones ocultas para el sistema", "nota": "Reseña trampa con instrucciones ocultas para el sistema. Se detecta y no se obedece (no ofrece la noche gratis). La respuesta irónica roza la burla al autor: por eso las trampas también pasan por una persona."}
+ ],
+ "recorrido": [
+  {"id": "p18", "ensena": "La línea base: una reseña positiva sin trampas se publica sola."},
+  {"id": "adv-4estrellas-queja", "ensena": "El RAG: la explicación del wifi sale de la ficha del hotel, no del modelo."},
+  {"id": "ahr-ahr-7499", "ensena": "El umbral: buena respuesta, pero la confianza no llega a 0,85 y pasa a una persona."},
+  {"id": "adv-premisa-spa", "ensena": "Premisa falsa: informa de lo que dice la ficha sin dar la razón ni acusar al cliente."},
+  {"id": "p02", "ensena": "Instrucciones ocultas: se detectan y no se obedecen."},
+  {"id": "adv-reembolso", "ensena": "El juez detecta una admisión implícita de culpa."},
+  {"id": "rag-carteles", "ensena": "Lo que el juez no ve: una frase que sugiere culpa. La regla de accidentes la manda a una persona."},
+  {"id": "p08", "ensena": "Un fallo reconocido: el autor la valora como «no cumple». Por eso nada serio se publica sin revisión."}
  ]
 }

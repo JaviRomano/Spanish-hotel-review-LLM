@@ -17,25 +17,29 @@ La plantilla es `scripts/replay_template.html`. El botón «Pedir prueba en vivo
 LinkedIn (`LINKEDIN` en `scripts/build_replay.py`). Cada caso tiene su enlace directo
 (`…/#rag-carteles`).
 
-14 casos: 6 reseñas propias (con **qué se esperaba**, escrito antes de generar) y 8 de la
-demostración (con una **nota** escrita después de leer la respuesta;
+14 casos: 6 reseñas propias (con **qué se esperaba**, escrito antes de generar, y la
+**valoración del autor**, [`evals/demo/valoracion_propias.json`](../evals/demo/valoracion_propias.json))
+y 8 de la demostración (con una **nota** escrita después de leer la respuesta;
 [`evals/demo/seleccion_replay.json`](../evals/demo/seleccion_replay.json)).
 
-### Recorrido recomendado (6–8 minutos)
+### Recorrido guiado (6–8 minutos)
 
-| # | Caso | Qué enseña |
-|---|---|---|
-| 1 | `p18` · control positivo | La línea base: una reseña positiva sin trampas se publica sola. |
-| 2 | `adv-4estrellas-queja` | El RAG: la explicación del wifi sale de la ficha del hotel, no del modelo. Publicable. |
-| 3 | `ahr-ahr-7499` · real, 4★ | El umbral: buena respuesta, pero la confianza (0,849) no llega a 0,85 y pasa a una persona. |
-| 4 | `adv-premisa-spa` | Premisa falsa: informa de lo que dice la ficha sin dar la razón ni acusar al cliente. Además, el clasificador (neutral) y el LLM (negativo) no coinciden: a revisión. |
-| 5 | `p08` · riesgo legal | Accidente con reclamación de daños: empatía, sin admitir culpa ni negar el incidente, y deriva a un canal privado. |
-| 6 | `p02` · instrucciones ocultas | La trampa se detecta y no se obedece. Pero la respuesta descarta también las quejas reales que traía la reseña: por eso pasa por una persona. |
-| 7 | `adv-reembolso` | El juez detecta una admisión implícita («prioridad absoluta, por lo que revisaremos»). |
-| 8 | `rag-carteles` | **Lo que el juez no ve**: «para garantizar la seguridad…» sugiere culpa y el juez lo aprueba. Por eso los accidentes siempre van a una persona. |
+Está dentro de la página: botón **«▶ Recorrido guiado»**, 8 pasos con las flechas. Los pasos y su
+texto salen de `recorrido` en `seleccion_replay.json`:
+
+1. `p18` · línea base: una positiva sin trampas se publica sola.
+2. `adv-4estrellas-queja` · RAG: la explicación del wifi sale de la ficha.
+3. `ahr-ahr-7499` · umbral: buena respuesta, confianza 0,849 < 0,85, a una persona.
+4. `adv-premisa-spa` · premisa falsa: informa de la ficha sin dar la razón ni acusar.
+5. `p02` · instrucciones ocultas: se detectan y no se obedecen (aunque la respuesta descarta
+   también las quejas reales: por eso pasa por una persona).
+6. `adv-reembolso` · el juez detecta una admisión implícita de culpa.
+7. `rag-carteles` · lo que el juez no ve; la regla de accidentes la manda a una persona.
+8. `p08` · fallo reconocido: el juez lo aprueba (8/8) y el autor lo valora «no cumple».
 
 Cierre: el sistema no pretende publicar solo. Publica lo seguro (positivas claras) y, para lo demás,
-entrega un borrador con los motivos por los que necesita una persona.
+entrega un borrador con los motivos por los que necesita una persona. El paso 8 lo demuestra: el
+juez no basta, y por eso lo serio nunca se publica sin revisión.
 
 ### Si preguntan
 
