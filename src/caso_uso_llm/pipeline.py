@@ -186,6 +186,7 @@ def generate_stage(
                                  detect_traps=True, trap_system=GENUINIDAD_V2, today=today)  # fmt: skip
         response = gen["response"]
         it["genuina"], it["motivo_trampa"] = gen["genuina"], gen.get("motivo_trampa", "")
+        it["recortes"] = gen.get("recortes", [])  # v9: finalidad recortada tras «revisaremos»
         with timing.stage("checks"):
             checks = C.run_checks(response, analysis["aspectos"])
             checks.update(ficha_checks(response, it["review"], it["hotel"]))

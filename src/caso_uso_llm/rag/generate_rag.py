@@ -112,10 +112,25 @@ def context_user(
         if lean
         else "Respuestas aprobadas a reseñas parecidas (solo como ejemplo)"
     )
+    greeting = (
+        f"\n\nSaludo con el que debes empezar: «{greeting_for(review)}»" if version == "v9" else ""
+    )
     return (
         f"Ficha del hotel:\n{ficha}\n\nPolíticas aplicables:\n{pol_text}\n\n"
-        f"{ex_label}:\n{ex_text}\n\n---\n\n" + response_user(review, analysis, quotes=not lean)
+        f"{ex_label}:\n{ex_text}\n\n---\n\n"
+        + response_user(review, analysis, quotes=not lean)
+        + greeting
     )
+
+
+def greeting_for(review: str) -> str:
+    """Saludo de v9 elegido por reseña (spec.SALUDOS): se alterna entre respuestas, pero la misma
+    reseña recibe siempre el mismo (reproducible y cacheable)."""
+    from caso_uso_llm.spec import SALUDOS
+
+    return SALUDOS[
+        int(hashlib.sha1(f"saludo\n{review}".encode()).hexdigest()[:8], 16) % len(SALUDOS)
+    ]
 
 
 def options_for(version: str, review: str) -> dict | None:
@@ -166,10 +181,11 @@ def generate_reply(
             text = respond(trap_reply, f"Reseña:\n«{review}»", cache, model, opts)
             return {"response": text, "genuina": False, "motivo_trampa": g["motivo"]}
     user = context_user(review, analysis, hotel, pols, exs, version)
-    return {
-        "response": respond(RESPONSE_PROMPTS[version], user, cache, model, opts),
-        "genuina": True,
-    }
+    response = respond(RESPONSE_PROMPTS[version], user, cache, model, opts)
+    out = {"response": response, "genuina": True}
+    if version == "v9":  # el prompt no basta: la finalidad tras «revisaremos» se recorta aquí
+        out["response"], out["recortes"] = C.trim_purpose(response)
+    return out
 
 
 def ficha_checks(response: str, review: str, hotel: str | None) -> dict:

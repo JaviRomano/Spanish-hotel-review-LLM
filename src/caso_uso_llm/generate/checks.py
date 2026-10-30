@@ -96,7 +96,11 @@ NAME_IN_REVIEW = re.compile(
     rf"\b(?:soy|me llamo|mi nombre es|una tal|un tal|la chica|el chico|recepcionista|camarer[oa])"
     rf",?\s+{_NAME}"
 )
-SALUTATION = re.compile(r"^\s*Estimad[oa]s?\s+([^\s:,]+)", re.IGNORECASE)
+# Saludo personalizado en la primera línea: «Estimado Andrés:», «Hola, Andrés:». Solo dentro de esa
+# línea: «Hola:» seguido de un salto de línea (el saludo de v9) no captura la palabra siguiente.
+SALUTATION = re.compile(
+    r"^[ \t]*(?:Estimad[oa]s?|Hola|Buenas|Saludos)[ \t]*,?[ \t]+([^\s:,]+)", re.IGNORECASE
+)
 GENERIC_SALUTATION = {"cliente", "clienta", "clientes", "huésped", "huéspedes", "señor", "señora"}
 
 
@@ -198,3 +202,20 @@ def copied_from_review(response: str, review: str, n: int = 4) -> list[str]:
 
 def _ngrams(words: list[str], n: int) -> list[list[str]]:
     return [words[i : i + n] for i in range(len(words) - n + 1)]
+
+
+# «Revisaremos lo ocurrido para entender cómo se produjo…»: la finalidad da a entender un fallo y
+# el juez la suspende como admisión de culpa. v9 lo prohíbe en el prompt y el modelo no obedece
+# (reports/phase9_regresion.md), así que v9 la recorta aquí: la frase termina tras lo que se revisa.
+# Solo tras un verbo «revisar» en futuro y dentro de la misma frase; el resto del texto no cambia.
+PURPOSE = re.compile(
+    r"(\b(?:revisaremos|revisará|revisarán|vamos a revisar)\b[^.!?\n]*?)"
+    r"\s*,?\s+(?:para|con el fin de|a fin de|con el objetivo de|y así)\b[^.!?\n]*([.!?])",
+    re.IGNORECASE,
+)
+
+
+def trim_purpose(response: str) -> tuple[str, list[str]]:
+    """Quita la finalidad tras «revisaremos…»; devuelve el texto y los fragmentos quitados."""
+    removed = [m.group(0)[len(m.group(1)) : -1].strip() for m in PURPOSE.finditer(response)]
+    return PURPOSE.sub(r"\1\2", response), removed

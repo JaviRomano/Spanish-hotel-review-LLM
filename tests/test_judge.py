@@ -75,3 +75,19 @@ def test_v2h_solo_aclara_culpa_respecto_a_v2g():
 
     v2g, v2h = RUBRICS_FICHA["v2g"], RUBRICS_FICHA["v2h"]
     assert {a.id for a, b in zip(v2g, v2h, strict=True) if a != b} == {"sin_culpa"}
+
+
+def test_el_juez_de_pares_v1_no_cambia_y_v2_dice_que_el_saludo_no_cuenta():
+    from caso_uso_llm.evals import judge as J
+
+    seen = []
+
+    class Rec:
+        def get_or_call(self, payload, fn):
+            seen.append(payload["sys"])
+            return '{"motivo": "", "preferida": "empate"}'
+
+    J.compare("r", "a", "b", Rec())
+    J.compare("r", "a", "b", Rec(), version="v2")
+    assert seen[0] == J.PAIR_SYSTEM  # la caché de los pares de siempre sigue valiendo
+    assert seen[1] == J.PAIR_SYSTEM + J.PAIR_SALUDO and "saludo inicial" in seen[1]

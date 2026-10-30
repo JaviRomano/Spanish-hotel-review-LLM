@@ -234,3 +234,16 @@ RUBRICS_FICHA["v2h"] = tuple(
     replace(c, no_cumple_si=c.no_cumple_si + _V2H[c.id]) if c.id in _V2H else c
     for c in RUBRICS_FICHA["v2g"]
 )
+
+# v2i (2026-10-30, reports/phase9_regresion.md): con v2h el juez suspendía en «registro» el saludo
+# «Hola:» (18 de 21), que Javier eligió para sustituir a «Estimado cliente:». Se aclara que el
+# saludo no decide el registro. Puerta en `just regresion`: una respuesta que tutea debe seguir
+# suspendiendo y una de usted con «Hola:» debe cumplir.
+_V2I = {
+    "registro": " Un saludo inicial «Hola:» o «Saludos:» seguido de trato de usted SÍ cumple: el "
+    "registro se juzga por los verbos y pronombres con que se dirige al cliente.",
+}
+RUBRICS_FICHA["v2i"] = tuple(
+    replace(c, no_cumple_si=c.no_cumple_si + _V2I[c.id]) if c.id in _V2I else c
+    for c in RUBRICS_FICHA["v2h"]
+)

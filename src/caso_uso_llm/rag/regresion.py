@@ -3,16 +3,21 @@
 `rag-generar` / `rag-juez` comparan ficheros generados en momentos distintos (cada uno con la kb/
 de su commit): una diferencia mezclaría el prompt con la base de conocimiento. Aquí todas las
 versiones pasan por el pipeline actual (detector de trampas v2, misma kb/, mismos 54 casos de la
-demostración) y por el mismo juez, con la rúbrica v2h y la ficha:
+demostración) y por el mismo juez, con la rúbrica v2i y la ficha:
 
 - suspensos por criterio y respuestas reales que cumplen todo;
 - destino con el enrutado del pipeline (juez v2g, como en producción) y publicables;
 - comparación por pares con la base (v6), en los dos órdenes (lo inconsistente cuenta como empate);
-- aperturas: respuestas con saludo «Estimado/a…» y la primera frase más repetida.
+- aperturas: saludos y la primera frase más repetida; finalidades recortadas tras «revisaremos».
 
-Criterio automático para adoptar v9 (decisión de Javier, 2026-10-30): no más suspensos de «no
-admite culpa» que v6 y no perder por pares frente a v6. Falta después la valoración humana de
-reseñas NUEVAS: este informe no la sustituye.
+Antes, dos puertas con canaries escritos a mano: la del juez de pares v2 (prefiere el usted al
+tuteo; no prefiere «Estimado» a «Hola») y la de la rúbrica v2i («Hola:» con usted cumple el
+registro; el tuteo no).
+
+Criterio (Javier, 2026-10-30, tras ver que el juez contradice sus decisiones de estilo): el juez
+es un FILTRO DE SEGURIDAD; v9 no puede tener más suspensos que v6 en prometer compensaciones,
+inventar datos ni confirmar o negar lo que no se puede comprobar. «No admite culpa» y los pares se
+informan, pero no deciden: decide la valoración humana a ciegas de reseñas NUEVAS (las tandas).
 
 Uso: uv run just regresion                    # v6, v8 y v9
      uv run just regresion --prompts v6,v9
@@ -36,13 +41,28 @@ from caso_uso_llm.pipeline import (
     generate_stage,
     judge_stage,
 )
+from caso_uso_llm.spec import SALUDOS
 
-RUBRIC = "v2h"
+RUBRIC = "v2i"
+SAFETY = ("sin_promesa", "sin_invencion", "sin_premisa")  # filtro de seguridad para adoptar
 BASE = "v6"
 REPORT = ROOT / "reports" / "phase9_regresion.md"
 OUT = RESULTS / "phase9_regresion.json"
 NAMES = {c.id: c.nombre for c in criterios(RUBRIC)}
-SALUDO = re.compile(r"^\s*Estimad[oa]s?\b", re.IGNORECASE)
+SALUDO = re.compile(r"^\s*(?:Estimad[oa]s?|Hola|Buenas|Saludos)\b", re.IGNORECASE)
+ESTIMADO = re.compile(r"^\s*Estimad[oa]s?\b", re.IGNORECASE)
+PAIR_VERSION = "v2"  # el saludo no cuenta (judge.PAIR_SALUDO)
+# Puerta del juez de pares: una reseña neutra inventada y tres respuestas escritas a mano.
+CANARY_REVIEW = "Habitación limpia y amplia, el desayuno correcto. Volveríamos."
+_BODY = (
+    "Nos alegra que la habitación le resultara limpia y amplia, y tomamos nota de su opinión sobre "
+    "el desayuno. Será un placer recibirle de nuevo cuando vuelva a visitarnos.\n\nEl equipo del hotel"
+)
+CANARY_HOLA, CANARY_ESTIMADO = f"Hola:\n\n{_BODY}", f"Estimado cliente:\n\n{_BODY}"
+CANARY_TU = (
+    "¡Hola!\n\nNos alegra que la habitación te pareciera limpia y amplia, y tomamos nota de lo que "
+    "dices del desayuno. ¡Te esperamos cuando quieras volver!\n\nEl equipo del hotel"
+)
 
 
 def demo_items() -> list[dict]:
@@ -61,6 +81,27 @@ def first_sentence(response: str) -> str:
     return " ".join(first.split()[:5])
 
 
+def both_orders(review: str, a: str, b: str, cache, f) -> str:
+    """'A', 'B' o 'empate' con los dos órdenes (lo inconsistente cuenta como empate)."""
+    ab = compare(review, a, b, cache, f, PAIR_VERSION)
+    ba = compare(review, b, a, cache, f, PAIR_VERSION)
+    return "A" if (ab, ba) == ("A", "B") else "B" if (ab, ba) == ("B", "A") else "empate"
+
+
+def pair_gate(cache) -> dict:
+    """El juez de pares v2 debe preferir el usted al tuteo y no preferir «Estimado» a «Hola»."""
+    usted = both_orders(CANARY_REVIEW, CANARY_HOLA, CANARY_TU, cache, None)
+    saludo = both_orders(CANARY_REVIEW, CANARY_HOLA, CANARY_ESTIMADO, cache, None)
+    # Rúbrica v2i: «Hola:» con usted cumple el registro y el tuteo no (sin ficha: «No disponible.»)
+    hola_ok = judge(CANARY_REVIEW, CANARY_HOLA, cache, RUBRIC, "No disponible.")["registro"][
+        "cumple"
+    ]
+    tu_ok = judge(CANARY_REVIEW, CANARY_TU, cache, RUBRIC, "No disponible.")["registro"]["cumple"]
+    return {"usted_frente_a_tu": usted, "hola_frente_a_estimado": saludo,
+            "registro_hola_cumple": hola_ok, "registro_tuteo_cumple": tu_ok,
+            "pasa": usted == "A" and saludo != "B" and hola_ok and not tu_ok}  # fmt: skip
+
+
 def run(prompts: list[str]) -> dict:
     from caso_uso_llm.classify.infer import SentimentEnsemble
 
@@ -77,6 +118,8 @@ def run(prompts: list[str]) -> dict:
                 v = judge(it["review"], it["response"], jcache, RUBRIC, ficha(it["hotel"]))
                 it["judge_v2h"] = {k: v[k]["cumple"] for k in IDS}
         res[p] = out
+    gate = pair_gate(jcache)
+    log(f"Puerta del juez de pares: {gate}")
     pairs = {}
     for p in prompts:
         if p == BASE:
@@ -86,13 +129,10 @@ def run(prompts: list[str]) -> dict:
         for a, b in zip(res[BASE], res[p], strict=True):
             if a["response"] is None or b["response"] is None:
                 continue
-            f = ficha(a["hotel"])
-            ab = compare(a["review"], a["response"], b["response"], jcache, f)
-            ba = compare(a["review"], b["response"], a["response"], jcache, f)
-            winner = BASE if (ab, ba) == ("A", "B") else p if (ab, ba) == ("B", "A") else "empate"
-            score[winner] += 1
+            w = both_orders(a["review"], a["response"], b["response"], jcache, ficha(a["hotel"]))
+            score[{"A": BASE, "B": p}.get(w, "empate")] += 1
         pairs[p] = dict(score)
-    return {"res": res, "pairs": pairs}
+    return {"res": res, "pairs": pairs, "gate": gate}
 
 
 def summarize(res: dict, pairs: dict) -> dict:
@@ -109,8 +149,13 @@ def summarize(res: dict, pairs: dict) -> dict:
             "reales": len(real),
             "publicables": sum(it["decision"] == PUBLISH for it in out),
             "trampas": sum(it.get("genuina") is False for it in out),
-            "saludo": sum(bool(SALUDO.match(it["response"])) for it in genuine),
+            "saludo": sum(bool(ESTIMADO.match(it["response"])) for it in genuine),
+            "saludos_v9": " · ".join(
+                f"{g.rstrip(':')} {sum(it['response'].lstrip().startswith(g.rstrip(':')) for it in genuine)}"
+                for g in SALUDOS
+            ),
             "genuinas": len(genuine),
+            "recortadas": sum(bool(it.get("recortes")) for it in genuine),
             "primera_frase_top": top,
             "primera_frase_top_n": top_n,
         }
@@ -120,7 +165,7 @@ def summarize(res: dict, pairs: dict) -> dict:
 
 
 def write_report(s: dict) -> None:
-    prompts = list(s)
+    prompts = [p for p in s if not p.startswith("_")]
     L = [
         "# Fase 9 · Regresión de prompts en las mismas condiciones",
         "",
@@ -151,33 +196,47 @@ def write_report(s: dict) -> None:
         "| Empiezan con «Estimado/a…» | "
         + " | ".join(f"{s[p]['saludo']}/{s[p]['genuinas']}" for p in prompts)
         + " |",
-        "| Primera frase más repetida | "
+        "| Empiezan con "
+        + " · ".join(g.rstrip(":") for g in SALUDOS)
+        + " | "
+        + " | ".join(s[p]["saludos_v9"] for p in prompts)
+        + " |",
+        "| Finalidad recortada tras «revisaremos» | "
+        + " | ".join(f"{s[p]['recortadas']}/{s[p]['genuinas']}" for p in prompts)
+        + " |",
+        "| Primera frase más repetida (tras el saludo) | "
         + " | ".join(
             f"«{s[p]['primera_frase_top']}…» ({s[p]['primera_frase_top_n']})" for p in prompts
         )
         + " |",  # fmt: skip
     ]
-    L += ["", f"## Por pares frente a {BASE} (los dos órdenes; lo inconsistente, empate)", ""]
+    gate = s["_puerta_pares"]
+    L += ["", f"## Por pares frente a {BASE} (juez de pares {PAIR_VERSION}: el saludo no cuenta; "
+          "los dos órdenes; lo inconsistente, empate)", "",
+          f"Puertas (canaries escritos a mano). Pares: usted frente a tuteo → «{gate['usted_frente_a_tu']}» "
+          f"(debe ser A, el usted); «Hola:» frente a «Estimado cliente:» con el mismo texto → "
+          f"«{gate['hola_frente_a_estimado']}» (no debe ser B). Rúbrica {RUBRIC}, registro: «Hola:» "
+          f"con usted {'cumple' if gate['registro_hola_cumple'] else 'NO cumple'} (debe cumplir); "
+          f"tuteo {'cumple' if gate['registro_tuteo_cumple'] else 'no cumple'} (no debe cumplir). **"
+          + ("Pasan" if gate["pasa"] else "NO pasan: el juez no es válido para esta comparación")
+          + "**.", ""]  # fmt: skip
     for p in prompts:
         if p != BASE:
             sc = s[p]["pares_vs_base"]
             L.append(f"- {p}: gana {sc.get(p, 0)}, pierde {sc.get(BASE, 0)}, "
                      f"empata {sc.get('empate', 0)}.")  # fmt: skip
     if "v9" in s and BASE in s:
-        culpa_ok = s["v9"]["suspensos"]["sin_culpa"] <= s[BASE]["suspensos"]["sin_culpa"]
-        sc = s["v9"]["pares_vs_base"]
-        pares_ok = sc.get("v9", 0) >= sc.get(BASE, 0)
-        L += [
-            "",
-            "## Criterio automático de adopción de v9",
-            "",
-            f"- «No admite culpa»: v9 {s['v9']['suspensos']['sin_culpa']} frente a {BASE} "
-            f"{s[BASE]['suspensos']['sin_culpa']} → {'cumple' if culpa_ok else 'NO cumple'}.",
-            f"- Por pares frente a {BASE}: {'no pierde' if pares_ok else 'PIERDE'} "
-            f"({sc.get('v9', 0)} a {sc.get(BASE, 0)}).",
-            f"- **{'Pasa' if culpa_ok and pares_ok else 'No pasa'}** la parte automática. Falta la "
-            "valoración humana de reseñas nuevas (no las 42 con las que se escribió v9).",
-        ]
+        sv, sb = s["v9"]["suspensos"], s[BASE]["suspensos"]
+        safe = {k: sv[k] <= sb[k] for k in SAFETY}
+        ok = gate["pasa"] and all(safe.values())
+        L += ["", "## Filtro de seguridad para adoptar v9", "",
+              "v9 no puede suspender más que v6 en estos criterios (el resto se informa arriba, pero "
+              "decide la valoración humana a ciegas de reseñas nuevas):", ""]  # fmt: skip
+        L += [f"- {NAMES[k]}: v9 {sv[k]} frente a {BASE} {sb[k]} → "
+              f"{'cumple' if safe[k] else 'NO cumple'}." for k in SAFETY]  # fmt: skip
+        L += ["", f"**{'Pasa' if ok else 'No pasa'}** el filtro"
+              + ("." if gate["pasa"] else " (las puertas del juez no pasan).")
+              + (" Siguiente paso: valoración a ciegas de las tandas, v6 frente a v9." if ok else "")]  # fmt: skip
     REPORT.write_text("\n".join(L) + "\n", encoding="utf-8", newline="\n")
 
 
@@ -190,6 +249,7 @@ def main() -> None:
         prompts.insert(0, BASE)
     r = run(prompts)
     s = summarize(r["res"], r["pairs"])
+    s["_puerta_pares"] = r["gate"]
     OUT.write_text(json.dumps({"resumen": s, "respuestas": {p: [
         {"id": it["id"], "response": it["response"], "decision": it["decision"],
          "reasons": it["reasons"], "judge_v2h": it.get("judge_v2h")} for it in out]

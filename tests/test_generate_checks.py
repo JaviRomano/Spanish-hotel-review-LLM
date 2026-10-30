@@ -117,3 +117,46 @@ def test_hygiene_terms_y_copia_literal():
     assert (
         copied_from_review("Gracias por su reseña sobre la comida.", "La comida de la casa") == []
     )
+
+
+def test_el_saludo_hola_de_v9_no_es_un_nombre_pero_hola_con_nombre_si():
+    from caso_uso_llm.generate.checks import person_names
+
+    assert (
+        person_names("Hola:\n\nLamentamos lo ocurrido.\n\nEl equipo del hotel", "Todo mal.") == []
+    )
+    assert person_names("Hola, Andrés:\n\nGracias.", "Soy Andrés y todo bien.") == ["Andrés"]
+    assert person_names("Estimado cliente:\n\nGracias.", "Todo bien.") == []
+
+
+def test_los_saludos_buenas_y_saludos_tampoco_son_nombres():
+    from caso_uso_llm.generate.checks import person_names
+
+    for g in ("Buenas:", "Saludos:"):
+        assert person_names(f"{g}\n\nNos alegra su visita.", "Todo bien.") == []
+    assert person_names("Buenas, Lucía:\n\nGracias.", "Me atendió una tal Lucía.") == ["Lucía"]
+
+
+def test_recorta_la_finalidad_tras_revisaremos_y_nada_mas():
+    from caso_uso_llm.generate.checks import trim_purpose
+
+    cases = {
+        "Revisaremos lo ocurrido para comprender cómo se produjo esta confusión.":
+            "Revisaremos lo ocurrido.",
+        "revisaremos lo ocurrido con el equipo para asegurar que todo esté en orden.":
+            "revisaremos lo ocurrido con el equipo.",
+        "La dirección revisará personalmente su caso, con el fin de darle una respuesta.":
+            "La dirección revisará personalmente su caso.",
+        "Revisaremos lo que nos describe y así evitaremos dudas. Gracias por escribirnos.":
+            "Revisaremos lo que nos describe. Gracias por escribirnos.",
+    }  # fmt: skip
+    for before, after in cases.items():
+        assert trim_purpose(before)[0] == after, before
+    unchanged = [
+        "Para nosotros es importante; revisaremos lo ocurrido con el equipo.",  # «para» antes
+        "Lo trasladaremos al equipo para que lo tenga en cuenta.",  # no es «revisar»
+        "Revisaremos lo ocurrido.\n\nPara cualquier consulta, escríbanos por canal privado.",
+    ]
+    for text in unchanged:
+        assert trim_purpose(text) == (text, []), text
+    assert trim_purpose("Revisaremos lo ocurrido para entenderlo.")[1] == ["para entenderlo"]

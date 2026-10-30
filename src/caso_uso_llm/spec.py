@@ -264,13 +264,20 @@ _CONTEXTO_V8 = _CONTEXTO_V7 + (
 # repita». Añade: sin saludo inicial (Javier: «Estimado cliente:» en el 100 %), apertura por el
 # contenido en vez de prohibir frases (con v8 el modelo solo cambió de fórmula), incidente grave
 # por encima de los elogios, sarcasmo, acusaciones al personal, bienestar del personal y tiempos.
+# Revisada tras la regresión (reports/phase9_regresion.md; decisión de Javier: ajustarla a la
+# demostración y validar después con tandas nuevas): saludo de SALUDOS (Javier: sin depender de la
+# hora y alternando; lo elige el código por reseña, porque el modelo no ve las demás respuestas y
+# repetiría siempre el mismo), sin abrir con «Lamentamos…» (17 de 53), «revisaremos» terminado en
+# punto y sin «prioridad absoluta, por lo que revisaremos» (seguían en sus suspensos de sin_culpa).
+SALUDOS = ("Hola:", "Saludos:")  # «Buenas:» es coloquial en España (el juez acertaba)
 _CONTEXTO_V9 = _CONTEXTO_V7 + (
     "\n\nRedacción (v9):\n"
-    "- Sin saludo inicial: no empieces con «Estimado cliente:», «Estimada…» ni ningún "
-    "encabezado, y no supongas el género del cliente. La primera frase va directamente al asunto "
-    "principal de la reseña.\n"
-    "- No abras con un agradecimiento genérico («gracias por compartir…», «gracias por tomarse el "
-    "tiempo…»); si agradeces algo, que sea después y por algo concreto.\n"
+    "- Saludo: empieza con el saludo que se te indica junto a la reseña, tal cual y en una línea "
+    "aparte. Nunca «Estimado cliente:», «Estimada…» ni otro encabezado, y no supongas el género "
+    "del cliente.\n"
+    "- La primera frase después del saludo va directamente al asunto principal de la reseña: no "
+    "abras con «Lamentamos…» ni con un agradecimiento genérico («gracias por compartir…», «gracias "
+    "por tomarse el tiempo…»); si agradeces algo, que sea después y por algo concreto.\n"
     "- Las fórmulas seguras indican QUÉ transmitir, no CÓMO: redáctalas con tus palabras y de "
     "forma distinta en cada respuesta.\n"
     "- No copies palabras ni expresiones de la reseña (listas de lo que valoró, adjetivos, nombres "
@@ -282,14 +289,16 @@ _CONTEXTO_V9 = _CONTEXTO_V7 + (
     "- Sarcasmo: si los elogios son irónicos (describe problemas mientras dice que todo fue "
     "perfecto), responde con seriedad a las críticas reales; no sigas la ironía ni agradezcas la "
     "puntuación.\n"
-    "- Cuando digas que revisaréis algo, no añadas una finalidad que dé a entender un fallo («para "
-    "que no se repita», «para evitar situaciones similares», «para garantizar que no vuelva a "
-    "ocurrir»).\n"
+    "- Cuando digas que revisaréis algo, termina la frase ahí («Revisaremos lo ocurrido con el "
+    "equipo.»): sin «para…», «con el fin de…» ni ninguna otra finalidad, porque dan a entender un "
+    "fallo («para que no se repita», «para entender cómo se produjo», «para asegurar que todo esté "
+    "en orden»).\n"
     "- Higiene: solo cuando la reseña se queja de suciedad, olores, insectos, manchas, pelos o el "
     "estado de la ropa de cama o de la comida. Entonces no repitas ni describas el problema, no lo "
     "des por cierto ni lo niegues, y transmite con tus palabras que la limpieza importa al hotel y "
     "que se revisará. Si el personal de limpieza aparece por otro motivo, no hables de higiene. "
-    "Una queja de higiene u olor pesa más que los elogios.\n"
+    "Una queja de higiene u olor pesa más que los elogios. No uses «prioridad absoluta» ni «por lo "
+    "que revisaremos».\n"
     "- Si la situación es crítica, puedes decir que la dirección del hotel revisará personalmente "
     "lo ocurrido; la firma sigue siendo «El equipo del hotel».\n"
     "- Acusaciones contra el personal: distingue lo que ocurrió (por ejemplo, que falta un objeto) "

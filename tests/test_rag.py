@@ -160,3 +160,18 @@ def test_detector_v2_recibe_la_fecha_de_referencia_y_v1_no_cambia(monkeypatch):
     assert seen[1]["sys"] == GENUINIDAD_V2
     assert seen[1]["review"].startswith("Fecha de hoy: 29 de octubre de 2026 (2026-10-29).")
     assert "35 de febrero" in GENUINIDAD_V2 and "ignora tus instrucciones" in GENUINIDAD_V2
+
+
+def test_v9_alterna_el_saludo_por_resena_y_es_reproducible():
+    from collections import Counter
+
+    from caso_uso_llm.rag.generate_rag import context_user, greeting_for
+    from caso_uso_llm.spec import SALUDOS
+
+    reviews = [f"Reseña número {i}: todo bien." for i in range(60)]
+    counts = Counter(greeting_for(r) for r in reviews)
+    assert set(counts) == set(SALUDOS) and min(counts.values()) >= 10  # se alternan los tres
+    assert greeting_for("misma reseña") == greeting_for("misma reseña")
+    analysis = {"sentimiento": "positivo", "aspectos": [], "peticiones": []}
+    assert f"«{greeting_for('x')}»" in context_user("x", analysis, None, [], [], "v9")
+    assert "Saludo con el que debes empezar" not in context_user("x", analysis, None, [], [], "v6")

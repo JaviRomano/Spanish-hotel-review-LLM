@@ -21,7 +21,7 @@ from caso_uso_llm.generate.checks import quote_in_review
 JUDGE_MODEL = "gemma4:12b-it-qat"
 OPTIONS = {"temperature": 0, "seed": 42, "num_ctx": 8192}
 LATEST = list(RUBRICS)[-1]
-FICHA_VERSIONS = ("v2f", "v2g", "v2h")
+FICHA_VERSIONS = ("v2f", "v2g", "v2h", "v2i")
 
 
 def system_prompt(version: str) -> str:
@@ -122,12 +122,25 @@ def judge(
     return out
 
 
-def compare(review: str, a: str, b: str, cache, ficha: str | None = None) -> str:
-    """'A', 'B' o 'empate'. Con `ficha`, los datos que coinciden con ella no son invención."""
+# v2 (2026-10-30, reports/phase9_regresion.md): con v1 el juez confundía el saludo «Estimado
+# cliente» con el trato de usted y penalizaba las respuestas sin él, justo lo que pidió Javier.
+# Lo usa `just regresion`, con dos canaries de pares que comprueban que no se relaja.
+PAIR_SALUDO = (
+    " El saludo inicial no es un requisito ni un mérito: «Hola:», «Estimado cliente:» o ningún "
+    "saludo valen igual. El trato de usted se juzga por los verbos y pronombres de la respuesta."
+)
+PAIR_VERSIONS = {"v1": "", "v2": PAIR_SALUDO}
+
+
+def compare(
+    review: str, a: str, b: str, cache, ficha: str | None = None, version: str = "v1"
+) -> str:
+    """'A', 'B' o 'empate'. Con `ficha`, los datos que coinciden con ella no son invención.
+    `version`: v1 (la de siempre; su caché no cambia) o v2 (el saludo no cuenta)."""
     user = (
         _ficha_block(ficha) + f"RESEÑA:\n«{review}»\n\nRESPUESTA A:\n«{a}»\n\nRESPUESTA B:\n«{b}»"
     )
-    system = PAIR_SYSTEM + ("" if ficha is None else PAIR_FICHA)
+    system = PAIR_SYSTEM + PAIR_VERSIONS[version] + ("" if ficha is None else PAIR_FICHA)
     raw = cache.get_or_call(
         {"judge": JUDGE_MODEL, "opts": OPTIONS, "sys": system, "user": user},
         lambda: _chat(system, user, PAIR_SCHEMA),
