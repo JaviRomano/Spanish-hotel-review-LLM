@@ -1,14 +1,15 @@
-"""Demo en modo repetición: 10 reseñas extremas y lo que respondió el sistema, paso a paso.
+"""Demo en modo repetición: reseñas ya evaluadas y contestadas, paso a paso.
 
 No ejecuta ningún modelo: muestra lo que produjo el pipeline completo (clasificador mRoBERTa,
 RAG, generador Qwen 27B, comprobaciones y juez Gemma 12B), ejecutado antes en local sobre una
-GPU AMD. Solo necesita Gradio y `casos.json` (scripts/build_replay.py), así que corre en un
-servidor sin GPU. Para probar reseñas nuevas hay que pedir una sesión en directo.
+GPU AMD. Solo necesita Gradio y `casos.json` (scripts/build_replay.py). Para probar reseñas
+nuevas, quien la ve pide una prueba en vivo por LinkedIn y se arranca `just app-live`.
 
 Uso: python demo_replay/app.py     # http://127.0.0.1:7861
 """
 
 import json
+import os
 from pathlib import Path
 
 import gradio as gr
@@ -16,27 +17,52 @@ import gradio as gr
 DATA = json.loads((Path(__file__).parent / "casos.json").read_text(encoding="utf-8"))
 CASES = {c["id"]: c for c in DATA["casos"]}
 REPO = "https://github.com/JaviRomano/Spanish-hotel-review-LLM"
-CONTACT = "https://github.com/JaviRomano"
+# URL del perfil de LinkedIn para pedir la prueba en vivo (sin ella, el texto no lleva enlace)
+LINKEDIN = os.environ.get("DEMO_LINKEDIN", "")
+CONTACT = f"[Escríbeme por LinkedIn]({LINKEDIN})" if LINKEDIN else "Escríbeme por LinkedIn"
 
 INTRO = f"""# ¿Cómo responde una IA a las reseñas difíciles de un hotel?
 
-Diez reseñas escritas a propósito para ponerla a prueba (sarcasmo, insultos, amenazas legales,
-instrucciones ocultas, datos falsos…). Para cada una, **qué se esperaba** (escrito antes de
-generar), **qué respondió** el sistema y **si la publicaría o la pasaría a una persona**.
+Reseñas ya evaluadas y contestadas por el sistema. Para cada una: **qué respondió**, **si la
+publicaría o la pasaría a una persona** y por qué.
+
+- **Reseñas propias:** diez escritas a propósito para ponerlo a prueba (sarcasmo, amenazas
+  legales, instrucciones ocultas, datos falsos…), con **qué se esperaba** escrito *antes* de generar.
+- **Selección de la demostración:** casos sintéticos y reseñas reales (TripAdvisor, corpus AHR),
+  con una nota escrita *después* de leer la respuesta. Incluye fallos que el sistema no detecta.
 
 Todo se generó **en local, sobre una GPU AMD**: clasificador mRoBERTa → contexto del hotel (RAG)
 → borrador con Qwen 27B → comprobaciones y un segundo modelo como juez. Los hoteles son ficticios.
 [Código, informes y cifras]({REPO})."""
 
-LIVE = (
-    f"> 🔬 **Esto es una repetición: aquí no se genera nada en directo.** ¿Quieres probarlo con tus "
-    f"propias reseñas? [Pide una prueba en vivo]({CONTACT}) y despliego el modelo desde mi ordenador."
-)
+LIVE = f"""> 🔬 **Esto es una repetición: aquí no se genera nada en directo.**
+> ¿Quieres probarlo con tus propias reseñas? {CONTACT} con
+> «Prueba en vivo» y cuándo te viene bien. Arranco el sistema en mi ordenador y te paso un enlace y
+> una contraseña. Cada reseña tarda alrededor de un minuto (una sola GPU), y lo que escribas se
+> guarda solo para evaluar el sistema, sin tu nombre."""
+
+GROUPS = {
+    "Reseñas propias": "Propia",
+    "Casos sintéticos": "Sintético",
+    "Reseñas reales (AHR)": "Real",
+}
 
 
 def label(c: dict) -> str:
     icon = "✅" if c["decision"] == "publicable" else "👤"
-    return f"{icon} {c['id']} · {c['tipo']}" if c["tipo"] else f"{icon} {c['id']}"
+    group = GROUPS.get(c["grupo"], c["grupo"])
+    return f"{icon} {group} · {c['id']}" + (f" · {c['tipo']}" if c["tipo"] else "")
+
+
+def context(c: dict) -> str:
+    if c["esperado"]:
+        return (
+            "**Qué se esperaba de una buena respuesta** (escrito antes de generar)\n\n"
+            + c["esperado"]
+        )
+    if c["nota"]:
+        return "**Por qué está aquí** (nota escrita después de leer la respuesta)\n\n" + c["nota"]
+    return ""
 
 
 def show(case_id: str | None):
@@ -44,7 +70,7 @@ def show(case_id: str | None):
     if c is None:
         return ("",) * 5
     review = f"**{c['hotel']}**\n\n> " + c["review"].replace("\n", "\n> ")
-    expected = c["esperado"] or "—"
+    expected = context(c)
     if c["decision"] == "publicable":
         decision = "### ✅ Se publicaría sin revisión"
     else:
@@ -68,7 +94,7 @@ def show(case_id: str | None):
     return review, expected, c["response"] or "(sin respuesta)", decision, judge + "\n\n" + detail
 
 
-with gr.Blocks(title="Reseñas difíciles · modo repetición") as demo:
+with gr.Blocks(title="Reseñas de hotel · modo repetición") as demo:
     gr.Markdown(INTRO)
     gr.Markdown(LIVE)
     options = [(label(c), c["id"]) for c in DATA["casos"]]
@@ -78,7 +104,6 @@ with gr.Blocks(title="Reseñas difíciles · modo repetición") as demo:
     with gr.Row():
         with gr.Column():
             review = gr.Markdown(label="Reseña")
-            gr.Markdown("**Qué se esperaba de una buena respuesta**")
             expected = gr.Markdown()
         with gr.Column():
             response = gr.Textbox(label="Respuesta generada", lines=12, interactive=False)

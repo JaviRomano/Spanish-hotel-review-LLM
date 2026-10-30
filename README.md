@@ -183,7 +183,7 @@ Later versions were tried to fix what reading the replies shows (repeated openin
 
 The Gradio demo (`uv run just app`) shows each step for one review and has a review queue where a person approves, edits or discards each draft. The draft appears as soon as it is written and the judge's verdict arrives a few seconds later; nothing is shown as publishable before it. The hotels and their fact sheets are fictitious. Reviews written in the live demo, and the reviewers' decisions, are stored outside git (`data/live/`).
 
-There is also a **replay mode** (`uv run just replay`): only Gradio and the pre-computed results of 10 reviews written for the demo, with no models or GPU, to show the pipeline on any machine.
+There is also a **replay mode** (`uv run just replay`): only Gradio and the pre-computed results of 18 reviews (10 written for the demo, with what a good reply should do written beforehand, and 8 from the demonstration set, with notes on their failures), with no models or GPU. A live test is run on request. Walkthrough and checklist (in Spanish): [`docs/DEMO.md`](docs/DEMO.md).
 
 <img alt="Demo: a 4-star review that praises the location and the beds but complains about the wifi in the room, at a fictitious hotel. The reply explains, as the fact sheet says, that the stone walls make the wifi patchy in the rooms; the judge passes all 8 criteria and the reply is publishable." src="docs/img/demo_respuesta.png" width="820">
 
@@ -264,7 +264,7 @@ src/caso_uso_llm/
   paths.py     absolute paths · seed.py seeds · log.py progress
 kb/            synthetic knowledge base: hotel fact sheets, policies and approved replies
 evals/         adversarial cases, canaries, gold, retrieval queries, calibration labels and the latency sample
-demo_replay/   replay mode: Gradio app and the pre-computed cases it shows
+demo_replay/   replay mode: Gradio app and the pre-computed cases it shows (guide: docs/DEMO.md)
 scripts/       utilities (labelling and comparison sheets, forms, agreement, GPU, charts, screenshots)
 docs/img/      README charts and demo screenshots
 tests/         normalisation, deduplication, split, data invariants, prompt-rubric consistency, routing and the app
@@ -477,7 +477,7 @@ Se probaron varias versiones para corregir lo que muestra la lectura de las resp
 
 La demo en Gradio (`uv run just app`) muestra cada paso para una reseña y tiene una cola de revisión donde una persona aprueba, edita o descarta cada borrador. El borrador aparece en cuanto está escrito y el veredicto del juez llega unos segundos después; antes de él no se muestra nada como publicable. Los hoteles y sus fichas son ficticios. Las reseñas escritas en la demo en vivo y las decisiones de quien revisa se guardan fuera de git (`data/live/`).
 
-Hay además un **modo repetición** (`uv run just replay`): solo Gradio y los resultados ya calculados de 10 reseñas escritas para la demo, sin modelos ni GPU, para enseñar el pipeline en cualquier equipo.
+Hay además un **modo repetición** (`uv run just replay`): solo Gradio y los resultados ya calculados de 18 reseñas (10 escritas para la demo, con lo que debía hacer una buena respuesta escrito antes, y 8 del conjunto de demostración, con notas sobre sus fallos), sin modelos ni GPU. La prueba en vivo se hace a petición. Recorrido y lista de comprobación: [`docs/DEMO.md`](docs/DEMO.md).
 
 <img alt="Demo: una reseña de 4 estrellas que elogia la ubicación y las camas y se queja del wifi de la habitación, en un hotel ficticio. La respuesta explica, como dice la ficha, que los muros de piedra hacen irregular el wifi en las habitaciones; el juez aprueba los 8 criterios y la respuesta es publicable." src="docs/img/demo_respuesta.png" width="820">
 
@@ -558,7 +558,7 @@ src/caso_uso_llm/
   paths.py     rutas absolutas · seed.py semillas · log.py progreso
 kb/            base de conocimiento sintética: fichas de hotel, políticas y respuestas aprobadas
 evals/         casos adversariales, canaries, gold, consultas de recuperación, etiquetas de calibración y muestra de latencia
-demo_replay/   modo repetición: app de Gradio y los casos ya calculados que muestra
+demo_replay/   modo repetición: app de Gradio y los casos ya calculados que muestra (guía: docs/DEMO.md)
 scripts/       utilidades (hojas de etiquetado y de comparación, formularios, acuerdo, GPU, gráficas, capturas)
 docs/img/      gráficas del README y capturas de la demo
 tests/         normalización, deduplicación, split, invariantes de los datos, coherencia prompt-rúbrica, enrutado y la app
