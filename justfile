@@ -95,6 +95,11 @@ modelo-pequeno *ARGS:
 latencia *ARGS:
     python -m caso_uso_llm.latency {{ARGS}}
 
+# Fase 9: regresión de prompts en las mismas condiciones (pipeline actual, juez v2h, pares con v6)
+#   -> reports/phase9_regresion.md. Ej.: just regresion --prompts v6,v9
+regresion *ARGS:
+    python -m caso_uso_llm.rag.regresion {{ARGS}}
+
 # Demo en modo repetición: reconstruye casos.json y la abre (sin modelos; http://127.0.0.1:7861)
 replay:
     python scripts/build_replay.py

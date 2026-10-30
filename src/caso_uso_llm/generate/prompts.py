@@ -70,11 +70,12 @@ RESPONSE_PROMPTS = {
     "v6": generator_prompt("v6"),
     "v7": generator_prompt("v7"),  # Fase 9: v6 + no presuponer una estancia que no hubo
     "v8": generator_prompt("v8"),  # Fase 9: variedad, sin copias, higiene, quejas primero
+    "v9": generator_prompt("v9"),  # Fase 9: v8 corregida con 42 valoraciones humanas
 }
 # Versiones que esperan contexto recuperado: solo las usa rag/generate_rag.py, no `just generar`.
-RAG_PROMPTS = ("v5", "v6", "v7", "v8")
+RAG_PROMPTS = ("v5", "v6", "v7", "v8", "v9")
 # Versiones que NO reciben las citas literales de los aspectos (para que no las copien).
-NO_QUOTES = ("v8",)
+NO_QUOTES = ("v8", "v9")
 
 
 def response_user(review: str, analysis: dict, quotes: bool = True) -> str:

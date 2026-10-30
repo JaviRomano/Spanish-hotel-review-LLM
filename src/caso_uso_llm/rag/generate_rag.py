@@ -127,7 +127,15 @@ def options_for(version: str, review: str) -> dict | None:
     return {**OPTIONS, "temperature": 0.6, "seed": seed}
 
 
-TRAP_VERSIONS = ("v8",)  # versiones que detectan reseñas trampa antes de responder
+TRAP_VERSIONS = ("v8", "v9")  # versiones que detectan reseñas trampa antes de responder
+
+
+def trap_prompts(version: str) -> tuple[str, str]:
+    """(detector, respuesta) de las trampas para cada versión: v9 usa el detector v2 y la
+    respuesta v2 (broma corta, una frase, fuera de contexto); antes, v1 (informes reproducibles)."""
+    from caso_uso_llm.spec import GENUINIDAD, GENUINIDAD_V2, TRAMPA, TRAMPA_V2
+
+    return (GENUINIDAD_V2, TRAMPA_V2) if version == "v9" else (GENUINIDAD, TRAMPA)
 
 
 def generate_reply(
@@ -150,13 +158,12 @@ def generate_reply(
     no cambian); el pipeline pasa True para cualquier prompt (decisión de Javier, 2026-10-29: el
     antitrampa se aplica también al modelo base, v6). `trap_system` y `today`: prompt del detector
     y fecha de referencia (ver generate.run.genuineness); por defecto, el detector v1 sin fecha."""
-    from caso_uso_llm.spec import TRAMPA
-
+    detector, trap_reply = trap_prompts(version)
     opts = options_for(version, review)
     if version in TRAP_VERSIONS if detect_traps is None else detect_traps:
-        g = genuineness(review, cache, model, trap_system, today)
+        g = genuineness(review, cache, model, trap_system or detector, today)
         if not g["genuina"]:
-            text = respond(TRAMPA, f"Reseña:\n«{review}»", cache, model, opts)
+            text = respond(trap_reply, f"Reseña:\n«{review}»", cache, model, opts)
             return {"response": text, "genuina": False, "motivo_trampa": g["motivo"]}
     user = context_user(review, analysis, hotel, pols, exs, version)
     return {
