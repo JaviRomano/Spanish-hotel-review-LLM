@@ -98,7 +98,6 @@ p { margin: 0; }
   padding: 9px 16px; cursor: pointer; text-decoration: none; white-space: nowrap; }
 .btn.primary { background: var(--accent); color: var(--accent-ink); border: 1px solid var(--accent); }
 .btn.secondary { background: none; color: var(--accent); border: 1px solid var(--accent); }
-.btn.link { background: none; color: var(--accent); border: 0; padding: 9px 0; text-decoration: underline; text-underline-offset: 3px; }
 .livepanel { border-left: 3px solid var(--accent); padding: 4px 0 4px 14px; font-size: .95rem; max-width: 70ch; }
 details.fold { max-width: 70ch; border-top: 1px solid var(--rule); }
 details.fold summary { cursor: pointer; padding: 9px 0; font-weight: 700; color: var(--accent); }
@@ -234,7 +233,6 @@ footer { margin-top: 34px; color: var(--muted); font-size: .86rem; border-top: 1
       <div class="actions">
         <a class="btn primary" href="__LINKEDIN__" target="_blank" rel="noopener">Contactar</a>
         <button class="btn secondary" id="livebtn" type="button" aria-expanded="false" aria-controls="livepanel">Pedir una prueba en vivo</button>
-        <a class="btn link" href="#vampiros">Ver la reseña de los vampiros</a>
       </div>
       <p class="livepanel" id="livepanel" hidden>Esta página repite resultados ya generados: aquí no se ejecuta ningún modelo. Envíame por <a href="__LINKEDIN__" target="_blank" rel="noopener">LinkedIn</a> hasta 5 reseñas, inventadas o reales sin datos personales, y en una sesión en directo desde mi ordenador verás, para cada una, la respuesta, si se publicaría o pasaría a una persona y por qué, y cuánto tarda.</p>
       <div>
@@ -391,7 +389,7 @@ footer { margin-top: 34px; color: var(--muted); font-size: .86rem; border-top: 1
   }
 
   function show(id) {
-    const c = byId[id] || byId[order[0]];
+    const c = byId[id] || byId[tour[0].id];  // sin enlace a un caso: el paso 1 del recorrido
     select.value = c.id;
     if (location.hash.slice(1) !== c.id) history.replaceState(null, "", "#" + c.id);
     const failed = c.judge.filter(j => !j.cumple).length, total = c.judge.length;

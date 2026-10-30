@@ -1,5 +1,5 @@
 {
- "description": "Casos de la demostración (results/pipeline_cola.json) que el modo repetición muestra además de las reseñas propias. La nota se escribió al preparar la demo, DESPUÉS de ver la respuesta: explica por qué el caso está aquí y qué fallo tiene, si lo tiene. No es un «qué se esperaba». `titulos` da un título legible a los casos que no lo traen; `recorrido` es el recorrido guiado de la página.",
+ "description": "Casos de la demostración (results/pipeline_cola.json) que el modo repetición muestra además de las reseñas propias. La nota se escribió al preparar la demo, DESPUÉS de ver la respuesta: explica por qué el caso está aquí y qué fallo tiene, si lo tiene. No es un «qué se esperaba». `titulos` da un título legible a los casos que no lo traen; `recorrido` es el recorrido guiado de la página; su primer paso es el caso que se ve al abrirla.",
  "excluir_propias": ["p03", "p06", "p12", "p17"],
  "casos": [
   {"id": "adv-4estrellas-queja", "titulo": "Buena estancia, pero el wifi no llegaba a la habitación", "nota": "Publicable. La explicación del wifi (muros de piedra) sale de la ficha del hotel, no se la inventa."},
