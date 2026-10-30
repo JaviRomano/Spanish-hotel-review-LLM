@@ -11,6 +11,7 @@ abriendo `docs/index.html`.
 
 ```bash
 uv run just replay        # regenera docs/index.html y la abre; después, commit + push para publicarla
+uv run --with playwright python scripts/verificar_replay.py   # capturas (docs/screenshots/), consola, contraste AA, teclado
 ```
 
 La plantilla es `scripts/replay_template.html`. El botón «Pedir prueba en vivo» enlaza al perfil de

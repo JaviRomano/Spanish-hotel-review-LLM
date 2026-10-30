@@ -255,6 +255,7 @@ uv run python scripts/comparacion_ciegas.py  # blind A/B sheet of two prompt ver
 uv run python scripts/formulario_tandas.py   # HTML form to write test reviews by hand, 10 at a time
 uv run python scripts/figuras.py             # README charts from the versioned results
 uv run --with playwright python scripts/capturas.py  # demo screenshots (with the app running)
+uv run --with playwright python scripts/verificar_replay.py  # replay page: screenshots, console, AA contrast, keyboard
 uv run just                    # lists every recipe
 ```
 
@@ -560,6 +561,7 @@ uv run python scripts/comparacion_ciegas.py  # hoja A/B a ciegas de dos versione
 uv run python scripts/formulario_tandas.py   # formulario HTML para escribir reseñas de prueba, de 10 en 10
 uv run python scripts/figuras.py             # gráficas del README a partir de los resultados versionados
 uv run --with playwright python scripts/capturas.py  # capturas de la demo (con la app en marcha)
+uv run --with playwright python scripts/verificar_replay.py  # página de repetición: capturas, consola, contraste AA y teclado
 uv run just                    # lista todas las recetas
 ```
 
