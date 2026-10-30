@@ -166,7 +166,7 @@ footer { margin-top: 28px; color: var(--muted); font-size: .88rem; border-top: 1
       <li><strong>Reseñas propias:</strong> escritas a propósito para ponerlo a prueba (amenazas legales, instrucciones ocultas, datos falsos, ataques al personal…), con <strong>qué se esperaba</strong> escrito <em>antes</em> de generar y la <strong>valoración del autor</strong> después.</li>
       <li><strong>Selección de la demostración:</strong> casos sintéticos y reseñas reales (TripAdvisor, corpus AHR), con una nota escrita <em>después</em> de leer la respuesta.</li>
     </ul>
-    <p>Cadena, todo en una GPU AMD y sin enviar datos fuera: clasificador mRoBERTa → contexto del hotel (RAG: ficha, políticas y respuestas aprobadas) → borrador con Qwen 27B → comprobaciones deterministas y un segundo modelo (Gemma 12B) como juez → publicar o pasar a una persona. Los hoteles son ficticios.</p>
+    <p>Cadena, todo en una GPU AMD y sin enviar datos fuera: clasificador mRoBERTa → ficha completa del hotel, más las políticas y respuestas aprobadas parecidas, recuperadas por búsqueda (RAG) → borrador con Qwen 27B → reglas deterministas y un segundo modelo (Gemma 12B) como juez → publicar o pasar a una persona. Ni las reglas ni el juez son infalibles: por eso lo dudoso o delicado lo decide una persona. Los hoteles son ficticios.</p>
   </details>
 
   <div class="picker">
