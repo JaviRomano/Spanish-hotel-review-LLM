@@ -21,9 +21,10 @@ ROOT = Path(__file__).resolve().parents[1]
 PAGE = (ROOT / "docs" / "index.html").as_uri()
 SHOTS = ROOT / "docs" / "screenshots"
 # Texto sobre fondo de color: selector del elemento cuyo color y fondo se comparan
-CONTRAST = [".pill.ok", ".pill.no", ".pill.partial", ".pill.mode", ".kpi.main b", ".kpi.main span",
-            ".rating p", ".rating .head", ".alertbox", ".decision .head", ".decision li",
-            ".caveat", ".chips li", ".btn.alert", ".btn.primary", "mark"]  # fmt: skip
+CONTRAST = [".pill.ok", ".pill.no", ".pill.partial", ".pill.mode", ".pill.neutral", ".fig.main b",
+            ".fig span", ".rating p", ".rating .head", ".alertbox", ".stamp", ".reasons li",
+            ".caveat", ".spec dt", ".spec dd", ".label", ".btn.alert", ".btn.primary", "mark",
+            ".inspect td", ".criterion p", ".flow li span"]  # fmt: skip
 
 
 def _rgb(s: str) -> tuple[float, ...]:

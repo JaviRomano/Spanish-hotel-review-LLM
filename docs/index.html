@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Hotel Review LLM · Fco Javier Fdez</title>
 <meta name="author" content="Fco Javier Fdez">
 <meta name="description" content="Cómo responde un sistema local de IA (clasificador, RAG, generador y juez) a reseñas de hotel difíciles: respuestas ya evaluadas, con sus fallos. Un proyecto de Fco Javier Fdez.">
@@ -18,285 +18,324 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Hotel Review LLM · Fco Javier Fdez">
 <meta name="twitter:image" content="https://javiromano.github.io/Spanish-hotel-review-LLM/og.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap">
 <style>
+/* Maquetación: el mostrador de recepción. A la izquierda la reseña tal como llega de la plataforma;
+   a la derecha la respuesta del hotel, en papel con membrete y con el sello de la puerta; debajo,
+   la hoja de inspección del juez. Bordes y fondos solo para la carta y el sello. */
 :root {
-  --bg: #fcfcfb; --surface: #ffffff; --sunken: #f3f2ef; --border: #dedcd6;
-  --text: #1a1a19; --muted: #57564f; --accent: #1f63c4; --accent-ink: #ffffff;
-  --ok: #17663a; --ok-bg: #e7f4ec; --warn: #7a4900; --warn-bg: #fbf0dd;
-  --bad: #a32019; --bad-bg: #fbe9e7; --quote: #e9e7e1; --tour: #eaf1fb;
-  --mark: #fff1b8; --mark-ink: #1a1a19; --info: #1f4f99; --info-bg: #e8f0fb;
+  --paper: #f4f6f3;    /* fondo: papel con un leve sesgo hacia el verde del acento */
+  --sheet: #ffffff;    /* la carta del hotel */
+  --ink: #17201c;      /* texto: negro verdoso */
+  --muted: #535e58;
+  --rule: #cdd4ce;
+  --accent: #0f5c4a;   /* verde botella de la rotulación de un hotel */
+  --accent-ink: #ffffff;
+  --tint: #e3ece7;     /* banda del recorrido y del modo de evaluación */
+  --pass: #1c6a39; --pass-bg: #e2f1e6;
+  --fail: #a3261d; --fail-bg: #fae6e3;
+  --hold: #7d4f00; --hold-bg: #f8edd8;
+  --marker: #ffe7a0; --marker-ink: #17201c;
+  --display: "Young Serif", Georgia, "Times New Roman", serif;
+  --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #161615; --surface: #1f1f1e; --sunken: #262624; --border: #3a3a37;
-    --text: #ecebe7; --muted: #aeada6; --accent: #6aa3ef; --accent-ink: #0d1b2e;
-    --ok: #6fd39a; --ok-bg: #16301f; --warn: #f0b860; --warn-bg: #33270f;
-    --bad: #ff9a90; --bad-bg: #3a1b18; --quote: #3a3a37; --tour: #1a2738;
-    --mark: #5a4a10; --mark-ink: #fff6d6; --info: #9cc2f5; --info-bg: #182638;
+    --paper: #111614; --sheet: #1a201d; --ink: #e5ebe7; --muted: #a0aba5; --rule: #2e3833;
+    --accent: #63c3a3; --accent-ink: #08201a; --tint: #1b2a25;
+    --pass: #78d69e; --pass-bg: #14301f; --fail: #ff9d90; --fail-bg: #3a1a17;
+    --hold: #f0bd62; --hold-bg: #33270f; --marker: #4d4214; --marker-ink: #fff4d1;
+    color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #161615; --surface: #1f1f1e; --sunken: #262624; --border: #3a3a37;
-  --text: #ecebe7; --muted: #aeada6; --accent: #6aa3ef; --accent-ink: #0d1b2e;
-  --ok: #6fd39a; --ok-bg: #16301f; --warn: #f0b860; --warn-bg: #33270f;
-  --bad: #ff9a90; --bad-bg: #3a1b18; --quote: #3a3a37; --tour: #1a2738;
-  --mark: #5a4a10; --mark-ink: #fff6d6; --info: #9cc2f5; --info-bg: #182638;
+  --paper: #111614; --sheet: #1a201d; --ink: #e5ebe7; --muted: #a0aba5; --rule: #2e3833;
+  --accent: #63c3a3; --accent-ink: #08201a; --tint: #1b2a25;
+  --pass: #78d69e; --pass-bg: #14301f; --fail: #ff9d90; --fail-bg: #3a1a17;
+  --hold: #f0bd62; --hold-bg: #33270f; --marker: #4d4214; --marker-ink: #fff4d1;
+  color-scheme: dark;
 }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
-body {
-  margin: 0; background: var(--bg); color: var(--text);
-  font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-}
-.wrap { max-width: 1180px; margin: 0 auto; padding: 20px 16px 48px; }
-a { color: var(--accent); }
-.icon { width: 1.05em; height: 1.05em; vertical-align: -0.17em; flex: none; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 17px/1.6 var(--body); }
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: 18px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+a { color: var(--accent); text-underline-offset: 2px; }
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-h1 { font-size: clamp(1.35rem, 3.4vw, 2rem); line-height: 1.2; margin: 0 0 4px; text-wrap: balance; }
-h2 { font-size: 1rem; margin: 0 0 8px; }
-p { margin: 0 0 10px; }
+.icon { width: 1em; height: 1em; vertical-align: -0.14em; flex: none; }
+h1, h2, h3 { font-weight: 400; margin: 0; }
+h1 { font-family: var(--display); font-size: clamp(1.75rem, 4.2vw, 2.7rem); line-height: 1.12; text-wrap: balance; max-width: 20ch; }
+h2 { font-family: var(--display); font-size: 1.25rem; line-height: 1.25; text-wrap: balance; }
+p { margin: 0; }
+.label { font: 600 .72rem/1.3 var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
+
+/* Barra superior */
+.topbar { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap;
+  border-bottom: 1px solid var(--rule); padding-bottom: 10px; margin-bottom: 26px; font-size: .92rem; }
+.topbar .who { color: var(--muted); }
+.topbar .who strong { color: var(--ink); }
+.theme { font: 600 .72rem var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted);
+  background: none; border: 0; border-bottom: 1px solid var(--rule); padding: 2px 0; cursor: pointer; }
 
 /* Cabecera */
-.top { display: flex; justify-content: flex-end; }
-.hero { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 28px; align-items: start; }
-@media (max-width: 760px) { .hero { grid-template-columns: 1fr; } .diagram { display: none; } }
-.byline { color: var(--muted); font-size: .95rem; margin: 0 0 10px; }
-.byline strong { color: var(--text); }
-.lead { margin: 0 0 10px; max-width: 70ch; }
-.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; padding: 0; list-style: none; }
-.chips li { font-size: .8rem; border: 1px solid var(--border); background: var(--surface); border-radius: 999px; padding: 3px 10px; color: var(--muted); }
-.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0 0 6px; }
-@media (max-width: 760px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 9px 11px; }
-.kpi.main { border: 2px solid var(--ok); background: var(--ok-bg); }
-.kpi b { display: block; font-size: clamp(1.15rem, 3vw, 1.5rem); line-height: 1.15; }
-.kpi.main b { color: var(--ok); }
-.kpi span { color: var(--muted); font-size: .8rem; line-height: 1.35; display: block; margin-top: 2px; }
-.kpi.main span { color: var(--text); }
-.caveat { color: var(--muted); font-size: .86rem; margin: 0 0 12px; max-width: 75ch; }
-.ctas { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 10px; }
-.btn { display: inline-flex; gap: 6px; align-items: center; font: inherit; font-weight: 600; border-radius: 8px; padding: 8px 14px; cursor: pointer; text-decoration: none; white-space: nowrap; }
+.hero { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 40px; align-items: start; }
+@media (max-width: 760px) { .hero { grid-template-columns: 1fr; gap: 0; } .flow { display: none; } }
+.hero .intro { display: grid; gap: 16px; }
+.lead { max-width: 62ch; font-size: 1.06rem; }
+.spec { display: flex; flex-wrap: wrap; gap: 0 22px; margin: 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); padding: 4px 0; }
+.spec div { flex: 1 1 auto; padding: 4px 0; min-width: 0; }
+.spec dt { font: 600 .68rem var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.spec dd { margin: 0; font: .9rem/1.35 var(--mono); color: var(--ink); }
+.figures { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
+@media (max-width: 760px) { .figures { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 18px; } }
+/* Cifras en la fuente de texto: en Young Serif el 0 se confunde con una o */
+.fig b { display: block; font: 700 clamp(1.6rem, 3.8vw, 2.15rem)/1.05 var(--body); font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.fig.main b { color: var(--accent); }
+.fig span { display: block; font-size: .84rem; line-height: 1.35; color: var(--muted); margin-top: 4px; }
+.fig.main span { color: var(--ink); }
+.caveat { font-size: .86rem; color: var(--muted); max-width: 70ch; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
+.btn { display: inline-flex; gap: 6px; align-items: center; font: 700 .95rem var(--body); border-radius: 3px;
+  padding: 9px 16px; cursor: pointer; text-decoration: none; white-space: nowrap; }
 .btn.primary { background: var(--accent); color: var(--accent-ink); border: 1px solid var(--accent); }
-.btn.secondary { background: var(--surface); color: var(--accent); border: 1px solid var(--accent); }
-.btn.alert { background: var(--surface); color: var(--bad); border: 1px solid var(--bad); }
-.livepanel { background: var(--sunken); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin: 0 0 10px; font-size: .94rem; }
-.livepanel p { margin: 0; }
-details.about, details.limits { color: var(--muted); max-width: 75ch; margin: 0 0 6px; }
-details.about summary, details.limits summary { color: var(--accent); font-weight: 600; cursor: pointer; padding: 4px 0; }
-details.about ul, details.limits ul { margin: 6px 0 8px; padding-left: 20px; }
-.diagram { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
-.diagram svg { width: 100%; height: auto; display: block; }
-.diagram .box { fill: var(--sunken); stroke: var(--border); }
-.diagram .box.gate { fill: var(--tour); stroke: var(--accent); }
-.diagram text { fill: var(--text); font: 13px system-ui, sans-serif; }
-.diagram .sub { fill: var(--muted); font-size: 11px; }
-.diagram .arrow { stroke: var(--muted); fill: none; stroke-width: 1.6; }
-.diagram .ok { fill: var(--ok); } .diagram .hu { fill: var(--warn); }
-.diagram figcaption { color: var(--muted); font-size: .8rem; margin-top: 6px; }
+.btn.secondary { background: none; color: var(--accent); border: 1px solid var(--accent); }
+.btn.alert { background: none; color: var(--fail); border: 0; padding: 9px 0; text-decoration: underline; text-underline-offset: 3px; }
+.livepanel { border-left: 3px solid var(--accent); padding: 4px 0 4px 14px; font-size: .95rem; max-width: 70ch; }
+details.fold { max-width: 70ch; border-top: 1px solid var(--rule); }
+details.fold summary { cursor: pointer; padding: 9px 0; font-weight: 700; color: var(--accent); }
+details.fold ul { margin: 0 0 12px; padding-left: 20px; color: var(--muted); }
+details.fold li + li { margin-top: 6px; }
+details.fold p { color: var(--muted); margin-bottom: 12px; }
+
+/* Diagrama: el recorrido de una reseña por el mostrador */
+.flow { border-left: 1px solid var(--rule); padding-left: 28px; }
+.flow ol { list-style: none; margin: 10px 0 0; padding: 0; counter-reset: paso; }
+.flow li { position: relative; padding: 0 0 16px 22px; border-left: 2px solid var(--rule); margin-left: 5px; }
+.flow li:last-child { border-left-color: transparent; padding-bottom: 0; }
+.flow li::before { content: ""; position: absolute; left: -7px; top: 6px; width: 12px; height: 12px; border-radius: 50%;
+  background: var(--paper); border: 2px solid var(--accent); }
+.flow li b { display: block; font-weight: 700; }
+.flow li span { display: block; font: .78rem/1.35 var(--mono); color: var(--muted); }
+.flow .gate b { color: var(--accent); }
+.flow .gate span { color: var(--ink); }
 
 /* Selector y recorrido */
-.picker { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 18px 0 10px; }
-.picker label { font-weight: 600; }
-select { flex: 1 1 320px; min-width: 0; font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 9px 10px; }
+.desk { margin-top: 40px; border-top: 2px solid var(--ink); padding-top: 14px; }
+.picker { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.picker label { font: 600 .72rem var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-right: 4px; }
+select { flex: 1 1 320px; min-width: 0; font: inherit; font-size: .98rem; color: var(--ink); background: var(--sheet);
+  border: 1px solid var(--rule); border-radius: 3px; padding: 9px 10px; }
+.nav { font: inherit; color: var(--ink); background: var(--sheet); border: 1px solid var(--rule); border-radius: 3px; padding: 8px 14px; cursor: pointer; }
 @media (max-width: 760px) {
   .picker label { flex: 1; }
   .picker select { order: 3; flex-basis: 100%; }
   .picker .btn { order: 4; flex-basis: 100%; justify-content: center; }
 }
-.nav { font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; cursor: pointer; }
-.tourbar { display: none; gap: 10px; align-items: center; flex-wrap: wrap; background: var(--tour); border: 1px solid var(--accent); border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
+.tourbar { display: none; gap: 10px 16px; align-items: baseline; flex-wrap: wrap; background: var(--tint); padding: 10px 14px; margin-top: 10px; }
 .tourbar.on { display: flex; }
-.tourbar p { margin: 0; flex: 1 1 260px; }
-.tourbar .step { font-weight: 700; color: var(--accent); }
-.tourbar button { font: inherit; background: none; border: none; color: var(--accent); cursor: pointer; text-decoration: underline; padding: 4px; }
+.tourbar p { flex: 1 1 260px; }
+.tourbar .step { font: 600 .78rem var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--accent); margin-right: 6px; }
+.tourbar button { font: inherit; background: none; border: none; color: var(--accent); cursor: pointer; text-decoration: underline; padding: 2px; }
 
-/* Resumen del caso */
-.summary { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; font-size: .92rem; }
-.summary .item { display: inline-flex; gap: 6px; align-items: center; }
-.summary .k { color: var(--muted); }
-.pill { display: inline-flex; gap: 5px; align-items: center; border-radius: 999px; padding: 2px 9px; font-weight: 600; font-size: .86rem; }
-.pill.ok { background: var(--ok-bg); color: var(--ok); }
-.pill.partial { background: var(--warn-bg); color: var(--warn); }
-.pill.no { background: var(--bad-bg); color: var(--bad); }
-.pill.neutral { background: var(--sunken); color: var(--muted); }
-.pill.mode { background: var(--info-bg); color: var(--info); }
-.alertbox { display: flex; gap: 8px; align-items: flex-start; border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; font-weight: 600; }
-.alertbox.warn { background: var(--bad-bg); color: var(--bad); border: 1px solid var(--bad); }
-.alertbox.info { background: var(--info-bg); color: var(--info); border: 1px solid var(--info); }
-.alertbox[hidden] { display: none; }
+/* Línea de resumen: modo · autor · juez · puerta */
+.summary { display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--rule); margin-top: 10px; }
+.summary .item { display: inline-flex; gap: 8px; align-items: center; }
+.summary .k { font: 600 .7rem var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.pill { display: inline-flex; gap: 5px; align-items: center; border-radius: 2px; padding: 1px 7px; font: 600 .82rem var(--mono); }
+.pill.ok { background: var(--pass-bg); color: var(--pass); }
+.pill.partial { background: var(--hold-bg); color: var(--hold); }
+.pill.no { background: var(--fail-bg); color: var(--fail); }
+.pill.neutral { background: var(--tint); color: var(--muted); }
+.pill.mode { background: var(--tint); color: var(--accent); }
+.alertbox { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; margin-top: 12px; font-weight: 700; }
+.alertbox.warn { background: var(--fail-bg); color: var(--fail); }
+.alertbox.info { background: var(--tint); color: var(--accent); }
 
-/* Caso */
-.grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
-@media (min-width: 761px) { .grid .left { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow: auto; } }
-@media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
-.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; min-width: 0; }
-.meta { color: var(--muted); font-size: .9rem; margin-bottom: 8px; }
-blockquote { margin: 0 0 14px; padding: 2px 0 2px 14px; border-left: 4px solid var(--quote); white-space: pre-wrap; overflow-wrap: anywhere; }
-.proof { border: 2px solid var(--info); border-radius: 10px; padding: 10px 12px; }
-.proof .tag { display: inline-flex; gap: 5px; align-items: center; font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--info); margin-bottom: 4px; }
-.proof h2 { margin-bottom: 4px; }
-.proof p { margin: 0; }
-.rating { border-radius: 10px; padding: 10px 12px; margin: 0 0 12px; border: 1px solid transparent; }
-.rating .head { display: flex; gap: 6px; align-items: center; font-weight: 700; }
-.rating .who { font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; }
-.rating.cumple { background: var(--ok-bg); border-color: var(--ok); } .rating.cumple .head { color: var(--ok); }
-.rating.parcial { background: var(--warn-bg); border-color: var(--warn); } .rating.parcial .head { color: var(--warn); }
-.rating.no_cumple { background: var(--bad-bg); border-color: var(--bad); } .rating.no_cumple .head { color: var(--bad); }
-.rating p { margin: 4px 0 0; color: var(--text); }
-.rating p.clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.more { font: inherit; font-size: .88rem; background: none; border: none; color: var(--accent); cursor: pointer; padding: 2px 0; text-decoration: underline; }
-.reply { white-space: pre-wrap; overflow-wrap: anywhere; background: var(--sunken); border-radius: 8px; padding: 12px 14px; margin: 0; font: inherit; }
-mark { background: var(--mark); color: var(--mark-ink); border-bottom: 2px dashed var(--bad); border-radius: 2px; position: relative; cursor: help; }
-.tip { display: none; position: absolute; left: 0; top: calc(100% + 6px); z-index: 5; width: max-content; max-width: min(320px, 80vw); white-space: normal; background: var(--text); color: var(--bg); font-size: .82rem; line-height: 1.35; padding: 6px 9px; border-radius: 6px; }
+/* Mostrador: reseña | carta */
+.counter { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 36px; align-items: start; margin-top: 22px; }
+@media (min-width: 761px) { .counter .left { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); max-height: calc(100vh - 24px); overflow: auto; } }
+@media (max-width: 760px) { .counter { grid-template-columns: 1fr; gap: 26px; } }
+.left { display: grid; gap: 16px; min-width: 0; }
+.source { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.review { margin: 0; font-size: 1.04rem; white-space: pre-wrap; overflow-wrap: anywhere; padding-left: 16px; border-left: 3px solid var(--ink); }
+.criterion { border: 1px dashed var(--accent); padding: 12px 14px; display: grid; gap: 6px; }
+.criterion .label { color: var(--accent); }
+.criterion h3 { font: 700 1rem var(--body); }
+.right { display: grid; gap: 18px; min-width: 0; }
+.letter { position: relative; background: var(--sheet); border: 1px solid var(--rule); box-shadow: 0 1px 0 var(--rule), 0 10px 26px -18px rgba(0, 0, 0, .35);
+  padding: 22px 24px 24px; }
+@media (max-width: 760px) { .letter { padding: 18px 16px 20px; } }
+.letterhead { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; border-bottom: 1px solid var(--rule); padding-bottom: 12px; margin-bottom: 16px; }
+.letterhead h2 { font-size: 1.2rem; }
+.letterhead .label { display: block; margin-top: 2px; }
+.reply { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: 1rem/1.65 var(--body); }
+.stamp { flex: none; transform: rotate(-5deg); border: 3px double currentColor; padding: 5px 10px 4px; font: 600 .78rem/1.15 var(--mono);
+  text-transform: uppercase; letter-spacing: .1em; text-align: center; background: var(--sheet); }
+.stamp.pub { color: var(--pass); }
+.stamp.rev { color: var(--hold); }
+.stamp small { display: block; font-size: .62rem; letter-spacing: .06em; margin-top: 2px; }
+mark { background: var(--marker); color: var(--marker-ink); padding: 0 1px; position: relative; cursor: help;
+  text-decoration: underline wavy var(--fail); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.tip { display: none; position: absolute; left: 0; top: calc(100% + 6px); z-index: 5; width: max-content; max-width: min(320px, 78vw);
+  white-space: normal; background: var(--ink); color: var(--paper); font: .82rem/1.4 var(--body); padding: 7px 10px; }
 mark:hover .tip, mark:focus .tip { display: block; }
-.hlnote { color: var(--muted); font-size: .82rem; margin: 6px 0 0; }
-.decision { border-radius: 10px; padding: 12px 14px; margin-top: 12px; }
-.decision.pub { background: var(--ok-bg); }
-.decision.rev { background: var(--warn-bg); }
-.decision .head { display: flex; gap: 6px; align-items: center; font-weight: 700; margin-bottom: 4px; }
-.decision.pub .head { color: var(--ok); }
-.decision.rev .head { color: var(--warn); }
-.decision ul { margin: 4px 0 0; padding-left: 20px; }
-.judgebox { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 10px; }
-.judge { list-style: none; padding: 0; margin: 0; }
-.judge li { display: flex; gap: 6px; align-items: flex-start; padding: 2px 0; font-size: .93rem; }
-.judge li.no { color: var(--bad); }
-.judge q { color: var(--muted); }
-details.more-detail { margin-top: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 4px 16px; }
-details.more-detail summary { cursor: pointer; font-weight: 600; padding: 10px 0; }
-pre.ficha { white-space: pre-wrap; background: var(--sunken); border-radius: 8px; padding: 10px 12px; font-size: .88rem; overflow-wrap: anywhere; }
-dl { margin: 0 0 12px; }
-dt { font-weight: 600; margin-top: 8px; }
-dd { margin: 2px 0 0; color: var(--muted); }
-details.limits { margin-top: 14px; }
-footer { margin-top: 28px; color: var(--muted); font-size: .88rem; border-top: 1px solid var(--border); padding-top: 14px; }
-.theme { font: inherit; font-size: .85rem; color: var(--muted); background: none; border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; cursor: pointer; white-space: nowrap; }
+.hlnote { font-size: .82rem; color: var(--muted); margin-top: 12px; }
+.rating { padding: 12px 14px; display: grid; gap: 4px; }
+.rating .head { display: flex; gap: 8px; align-items: center; font-weight: 700; flex-wrap: wrap; }
+.rating .who { font: 600 .7rem var(--mono); text-transform: uppercase; letter-spacing: .08em; }
+.rating.cumple { background: var(--pass-bg); } .rating.cumple .head { color: var(--pass); }
+.rating.parcial { background: var(--hold-bg); } .rating.parcial .head { color: var(--hold); }
+.rating.no_cumple { background: var(--fail-bg); } .rating.no_cumple .head { color: var(--fail); }
+.rating p { color: var(--ink); }
+.rating p.clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.more { justify-self: start; font: inherit; font-size: .88rem; background: none; border: none; color: var(--accent); cursor: pointer; padding: 0; text-decoration: underline; }
+.reasons h3, .inspect h3 { font: 600 .72rem var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 6px; }
+.reasons ul { margin: 0; padding-left: 18px; }
+.reasons li { color: var(--ink); }
+.inspect table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+.inspect caption { text-align: left; font: 400 1.1rem var(--display); margin-bottom: 6px; }
+.inspect caption small { font: .78rem var(--mono); color: var(--muted); }
+.inspect td { border-top: 1px solid var(--rule); padding: 6px 8px 6px 0; vertical-align: top; }
+.inspect td.res { width: 2.2em; font: 600 .9rem var(--mono); }
+.inspect tr.no td { color: var(--fail); }
+.inspect tr.ok td.res { color: var(--pass); }
+.inspect q { color: var(--muted); }
+details.detail { margin-top: 30px; border-top: 1px solid var(--rule); }
+details.detail summary { cursor: pointer; padding: 10px 0; font-weight: 700; }
+pre.ficha { white-space: pre-wrap; background: var(--sheet); border: 1px solid var(--rule); padding: 10px 12px; font: .84rem/1.5 var(--mono); overflow-wrap: anywhere; }
+dl.facts { margin: 0 0 14px; }
+dl.facts dt { font: 600 .7rem var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-top: 10px; }
+dl.facts dd { margin: 2px 0 0; }
+details.limits { margin-top: 0; }
+footer { margin-top: 34px; color: var(--muted); font-size: .86rem; border-top: 1px solid var(--rule); padding-top: 14px; max-width: 90ch; }
 </style>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <symbol id="i-auto" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M7.5 12.5l3 3 6-6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-auto" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="i-human" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 20.5c1.2-4 4.2-6 8-6s6.8 2 8 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
   <symbol id="i-ok" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-  <symbol id="i-partial" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></symbol>
+  <symbol id="i-partial" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/></symbol>
   <symbol id="i-no" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></symbol>
   <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 3.5l9.5 16.5h-19z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v4.5M12 17.2v.3" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
   <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 11v6M12 7.3v.3" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
-  <symbol id="i-pen" viewBox="0 0 24 24"><path d="M4 20l1-4 11-11 3 3-11 11z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
 </svg>
 <div class="wrap">
-  <div class="top"><button class="theme" id="theme" type="button" aria-label="Cambiar entre tema claro y oscuro">◐ Tema</button></div>
+  <div class="topbar">
+    <p class="who"><strong>Fco Javier Fdez</strong> · Data Engineer / ML · <a href="https://www.linkedin.com/in/franciscojavier-fernandezrumi/" target="_blank" rel="noopener">LinkedIn</a> · <a href="https://github.com/JaviRomano">GitHub</a> · <a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM">Código e informes</a></p>
+    <button class="theme" id="theme" type="button">Cambiar tema</button>
+  </div>
 
-  <div class="hero">
-    <div>
+  <header class="hero">
+    <div class="intro">
       <h1>¿Cómo responde una IA a las reseñas difíciles de un hotel?</h1>
-      <p class="byline"><strong>Fco Javier Fdez</strong> · Data Engineer / ML · <a href="https://www.linkedin.com/in/franciscojavier-fernandezrumi/" target="_blank" rel="noopener">LinkedIn</a> · <a href="https://github.com/JaviRomano">GitHub</a> · <a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM">código e informes</a></p>
-      <p class="lead">Un hotel responde a cientos de reseñas, y una respuesta mal escrita puede admitir una culpa, prometer un reembolso o dar la razón a algo falso. Este sistema <strong>redacta la respuesta, comprueba esos riesgos y decide si se publica sola o pasa a una persona</strong>.</p>
-      <ul class="chips" id="chips" aria-label="Tecnologías"></ul>
-      <div class="kpis" id="kpis"></div>
+      <p class="lead">Un hotel responde a cientos de reseñas, y una respuesta mal escrita puede admitir una culpa, prometer un reembolso o dar la razón a algo falso. Este sistema redacta la respuesta, comprueba esos riesgos y decide si se publica sola o pasa a una persona.</p>
+      <div class="figures" id="figures"></div>
       <p class="caveat" id="caveat"></p>
-      <div class="ctas">
+      <dl class="spec" id="spec" aria-label="Ficha técnica"></dl>
+      <div class="actions">
         <a class="btn primary" href="https://www.linkedin.com/in/franciscojavier-fernandezrumi/" target="_blank" rel="noopener">Contactar</a>
-        <button class="btn secondary" id="livebtn" type="button" aria-expanded="false" aria-controls="livepanel">Pedir prueba en vivo</button>
+        <button class="btn secondary" id="livebtn" type="button" aria-expanded="false" aria-controls="livepanel">Pedir una prueba en vivo</button>
         <a class="btn alert" href="#p08"><svg class="icon"><use href="#i-warn"/></svg>Ver un fallo que el sistema no detecta</a>
       </div>
-      <div class="livepanel" id="livepanel" hidden>
-        <p>🔬 <strong>Esta página es una repetición: aquí no se genera nada en directo.</strong> Envíame por <a href="https://www.linkedin.com/in/franciscojavier-fernandezrumi/" target="_blank" rel="noopener">LinkedIn</a> hasta 5 reseñas (inventadas, o reales sin datos personales) y, en una sesión en directo desde mi ordenador, verás para cada una la respuesta, si se publicaría o pasaría a una persona y por qué, y cuánto tarda.</p>
+      <p class="livepanel" id="livepanel" hidden>Esta página repite resultados ya generados: aquí no se ejecuta ningún modelo. Envíame por <a href="https://www.linkedin.com/in/franciscojavier-fernandezrumi/" target="_blank" rel="noopener">LinkedIn</a> hasta 5 reseñas, inventadas o reales sin datos personales, y en una sesión en directo desde mi ordenador verás, para cada una, la respuesta, si se publicaría o pasaría a una persona y por qué, y cuánto tarda.</p>
+      <div>
+        <details class="fold">
+          <summary>Qué está demostrado y qué no</summary>
+          <ul>
+            <li><strong>Demostrado</strong>, en local, con reseñas públicas y casos sintéticos: el clasificador, la recuperación de contexto, el juez y las reglas, cada uno medido por separado (<a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM#key-figures">cifras clave</a>). Las reseñas negativas, dudosas, trampa o con accidentes y reclamaciones legales pasan siempre por una persona.</li>
+            <li><strong>Sin demostrar todavía:</strong> el comportamiento con reseñas y fichas de un hotel real, una tasa de error aceptable para producción y el ahorro de trabajo. La evaluación humana es pequeña (24 respuestas calibradas y 30 comparadas a ciegas), y las fichas y políticas de los hoteles son inventadas.</li>
+          </ul>
+        </details>
+        <details class="fold">
+          <summary>Qué hay en esta página y cómo se hizo</summary>
+          <ul>
+            <li><strong>Reseñas de prueba:</strong> escritas a propósito para ponerlo a prueba (amenazas legales, instrucciones ocultas, datos falsos, ataques al personal), con el criterio de una buena respuesta escrito antes de generar y la valoración del autor después.</li>
+            <li><strong>Casos ilustrativos:</strong> casos sintéticos y reseñas reales de TripAdvisor (corpus AHR), con una nota escrita después de leer la respuesta.</li>
+          </ul>
+          <p>Ni las reglas ni el juez son infalibles. Por eso lo dudoso o delicado lo decide una persona.</p>
+        </details>
       </div>
-      <details class="about">
-        <summary>Qué está demostrado y qué no</summary>
-        <ul>
-          <li><strong>Demostrado</strong>, en local, con reseñas públicas y casos sintéticos: el clasificador, la recuperación de contexto, el juez y las reglas, cada uno medido por separado (<a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM#key-figures">cifras clave</a>). Las respuestas negativas, dudosas, trampa o con accidentes y reclamaciones legales pasan siempre por una persona.</li>
-          <li><strong>No demostrado todavía:</strong> el comportamiento con reseñas y fichas de un hotel real, una tasa de error aceptable para producción y el ahorro de trabajo. La evaluación humana es pequeña (24 respuestas calibradas y 30 comparadas a ciegas), y las fichas y políticas de los hoteles son inventadas.</li>
-        </ul>
-      </details>
-      <details class="about">
-        <summary>Qué hay en esta página y cómo se hizo</summary>
-        <ul>
-          <li><strong>Reseñas de prueba:</strong> escritas a propósito para ponerlo a prueba (amenazas legales, instrucciones ocultas, datos falsos, ataques al personal…), con el criterio de una buena respuesta escrito <em>antes</em> de generar y la valoración del autor después.</li>
-          <li><strong>Casos ilustrativos:</strong> casos sintéticos y reseñas reales (TripAdvisor, corpus AHR), con una nota escrita <em>después</em> de leer la respuesta.</li>
-        </ul>
-        <p>Cadena, todo en una GPU y sin enviar datos fuera: clasificador mRoBERTa → ficha completa del hotel, más las políticas y respuestas aprobadas parecidas, recuperadas por búsqueda (RAG) → borrador con Qwen 27B → reglas deterministas y un segundo modelo (Gemma 12B) como juez → publicar o pasar a una persona. Ni las reglas ni el juez son infalibles: por eso lo dudoso o delicado lo decide una persona.</p>
-      </details>
     </div>
 
-    <figure class="diagram" aria-labelledby="diag-cap">
-      <svg viewBox="0 0 320 372" role="img" aria-labelledby="diag-title">
-        <title id="diag-title">Cadena: reseña, clasificador, ficha y RAG, generador, reglas y juez, y puerta que publica o pasa a una persona</title>
-        <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
-        <g style="color: var(--muted)">
-          <rect class="box" x="70" y="4" width="180" height="40" rx="8"/><text x="160" y="29" text-anchor="middle">Reseña</text>
-          <path class="arrow" d="M160 44v14" marker-end="url(#arr)"/>
-          <rect class="box" x="40" y="62" width="240" height="44" rx="8"/><text x="160" y="81" text-anchor="middle">Clasificador mRoBERTa</text><text class="sub" x="160" y="97" text-anchor="middle">sentimiento + confianza</text>
-          <path class="arrow" d="M160 106v14" marker-end="url(#arr)"/>
-          <rect class="box" x="40" y="124" width="240" height="44" rx="8"/><text x="160" y="143" text-anchor="middle">Ficha del hotel + RAG</text><text class="sub" x="160" y="159" text-anchor="middle">políticas y respuestas aprobadas</text>
-          <path class="arrow" d="M160 168v14" marker-end="url(#arr)"/>
-          <rect class="box" x="40" y="186" width="240" height="44" rx="8"/><text x="160" y="205" text-anchor="middle">Generador Qwen 27B</text><text class="sub" x="160" y="221" text-anchor="middle">aspectos en JSON + borrador</text>
-          <path class="arrow" d="M160 230v14" marker-end="url(#arr)"/>
-          <rect class="box" x="40" y="248" width="240" height="44" rx="8"/><text x="160" y="267" text-anchor="middle">Reglas + juez Gemma 12B</text><text class="sub" x="160" y="283" text-anchor="middle">8 criterios con evidencia</text>
-          <path class="arrow" d="M160 292v14" marker-end="url(#arr)"/>
-          <rect class="box gate" x="40" y="310" width="240" height="58" rx="8"/><text x="160" y="329" text-anchor="middle">Puerta</text>
-          <circle class="ok" cx="72" cy="350" r="5"/><text class="sub" x="82" y="354">publica sola</text>
-          <circle class="hu" cx="178" cy="350" r="5"/><text class="sub" x="188" y="354">a una persona</text>
-        </g>
-      </svg>
-      <figcaption id="diag-cap">Todo corre en local, en una sola GPU, sin enviar datos fuera.</figcaption>
-    </figure>
-  </div>
+    <aside class="flow" aria-labelledby="flow-title">
+      <p class="label" id="flow-title">Recorrido de una reseña</p>
+      <ol>
+        <li><b>Llega la reseña</b><span>texto y hotel</span></li>
+        <li><b>Clasificador</b><span>mRoBERTa · sentimiento y confianza</span></li>
+        <li><b>Ficha del hotel y políticas</b><span>ficha completa · RAG: políticas y respuestas aprobadas</span></li>
+        <li><b>Borrador</b><span>Qwen 27B · aspectos en JSON y respuesta</span></li>
+        <li><b>Reglas y juez</b><span>Gemma 12B · 8 criterios con evidencia</span></li>
+        <li class="gate"><b>Puerta</b><span>se publica sola o pasa a una persona</span></li>
+      </ol>
+      <p class="caveat" style="margin-top:14px">Todo corre en un PC, en una sola GPU, sin enviar datos fuera.</p>
+    </aside>
+  </header>
 
-  <div class="picker">
-    <label for="case">Reseña</label>
-    <button class="nav" id="prev" type="button" aria-label="Anterior">←</button>
-    <select id="case"></select>
-    <button class="nav" id="next" type="button" aria-label="Siguiente">→</button>
-    <button class="btn secondary" id="tour" type="button">▶ Recorrido guiado</button>
-  </div>
-  <div class="tourbar" id="tourbar" role="status" aria-live="polite">
-    <p><span class="step" id="tourstep"></span> <span id="tourtext"></span></p>
-    <button type="button" id="tourexit">Salir del recorrido</button>
-  </div>
+  <section class="desk" aria-label="Casos">
+    <div class="picker">
+      <label for="case">Reseña</label>
+      <button class="nav" id="prev" type="button" aria-label="Anterior">←</button>
+      <select id="case"></select>
+      <button class="nav" id="next" type="button" aria-label="Siguiente">→</button>
+      <button class="btn secondary" id="tour" type="button">Recorrido guiado</button>
+    </div>
+    <div class="tourbar" id="tourbar" role="status" aria-live="polite">
+      <p><span class="step" id="tourstep"></span><span id="tourtext"></span></p>
+      <button type="button" id="tourexit">Salir del recorrido</button>
+    </div>
 
-  <div class="summary" id="summary" aria-label="Resumen del caso"></div>
-  <div class="alertbox" id="alert" role="note" hidden></div>
+    <div class="summary" id="summary" aria-label="Resumen del caso"></div>
+    <div class="alertbox" id="alert" role="note" hidden></div>
 
-  <div class="grid">
-    <section class="card left" aria-labelledby="h-review">
-      <h2 id="h-review">Reseña</h2>
-      <div class="meta" id="hotel"></div>
-      <blockquote id="review"></blockquote>
-      <div class="proof" id="context"></div>
-    </section>
-    <section class="card" aria-labelledby="h-reply">
-      <h2 id="h-reply">Respuesta generada</h2>
-      <div id="rating"></div>
-      <pre class="reply" id="reply"></pre>
-      <p class="hlnote" id="hlnote" hidden>Subrayado: fragmentos que señalan el juez o el autor. Pasa el ratón o enfoca con el tabulador para ver por qué.</p>
-      <div class="decision" id="decision"></div>
-      <div class="judgebox">
-        <h2 id="h-judge">Juez</h2>
-        <ul class="judge" id="judge"></ul>
+    <div class="counter">
+      <div class="left">
+        <div class="source"><span class="label">Reseña recibida</span><span class="label" id="hotel"></span></div>
+        <blockquote class="review" id="review"></blockquote>
+        <div class="criterion" id="context"></div>
       </div>
-    </section>
-  </div>
+      <div class="right">
+        <article class="letter" aria-labelledby="letter-hotel">
+          <div class="letterhead">
+            <div><h2 id="letter-hotel"></h2><span class="label">Respuesta del establecimiento · borrador</span></div>
+            <div class="stamp" id="stamp"></div>
+          </div>
+          <pre class="reply" id="reply"></pre>
+          <p class="hlnote" id="hlnote" hidden>Subrayado: fragmentos que señalan el juez o el autor. Pasa el ratón por encima, o llega con el tabulador, para ver por qué.</p>
+        </article>
+        <div id="rating"></div>
+        <div class="reasons" id="reasons"></div>
+        <div class="inspect">
+          <table>
+            <caption id="h-judge"></caption>
+            <tbody id="judge"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
-  <details class="more-detail" id="detail">
-    <summary>Clasificador y contexto recuperado</summary>
-    <div id="detail-body"></div>
-  </details>
-
-  <details class="limits">
-    <summary>Limitaciones conocidas</summary>
-    <ul>
-      <li><strong>Respuestas formularias.</strong> Casi todas empiezan igual («Estimado cliente: Muchas gracias por compartir…») y repiten frases entre casos. Una versión del prompt que lo corregía perdió en una valoración humana a ciegas; se volverá a intentar con más reseñas valoradas por personas, para no ajustar el prompt a estos mismos casos.</li>
-      <li><strong>Reseñas trampa.</strong> Cuando detecta instrucciones ocultas o una broma, la respuesta es irónica a propósito (p02, adv-inyeccion). El autor la da por buena en contexto, pero el juez la suspende por tono: no distingue esa excepción y hay que afinarlo. Mitigación: las trampas pasan siempre por una persona. Mejora pendiente: una respuesta neutra cuando se detecta una inyección.</li>
-      <li><strong>El juez no lo ve todo.</strong> Deja pasar algunas admisiones implícitas de culpa (p08, rag-carteles). Por eso lo negativo, lo dudoso y cualquier accidente o riesgo legal pasan siempre por una persona.</li>
-      <li><strong>Confianza del clasificador.</strong> Es la probabilidad media de la clase elegida en las 3 semillas del ensamble; casi nunca pasa de 0,93, y por debajo de 0,85 la reseña va a una persona. Con 3 decimales dos reseñas pueden coincidir (p01 y p09 marcan 0,783, pero sus valores son 0,78307 y 0,78335).</li>
-      <li>Las fichas de hotel, las políticas y parte de los casos son sintéticos.</li>
-    </ul>
-  </details>
+    <details class="detail" id="detail">
+      <summary>Clasificador y contexto recuperado</summary>
+      <div id="detail-body"></div>
+    </details>
+    <details class="detail limits">
+      <summary>Limitaciones conocidas</summary>
+      <ul>
+        <li><strong>Respuestas formularias.</strong> Casi todas empiezan igual («Estimado cliente: Muchas gracias por compartir…») y repiten frases entre casos. Una versión del prompt que lo corregía perdió en una valoración humana a ciegas. Se volverá a intentar con más reseñas valoradas por personas, para no ajustar el prompt a estos mismos casos.</li>
+        <li><strong>Reseñas trampa.</strong> Cuando detecta instrucciones ocultas o una broma, la respuesta es irónica a propósito (p02, adv-inyeccion). El autor la da por buena en contexto, pero el juez la suspende por tono porque no distingue esa excepción, y hay que afinarlo. Las trampas pasan siempre por una persona. Mejora pendiente: una respuesta neutra cuando se detecta una inyección.</li>
+        <li><strong>El juez no lo ve todo.</strong> Deja pasar algunas admisiones implícitas de culpa (p08, rag-carteles). Por eso lo negativo, lo dudoso y cualquier accidente o riesgo legal pasan siempre por una persona.</li>
+        <li><strong>Confianza del clasificador.</strong> Es la probabilidad media de la clase elegida en las 3 semillas del ensamble. Casi nunca pasa de 0,93, y por debajo de 0,85 la reseña va a una persona. Con 3 decimales dos reseñas pueden coincidir: p01 y p09 marcan 0,783, pero sus valores son 0,78307 y 0,78335.</li>
+        <li>Las fichas de hotel, las políticas y parte de los casos son sintéticos.</li>
+      </ul>
+    </details>
+  </section>
 
   <footer>
-    <p>© 2026 Fco Javier Fdez · <a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM">repositorio</a> (código MIT). Página generada con <code>scripts/build_replay.py</code> a partir de resultados versionados. Las reseñas reales proceden del corpus <a href="https://www.kaggle.com/datasets/chizhikchi/andalusian-hotels-reviews-unbalanced">Andalusian Hotels' Reviews</a> (CC BY-NC 4.0); hoteles, fichas y políticas son ficticios.</p>
+    <p>© 2026 Fco Javier Fdez · <a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM">repositorio</a> (código MIT). Página generada con <code>scripts/build_replay.py</code> a partir de resultados versionados. Las reseñas reales proceden del corpus <a href="https://www.kaggle.com/datasets/chizhikchi/andalusian-hotels-reviews-unbalanced">Andalusian Hotels' Reviews</a> (CC BY-NC 4.0). Hoteles, fichas y políticas son ficticios.</p>
   </footer>
 </div>
 
@@ -1817,12 +1856,26 @@ footer { margin-top: 28px; color: var(--muted); font-size: .88rem; border-top: 1
   "gpu": "AMD RX 7900 XTX"
  },
  "stack": [
-  "Qwen3.6 27B (generador)",
-  "Gemma 4 12B (juez)",
-  "RAG híbrido: BM25 + bge-m3",
-  "Clasificador mRoBERTa ×3",
-  "Python 3.12 · Ollama",
-  "100 % local · AMD RX 7900 XTX"
+  [
+   "Generador",
+   "Qwen3.6 27B"
+  ],
+  [
+   "Juez",
+   "Gemma 4 12B"
+  ],
+  [
+   "Recuperación",
+   "BM25 + bge-m3"
+  ],
+  [
+   "Clasificador",
+   "mRoBERTa ×3"
+  ],
+  [
+   "Ejecución",
+   "local · RX 7900 XTX"
+  ]
  ]
 }</script>
 <script>
@@ -1837,16 +1890,16 @@ footer { margin-top: 28px; color: var(--muted); font-size: .88rem; border-top: 1
   const PUB = "publicable";
   const VERDICT = {cumple: ["ok", "ok", "Cumple lo esperado"], parcial: ["partial", "partial", "Cumple en parte"], no_cumple: ["no", "no", "No cumple lo esperado"]};
 
-  // Cabecera: chips y cifras (calculadas por build_replay.py desde los resultados versionados)
-  for (const s of DATA.stack) $("chips").append(el("li", s));
-  const kpis = [
+  // Cabecera: cifras (calculadas por build_replay.py desde los resultados versionados) y ficha técnica
+  const figures = [
     [`${S.riesgo_publicadas} de ${S.riesgo_total}`, "reseñas reales de 1–3★ publicadas sin revisión", true],
-    [`${S.publicables} de ${S.total}`, `se publican solas${S.publicables === S.publicables_positivas ? ", todas positivas" : ""} · conservador por diseño`],
+    [`${S.publicables} de ${S.total}`, `se publican solas${S.publicables === S.publicables_positivas ? ", todas positivas" : ""}; conservador por diseño`],
     [`${S.total - S.publicables} de ${S.total}`, "pasan a una persona, con el motivo"],
-    [`${S.segundos} s`, `por reseña · Qwen 27B + Gemma 12B en una ${S.gpu} (borrador a los ${S.borrador} s)`],
+    [`${S.segundos} s`, `por reseña en una ${S.gpu}; el borrador se ve a los ${S.borrador} s`],
   ];
-  for (const [big, small, main] of kpis) { const d = el("div", null, "kpi" + (main ? " main" : "")); d.append(el("b", big), el("span", small)); $("kpis").append(d); }
-  $("caveat").textContent = `Demostración con ${S.total} reseñas (${S.sinteticos} sintéticas y ${S.total - S.sinteticos} reales de TripAdvisor, ${S.riesgo_total} de ellas de 1–3★): no es una medida en un hotel real.`;
+  for (const [big, small, main] of figures) { const d = el("div", null, "fig" + (main ? " main" : "")); d.append(el("b", big), el("span", small)); $("figures").append(d); }
+  $("caveat").textContent = `Demostración con ${S.total} reseñas: ${S.sinteticos} sintéticas y ${S.total - S.sinteticos} reales de TripAdvisor, ${S.riesgo_total} de ellas de 1 a 3 estrellas. No es una medida en un hotel real.`;
+  for (const [k, v] of DATA.stack) { const d = el("div"); d.append(el("dt", k), el("dd", v)); $("spec").append(d); }
   $("livebtn").addEventListener("click", () => {
     const open = $("livepanel").hidden; $("livepanel").hidden = !open; $("livebtn").setAttribute("aria-expanded", String(open));
   });
@@ -1857,16 +1910,16 @@ footer { margin-top: 28px; color: var(--muted); font-size: .88rem; border-top: 1
   for (const [name, mode] of groups) {
     const og = document.createElement("optgroup"); og.label = name;
     for (const c of cases.filter(c => c.eval_mode === mode)) {
-      const gate = c.decision === PUB ? "publica sola" : "a una persona";
-      og.append(new Option(`${c.titulo || c.id}${c.tipo ? " · " + c.tipo : ""} — ${gate}`, c.id));
+      const gate = c.decision === PUB ? "se publica sola" : "pasa a una persona";
+      og.append(new Option(`${c.titulo || c.id}${c.tipo ? " · " + c.tipo : ""} (${gate})`, c.id));
     }
     select.append(og);
   }
   const order = [...select.options].map(o => o.value);
   let step = null;  // índice del recorrido guiado, o null
 
-  function item(label, ...nodes) { const s = el("span", null, "item"); s.append(el("span", label, "k"), ...nodes); return s; }
-  function pill(cls, iconName, text) { const p = el("span", null, "pill " + cls); if (iconName) p.append(icon(iconName)); p.append(text); return p; }
+  const item = (label, node) => { const s = el("span", null, "item"); s.append(el("span", label, "k"), node); return s; };
+  const pill = (cls, iconName, text) => { const p = el("span", null, "pill " + cls); if (iconName) p.append(icon(iconName)); p.append(text); return p; };
 
   function renderReply(c) {
     const box = $("reply"); box.replaceChildren();
@@ -1894,82 +1947,81 @@ footer { margin-top: 28px; color: var(--muted); font-size: .88rem; border-top: 1
     select.value = c.id;
     if (location.hash.slice(1) !== c.id) history.replaceState(null, "", "#" + c.id);
     const failed = c.judge.filter(j => !j.cumple).length, total = c.judge.length;
+    const v = c.valoracion && VERDICT[c.valoracion.veredicto];
+    const pub = c.decision === PUB;
 
     // Resumen: modo · autor · juez · puerta
     const sum = $("summary"); sum.replaceChildren();
-    sum.append(pill("mode", "pen", c.eval_mode === "criterio_previo" ? "Criterio escrito antes de generar" : "Caso ilustrativo · nota posterior"));
-    const v = c.valoracion && VERDICT[c.valoracion.veredicto];
+    sum.append(pill("mode", null, c.eval_mode === "criterio_previo" ? "Criterio escrito antes de generar" : "Caso ilustrativo, nota posterior"));
     sum.append(item("Autor", v ? pill(v[0], v[1], v[2]) : pill("neutral", null, "sin valorar")));
-    sum.append(item("Juez", total ? pill(failed ? "no" : "ok", failed ? "no" : "ok", `${total - failed}/${total}`) : pill("neutral", null, "no aplica (trampa)")));
-    sum.append(item("Puerta", c.decision === PUB ? pill("ok", "auto", "publica sola") : pill("partial", "human", "a una persona")));
+    sum.append(item("Juez", total ? pill(failed ? "no" : "ok", failed ? "no" : "ok", `${total - failed}/${total}`) : pill("neutral", null, "no se aplica")));
+    sum.append(item("Puerta", pub ? pill("ok", "auto", "se publica sola") : pill("partial", "human", "pasa a una persona")));
 
     // Autor y juez discrepan
     const alert = $("alert"); alert.replaceChildren(); alert.hidden = true;
     if (c.valoracion && total) {
       const authorFails = c.valoracion.veredicto !== "cumple";
-      if (authorFails && failed === 0) { alert.className = "alertbox warn"; alert.append(icon("warn"), "El juez no detecta este fallo → por eso existe la revisión humana."); alert.hidden = false; }
-      else if (!authorFails && failed > 0) { alert.className = "alertbox info"; alert.append(icon("info"), "El juez es más estricto que el autor en este caso."); alert.hidden = false; }
+      if (authorFails && failed === 0) { alert.className = "alertbox warn"; alert.append(icon("warn"), "El juez no detecta este fallo. Por eso existe la revisión humana."); alert.hidden = false; }
+      else if (!authorFails && failed > 0) { alert.className = "alertbox info"; alert.append(icon("info"), "En este caso el juez es más estricto que el autor."); alert.hidden = false; }
     }
 
     $("hotel").textContent = c.hotel;
     $("review").textContent = c.review;
     const ctx = $("context"); ctx.replaceChildren();
-    if (c.esperado || c.nota) {
-      const tag = el("span", null, "tag"); tag.append(icon("pen"), c.esperado ? "Escrito antes de generar" : "Nota escrita después de leer la respuesta");
-      ctx.append(tag, el("h2", c.esperado ? "Qué se esperaba de una buena respuesta" : "Por qué está aquí"), el("p", c.esperado || c.nota));
-    }
     ctx.hidden = !(c.esperado || c.nota);
+    if (!ctx.hidden) ctx.append(el("span", c.esperado ? "Escrito antes de generar" : "Nota escrita después de leer la respuesta", "label"),
+      el("h3", c.esperado ? "Qué se esperaba de una buena respuesta" : "Por qué está aquí"), el("p", c.esperado || c.nota));
+
+    $("letter-hotel").textContent = c.hotel === "Sin ficha" ? "Hotel sin ficha" : c.hotel;
+    const stamp = $("stamp"); stamp.className = "stamp " + (pub ? "pub" : "rev");
+    stamp.replaceChildren(pub ? "Publicar" : "A revisión", el("small", pub ? "sin revisión" : "pasa a una persona"));
+    renderReply(c);
 
     const rating = $("rating"); rating.replaceChildren(); rating.className = "";
     if (v) {
       rating.className = "rating " + c.valoracion.veredicto;
-      const head = el("div", null, "head"); head.append(icon(v[1]), v[2] + " ", el("span", "· valoración del autor", "who"));
+      const head = el("div", null, "head"); head.append(icon(v[1]), v[2], el("span", "Valoración del autor", "who"));
       rating.append(head);
       if (c.valoracion.motivo) {
         const p = el("p", c.valoracion.motivo, "clamp"); rating.append(p);
         requestAnimationFrame(() => {
           if (p.scrollHeight > p.clientHeight + 2) {
-            const b = el("button", "ver más", "more"); b.type = "button"; b.setAttribute("aria-expanded", "false");
-            b.addEventListener("click", () => { const open = p.classList.toggle("clamp"); b.textContent = open ? "ver más" : "ver menos"; b.setAttribute("aria-expanded", String(!open)); });
+            const b = el("button", "Ver más", "more"); b.type = "button"; b.setAttribute("aria-expanded", "false");
+            b.addEventListener("click", () => { const open = p.classList.toggle("clamp"); b.textContent = open ? "Ver más" : "Ver menos"; b.setAttribute("aria-expanded", String(!open)); });
             rating.append(b);
           }
         });
       }
     }
 
-    renderReply(c);
-    const dec = $("decision"); dec.replaceChildren();
-    const head = el("div", null, "head");
-    if (c.decision === PUB) { dec.className = "decision pub"; head.append(icon("auto"), "Se publicaría sin revisión"); dec.append(head); }
-    else {
-      dec.className = "decision rev"; head.append(icon("human"), "Pasa a una persona antes de publicar"); dec.append(head);
-      const ul = el("ul"); c.reasons.forEach(r => ul.append(el("li", r))); dec.append(ul);
-    }
+    const reasons = $("reasons"); reasons.replaceChildren();
+    if (!pub) { reasons.append(el("h3", "Motivos de la puerta")); const ul = el("ul"); c.reasons.forEach(r => ul.append(el("li", r))); reasons.append(ul); }
 
-    const judge = $("judge"); judge.replaceChildren();
-    $("h-judge").textContent = total ? `Juez: ${total - failed}/${total} criterios cumplidos ` : "Juez: no se aplica a una reseña trampa ";
-    $("h-judge").append(el("small", "· Gemma 12B, otra familia que el generador"));
+    const cap = $("h-judge"); cap.replaceChildren();
+    cap.append(total ? `Inspección del juez: ${total - failed} de ${total} ` : "Inspección del juez: no se aplica a una reseña trampa ", el("small", "Gemma 12B, de otra familia que el generador"));
+    const tb = $("judge"); tb.replaceChildren();
     for (const j of c.judge) {
-      const li = el("li", null, j.cumple ? "" : "no"); li.append(icon(j.cumple ? "ok" : "no"));
-      const t = el("span", j.criterio); if (!j.cumple && j.evidencia) { t.append(": "); t.append(el("q", j.evidencia)); }
-      li.append(t); judge.append(li);
+      const tr = el("tr", null, j.cumple ? "ok" : "no");
+      const res = el("td", null, "res"); res.append(icon(j.cumple ? "ok" : "no")); res.setAttribute("aria-label", j.cumple ? "cumple" : "no cumple");
+      const td = el("td", j.criterio); if (!j.cumple && j.evidencia) { td.append(": "); td.append(el("q", j.evidencia)); }
+      tr.append(res, td); tb.append(tr);
     }
 
     const body = $("detail-body"); body.replaceChildren();
-    const dl = el("dl");
+    const dl = el("dl", null, "facts");
     const probs = Object.entries(c.probs).map(([k, x]) => `${k} ${fmt(x, 2)}`).join(" · ");
     const add = (t, d) => { dl.append(el("dt", t), el("dd", d)); };
-    add("Sentimiento (clasificador mRoBERTa, media de 3 semillas)", `${c.sentiment}, confianza ${fmt(c.confidence, 3)} (umbral ${fmt(DATA.umbral, 2)}) — ${probs}`);
-    add("Políticas recuperadas", c.politicas.join(", ") || "—");
+    add("Sentimiento (mRoBERTa, media de 3 semillas)", `${c.sentiment}, confianza ${fmt(c.confidence, 3)} (umbral ${fmt(DATA.umbral, 2)}). ${probs}`);
+    add("Políticas recuperadas", c.politicas.join(", ") || "ninguna");
     add("Peticiones detectadas", c.peticiones.join(", ") || "ninguna");
     body.append(dl);
-    if (c.ficha) { body.append(el("h2", "Ficha del hotel"), el("pre", c.ficha, "ficha")); }
+    if (c.ficha) { body.append(el("span", "Ficha del hotel", "label"), el("pre", c.ficha, "ficha")); }
 
     // Recorrido: el paso sigue al caso; si se elige otro caso, se sale
     if (step !== null && tour[step].id !== c.id) { step = tour.findIndex(s => s.id === c.id); if (step < 0) step = null; }
     $("tourbar").classList.toggle("on", step !== null);
     $("tour").hidden = step !== null;
-    if (step !== null) { $("tourstep").textContent = `Paso ${step + 1} de ${tour.length}.`; $("tourtext").textContent = tour[step].ensena; }
+    if (step !== null) { $("tourstep").textContent = `Paso ${step + 1} de ${tour.length}`; $("tourtext").textContent = tour[step].ensena; }
   }
 
   const move = d => {

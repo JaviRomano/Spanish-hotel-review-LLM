@@ -139,12 +139,18 @@ def summary(demo: dict) -> dict:
     }
 
 
-def stack() -> list[str]:
-    """Chips de la cabecera: los modelos salen de sus constantes en el código."""
-    gen = MODEL.split(":")[0].replace("qwen3.6", "Qwen3.6") + " 27B (generador)"
-    judge = JUDGE_MODEL.split(":")[0].replace("gemma4", "Gemma 4") + " 12B (juez)"
-    return [gen, judge, f"RAG híbrido: BM25 + {EMBED_MODEL}", "Clasificador mRoBERTa ×3",
-            "Python 3.12 · Ollama", f"100 % local · {GPU}"]  # fmt: skip
+def _size(tag: str) -> str:
+    """«qwen3.6:27b-q4_K_M» -> «27B»: el tamaño sale de la etiqueta del modelo."""
+    m = re.search(r":(\d+)b", tag)
+    return f" {m.group(1)}B" if m else ""
+
+
+def stack() -> list[list[str]]:
+    """Ficha técnica de la cabecera (etiqueta, valor): los modelos salen de sus constantes."""
+    gen = MODEL.split(":")[0].replace("qwen", "Qwen") + _size(MODEL)
+    judge = JUDGE_MODEL.split(":")[0].replace("gemma4", "Gemma 4") + _size(JUDGE_MODEL)
+    return [["Generador", gen], ["Juez", judge], ["Recuperación", f"BM25 + {EMBED_MODEL}"],
+            ["Clasificador", "mRoBERTa ×3"], ["Ejecución", "local · " + GPU.removeprefix("AMD ")]]  # fmt: skip
 
 
 def og_image(s: dict) -> None:
@@ -155,21 +161,22 @@ def og_image(s: dict) -> None:
     import matplotlib.pyplot as plt
 
     fig = plt.figure(figsize=(12, 6.3), dpi=100)
-    fig.patch.set_facecolor("#fcfcfb")
-    t = lambda x, y, s_, **kw: fig.text(x, y, s_, color=kw.pop("c", "#1a1a19"), **kw)  # noqa: E731
-    t(0.06, 0.82, "¿Cómo responde una IA a las", fontsize=40, fontweight="bold")
-    t(0.06, 0.70, "reseñas difíciles de un hotel?", fontsize=40, fontweight="bold")
+    # Mismos colores que la página (tokens --paper, --ink, --muted, --rule, --accent)
+    paper, ink, muted, rule, accent = "#f4f6f3", "#17201c", "#56615b", "#cdd4ce", "#0f5c4a"
+    fig.patch.set_facecolor(paper)
+    t = lambda x, y, s_, **kw: fig.text(x, y, s_, color=kw.pop("c", ink), **kw)  # noqa: E731
+    t(0.06, 0.82, "¿Cómo responde una IA a las", fontsize=40, fontweight="bold", family="serif")
+    t(0.06, 0.70, "reseñas difíciles de un hotel?", fontsize=40, fontweight="bold", family="serif")
     t(0.06, 0.60, f"Clasificador + RAG + generador + juez LLM, 100 % local · {AUTHOR}",
-      fontsize=19, c="#5c5b56")  # fmt: skip
+      fontsize=19, c=muted)  # fmt: skip
     kpis = [(f"{s['riesgo_publicadas']} de {s['riesgo_total']}", "reseñas reales de 1–3★\npublicadas sin revisión"),
             (f"{s['publicables']} de {s['total']}", "se publican solas\n(conservador por diseño)"),
             (f"{s['segundos']} s", f"por reseña en una\n{GPU}")]  # fmt: skip
+    fig.lines.append(plt.Line2D([0.06, 0.94], [0.50, 0.50], transform=fig.transFigure, color=rule))
     for i, (big, small) in enumerate(kpis):
         x = 0.06 + i * 0.30
-        fig.patches.append(plt.Rectangle((x, 0.10), 0.27, 0.38, transform=fig.transFigure,
-                                         facecolor="#ffffff", edgecolor="#dedcd6", lw=2))  # fmt: skip
-        t(x + 0.02, 0.35, big, fontsize=40, fontweight="bold", c="#1f63c4")
-        t(x + 0.02, 0.15, small, fontsize=15, c="#5c5b56")
+        t(x, 0.33, big, fontsize=44, fontweight="bold", family="serif", c=accent if i == 0 else ink)
+        t(x, 0.15, small, fontsize=16, c=muted)
     fig.savefig(OG, facecolor=fig.get_facecolor())
     plt.close(fig)
 
