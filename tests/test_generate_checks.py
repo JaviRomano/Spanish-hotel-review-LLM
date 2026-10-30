@@ -119,6 +119,31 @@ def test_hygiene_terms_y_copia_literal():
     )
 
 
+def test_accidente_o_riesgo_legal_en_la_resena():
+    assert C.incident_terms("Me resbalé en la piscina y me hice un esguince.") == [
+        "esguince",
+        "resbalé",
+    ]
+    assert C.incident_terms("Pienso reclamar daños con mi abogado.") == [
+        "abogado",
+        "reclamar daños",
+    ]
+    assert C.incident_terms("Si no me compensan, pondré una reclamación en Consumo.") == [
+        "reclamación en consumo"
+    ]
+    # Falsos positivos que no deben saltar (ahr-ahr-12719 y uso figurado)
+    assert C.incident_terms("Dos camareros ahogados de trabajo para toda la terraza.") == []
+    assert C.incident_terms("Desayuno correcto, habitación limpia y buen trato.") == []
+
+
+def test_un_accidente_va_a_revision_aunque_la_resena_sea_positiva():
+    from caso_uso_llm.pipeline import ALERTS
+
+    checks = {"incidente": ["me caí"], "promise": False}
+    assert ALERTS["accidente o riesgo legal"](checks)
+    assert not ALERTS["accidente o riesgo legal"]({"incidente": []})
+
+
 def test_el_saludo_hola_de_v9_no_es_un_nombre_pero_hola_con_nombre_si():
     from caso_uso_llm.generate.checks import person_names
 

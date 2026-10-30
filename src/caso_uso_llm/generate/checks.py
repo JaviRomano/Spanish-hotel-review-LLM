@@ -144,6 +144,25 @@ def hygiene_terms(response: str) -> list[str]:
     return sorted({m.group(0).lower() for m in HYGIENE.finditer(response)})
 
 
+# Accidente o riesgo legal (2026-10-30, auditoría de la demo): lo decide la RESEÑA, no la
+# respuesta. Antes iban a revisión solo por ser negativas; una reseña positiva o neutral que
+# contara una caída se habría publicado sin que nadie la viera. Sin «ahog-» suelto: «camareros
+# ahogados de trabajo» (ahr-ahr-12719).
+INCIDENT = re.compile(
+    r"\b(accidente\w*|me ca[ií]|se ca(?:y[oó]|yeron)|ca[ií]da\w*|resbal\w+|lesi[oó]n\w*|"
+    r"lesionad\w+|herid[ao]s?|esguince\w*|fractur\w+|urgencias|hospital\w*|ambulancia|"
+    r"intoxicaci\w+|quemadur\w+|se ahog\w+|denunci\w+|abogad\w+|demand\w+|juzgado\w*|"
+    r"tribunal\w*|hoja de reclamaciones|reclamaci[oó]n (?:en|a|ante) consumo|indemnizaci\w+|"
+    r"daños y perjuicios|reclamar (?:los )?daños|responsabilidad civil)\b",
+    re.IGNORECASE,
+)
+
+
+def incident_terms(review: str) -> list[str]:
+    """Términos de accidente, lesión o reclamación legal en la reseña."""
+    return sorted({m.group(0).lower() for m in INCIDENT.finditer(review)})
+
+
 _STOP = frozenset(
     [
         "el",

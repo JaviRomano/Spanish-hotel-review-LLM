@@ -84,6 +84,8 @@ REVIEW_LABELS = ("negativo", "neutral")  # sentimientos que nunca se publican si
 
 # Comprobaciones deterministas que mandan la respuesta a revisión (nombre legible -> función).
 ALERTS = {
+    # Primero: es el motivo de fondo cuando aparece (p08: no basta con «reseña negativa»)
+    "accidente o riesgo legal": lambda c: bool(c.get("incidente")),
     "promesa (regla)": lambda c: c["promise"],
     "culpa expresa (regla)": lambda c: c["liability"],
     "tuteo o dialecto": lambda c: c["tuteo"] or c["dialect"],
@@ -191,6 +193,7 @@ def generate_stage(
             checks = C.run_checks(response, analysis["aspectos"])
             checks.update(ficha_checks(response, it["review"], it["hotel"]))
             checks["nombres"] = C.person_names(response, it["review"])
+            checks["incidente"] = C.incident_terms(it["review"])
         it.update(analysis=analysis, response=response, checks=checks,
                   politicas=[d.id for d in p], ejemplos=[d.id for d in e])  # fmt: skip
         if i % 10 == 0:

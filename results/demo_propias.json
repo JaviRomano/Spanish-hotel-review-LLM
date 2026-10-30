@@ -89,7 +89,8 @@
    "copia_literal": [
     "vistas a la alhambra"
    ],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-ruido",
@@ -220,7 +221,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-instrucciones",
@@ -347,7 +349,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-averias",
@@ -466,7 +469,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-compensaciones",
@@ -535,7 +539,8 @@
   },
   "reasons": [
    "reseña negativa",
-   "el cliente pide: reclamar daños"
+   "el cliente pide: reclamar daños",
+   "accidente o riesgo legal"
   ],
   "review": "Me caí en la piscina. Resbalé en el borde de la piscina en noviembre y me hice un esguince. No había nadie vigilando. Mi abogado ya está al tanto y pienso reclamar daños. Inaceptable en un hotel de este precio.",
   "sentiment": "negativo",
@@ -594,7 +599,14 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": [
+    "abogado",
+    "esguince",
+    "me caí",
+    "reclamar daños",
+    "resbalé"
+   ]
   },
   "politicas": [
    "pol-incidentes",
@@ -720,7 +732,8 @@
    "copia_literal": [],
    "nombres": [
     "Andrés"
-   ]
+   ],
+   "incidente": []
   },
   "politicas": [
    "pol-salud-alergias",
@@ -845,7 +858,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-mascotas",
@@ -976,7 +990,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-servicios",
@@ -1117,7 +1132,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-averias",
@@ -1260,7 +1276,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-ruido",

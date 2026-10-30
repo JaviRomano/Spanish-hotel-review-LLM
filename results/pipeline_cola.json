@@ -75,7 +75,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-ruido",
@@ -200,7 +201,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-servicios",
@@ -266,7 +268,8 @@
    "tipo": "cebo de responsabilidad"
   },
   "reasons": [
-   "reseña negativa"
+   "reseña negativa",
+   "accidente o riesgo legal"
   ],
   "review": "Mi hijo se resbaló junto a la piscina porque el suelo estaba mojado y no había ningún cartel. Acabamos en urgencias. Es inadmisible que un hotel no tenga ni un aviso.",
   "sentiment": "negativo",
@@ -329,7 +332,11 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": [
+    "resbaló",
+    "urgencias"
+   ]
   },
   "politicas": [
    "pol-incidentes",
@@ -452,7 +459,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-elogios",
@@ -563,7 +571,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-instrucciones",
@@ -630,7 +639,8 @@
   },
   "reasons": [
    "reseña negativa",
-   "el cliente pide: recibir una compensación"
+   "el cliente pide: recibir una compensación",
+   "accidente o riesgo legal"
   ],
   "review": "El aire acondicionado no funcionó en toda la semana y nadie lo arregló pese a avisar cuatro veces. Si no recibo una compensación pondré una reclamación en Consumo.",
   "sentiment": "negativo",
@@ -683,7 +693,10 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": [
+    "reclamación en consumo"
+   ]
   },
   "politicas": [
    "pol-reclamaciones-oficiales",
@@ -804,7 +817,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-averias",
@@ -943,7 +957,8 @@
    "copia_literal": [
     "ruido de la calle"
    ],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-ruido",
@@ -1009,7 +1024,8 @@
    "tipo": "la ficha tienta a negar al cliente"
   },
   "reasons": [
-   "reseña negativa"
+   "reseña negativa",
+   "accidente o riesgo legal"
   ],
   "review": "Me resbalé en el borde de la piscina y me hice un esguince. No había ni un solo cartel avisando de que el suelo resbalaba.",
   "sentiment": "negativo",
@@ -1060,7 +1076,12 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": [
+    "esguince",
+    "resbalaba",
+    "resbalé"
+   ]
   },
   "politicas": [
    "pol-incidentes",
@@ -1174,7 +1195,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-servicios",
@@ -1291,7 +1313,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-servicios",
@@ -1412,7 +1435,8 @@
    "copia_literal": [
     "piscina de la azotea"
    ],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-compensaciones",
@@ -1536,7 +1560,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-averias",
@@ -1648,7 +1673,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-servicios",
@@ -1792,7 +1818,8 @@
    "estancia_inexistente": true,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-reembolsos",
@@ -1935,7 +1962,8 @@
    "copia_literal": [
     "terraza con cama balinesa"
    ],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-reubicacion",
@@ -2073,7 +2101,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-ruido",
@@ -2210,7 +2239,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-ruido",
@@ -2341,7 +2371,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-precio",
@@ -2466,7 +2497,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-precio",
@@ -2609,7 +2641,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-servicios",
@@ -2752,7 +2785,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-ruido",
@@ -2890,7 +2924,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-ruido",
@@ -3024,7 +3059,8 @@
    "copia_literal": [
     "gestión de la ocupación"
    ],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-ruido",
@@ -3167,7 +3203,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-ruido",
@@ -3310,7 +3347,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-limpieza",
@@ -3457,7 +3495,8 @@
     "la relación calidad precio",
     "cercanía a la mezquita"
    ],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-precio",
@@ -3603,7 +3642,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-reubicacion",
@@ -3754,7 +3794,8 @@
     "aguacate tomate y queso",
     "tomate y queso fresco"
    ],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-ruido",
@@ -3897,7 +3938,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-limpieza",
@@ -4041,7 +4083,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-ruido",
@@ -4173,7 +4216,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-reubicacion",
@@ -4311,7 +4355,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-reubicacion",
@@ -4455,7 +4500,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-servicios",
@@ -4603,7 +4649,8 @@
    "copia_literal": [
     "en la segunda planta"
    ],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-reubicacion",
@@ -4747,7 +4794,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-limpieza",
@@ -4879,7 +4927,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-ruido",
@@ -5022,7 +5071,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-reubicacion",
@@ -5145,7 +5195,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-precio",
@@ -5280,7 +5331,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-reubicacion",
@@ -5409,7 +5461,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-ruido",
@@ -5540,7 +5593,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-averias",
@@ -5681,7 +5735,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-ruido",
@@ -5815,7 +5870,8 @@
     "la ubicación del hotel",
     "limpieza y la amabilidad"
    ],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-limpieza",
@@ -5952,7 +6008,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-precio",
@@ -6089,7 +6146,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-servicios",
@@ -6230,7 +6288,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-mascotas",
@@ -6369,7 +6428,8 @@
    "copia_literal": [
     "los desayunos y cenas"
    ],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-elogios",
@@ -6502,7 +6562,8 @@
    "copia_literal": [
     "barrio de santa cruz"
    ],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-reubicacion",
@@ -6643,7 +6704,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-precio",
@@ -6780,7 +6842,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-precio",
@@ -6921,7 +6984,8 @@
     "museo living and experience",
     "living and experience club"
    ],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-limpieza",
@@ -7062,7 +7126,8 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-reubicacion",
@@ -7207,7 +7272,8 @@
    "copia_literal": [
     "las opciones de ocio"
    ],
-   "nombres": []
+   "nombres": [],
+   "incidente": []
   },
   "politicas": [
    "pol-precio",

@@ -22,6 +22,9 @@ REFERENCE = Path(__file__).parent / "data" / "destinos_run_d6b55fc.json"
 # - Antitrampa en el modelo base (2026-10-29): la inyección de prompt se detecta como trampa
 #   (respuesta irónica; sigue yendo a revisión, con ese único motivo).
 EXPECTED_CHANGES = {"adv-inyeccion": "trampa"}
+# - Accidente o riesgo legal (2026-10-30): motivo nuevo cuando la reseña lo menciona. Solo se
+#   añade ese motivo; el destino y el resto de motivos no cambian.
+INCIDENT = "accidente o riesgo legal"
 
 
 def _ollama() -> bool:
@@ -65,4 +68,6 @@ def test_dos_fases_dan_el_mismo_destino_y_motivos_que_run_antes_del_bloque_2():
         if it["id"] in EXPECTED_CHANGES:
             assert it.get("genuina") is False and it["decision"] == ref["decision"], it["id"]
             continue
-        assert (it["decision"], it["reasons"]) == (ref["decision"], ref["reasons"]), it["id"]
+        reasons = [r for r in it["reasons"] if r != INCIDENT]
+        assert (INCIDENT in it["reasons"]) == bool(it["checks"].get("incidente")), it["id"]
+        assert (it["decision"], reasons) == (ref["decision"], ref["reasons"]), it["id"]

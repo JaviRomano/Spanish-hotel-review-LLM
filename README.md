@@ -158,6 +158,7 @@ The deterministic checks were added after reading real replies (Phase 9), each f
 | the reply copies 4+ words from the review | it sounds like a parrot |
 | the reply talks about "your stay" when the guest never stayed | the judge misses it |
 | the guest claims a service the fact sheet says does not exist | a person checks the reply that informs them |
+| the review mentions an accident, an injury or a legal claim | the judge passed replies that hinted at blame ("to guarantee the safety of all our guests"), and before this rule such reviews went to a person only if they were negative |
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/pipeline_en_dark.png">
@@ -167,7 +168,7 @@ The deterministic checks were added after reading real replies (Phase 9), each f
 - **Demonstration on 54 reviews** (14 synthetic cases + 40 real AHR reviews never used for training or prompt development): 8 published, all positive, and 46 sent to review. The classifier gets 37/40 of the AHR reviews right. The first run (2026-10-23) published 13; the guardrails added in Phase 9 since then send 5 more to review, mostly for copying 4+ words from the review.
 - **Neutral reviews always go to a person.** In the first run the three neutral reviews that would have been published sat right on the threshold (confidence 0.851), and neutral is the classifier's weakest class.
 - **Reading the published replies:** none admits blame, promises anything or confirms a premise. Some have details a person would fix and the judge does not see: a grammatical slip ("Los tarifas"), an anglicism ("feedback"), an assumption about the nearby beach. And all 8 open the same way ("Estimado cliente: Muchas gracias por compartir su experiencia"): a reader who sees several replies notices.
-- **Reading the replies that go to review:** some would need editing. To "I slipped by the pool and there was no sign", v6 answers "we will review what happened with the greatest care *to guarantee the safety of all our guests*" and "…could not enjoy your stay *with the tranquillity it deserved*": both hint at a fault, and the judge passes them. That is why accidents always go to a person.
+- **Reading the replies that go to review:** some would need editing. To "I slipped by the pool and there was no sign", v6 answers "we will review what happened with the greatest care *to guarantee the safety of all our guests*" and "…could not enjoy your stay *with the tranquillity it deserved*": both hint at a fault, and the judge passes them. That is why any review that mentions an accident or a legal claim goes to a person (rule added on 2026-10-30).
 - **Cost:** about 49 s per new review locally (median; [`reports/phase9_latencia.md`](reports/phase9_latencia.md)), most of it loading models, because the 27B generator and the 12B judge do not fit in VRAM together and Ollama swaps them. The demo shows the draft at about 36 s and the judge's verdict when it arrives. In batch mode the pipeline runs in stages (classify all, retrieve all, generate all, judge all) to avoid that.
 
 ### Prompt versions after v6: why the pipeline stays on v6
@@ -451,6 +452,7 @@ Las comprobaciones deterministas se añadieron leyendo respuestas reales (Fase 9
 | la respuesta copia 4 o más palabras de la reseña | suena a loro |
 | la respuesta habla de «su estancia» cuando el cliente no llegó a alojarse | el juez no lo ve |
 | el cliente afirma un servicio que la ficha dice que no existe | una persona revisa la respuesta que se lo aclara |
+| la reseña menciona un accidente, una lesión o una reclamación legal | el juez aprobó respuestas que sugerían culpa («para garantizar la seguridad de todos nuestros huéspedes»), y antes de esta regla esas reseñas solo iban a una persona si eran negativas |
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/pipeline_es_dark.png">
@@ -460,7 +462,7 @@ Las comprobaciones deterministas se añadieron leyendo respuestas reales (Fase 9
 - **Demostración con 54 reseñas** (14 casos sintéticos y 40 reseñas reales del AHR, que no se usaron para entrenar ni para desarrollar los prompts): 8 publicables, todas positivas, y 46 a revisión. El clasificador acierta 37 de las 40 del AHR. La primera ejecución (2026-10-23) daba 13 publicables; los guardarraíles añadidos en la Fase 9 mandan 5 más a revisión, sobre todo por copiar 4 o más palabras de la reseña.
 - **Las neutrales van siempre a una persona.** En la primera ejecución, las tres neutrales que se habrían publicado rozaban el umbral (confianza 0,851), y el neutral es la clase más débil del clasificador.
 - **Leyendo las respuestas publicables:** ninguna admite culpa, promete nada ni confirma una premisa. Algunas tienen detalles que una persona corregiría y el juez no ve: una errata («Los tarifas»), un anglicismo («feedback») o una suposición sobre la playa cercana. Además, las 8 abren igual («Estimado cliente: Muchas gracias por compartir su experiencia»), y quien lea varias respuestas lo nota.
-- **Leyendo las que van a revisión:** algunas habría que editarlas. Ante «me resbalé en la piscina y no había ni un cartel», v6 responde «revisaremos lo ocurrido con la mayor atención *para garantizar la seguridad de todos nuestros huéspedes*» y «…no pudo disfrutar de su estancia *con la tranquilidad debida*»: las dos frases sugieren un fallo, y el juez las aprueba. Por eso los accidentes pasan siempre por una persona.
+- **Leyendo las que van a revisión:** algunas habría que editarlas. Ante «me resbalé en la piscina y no había ni un cartel», v6 responde «revisaremos lo ocurrido con la mayor atención *para garantizar la seguridad de todos nuestros huéspedes*» y «…no pudo disfrutar de su estancia *con la tranquilidad debida*»: las dos frases sugieren un fallo, y el juez las aprueba. Por eso cualquier reseña que mencione un accidente o una reclamación legal pasa por una persona (regla añadida el 2026-10-30).
 - **Coste:** unos 49 s por reseña nueva en local (mediana; [`reports/phase9_latencia.md`](reports/phase9_latencia.md)), la mayor parte en cargar modelos, porque el generador de 27B y el juez de 12B no caben juntos en la VRAM y Ollama los alterna. La demo muestra el borrador a los ~36 s y el veredicto del juez cuando llega. Por lotes, el pipeline va por etapas (clasificar todo, recuperar todo, generar todo, juzgar todo) para evitarlo.
 
 ### Versiones del prompt posteriores a v6: por qué se mantiene v6
