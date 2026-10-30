@@ -12,8 +12,12 @@ Uso: uv run python scripts/build_replay.py
 import json
 from pathlib import Path
 
+import numpy as np
+
 from caso_uso_llm.evals.rubric import IDS, criterios
-from caso_uso_llm.pipeline import RUBRIC, THRESHOLD
+from caso_uso_llm.latency import _rows, split_review
+from caso_uso_llm.paths import RESULTS
+from caso_uso_llm.pipeline import PUBLISH, RUBRIC, THRESHOLD
 from caso_uso_llm.rag import kb
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -70,6 +74,28 @@ def compact(it: dict, names: dict, policies: dict) -> dict:
     }
 
 
+def summary(demo: dict) -> dict:
+    """Cifras de la cabecera, calculadas aquí desde los resultados versionados (no a mano): la
+    demostración de 54 reseñas y la última medición de latencia de cada variante."""
+    items = list(demo.values())
+    runs = {}
+    for f in sorted(RESULTS.glob("latencia_*.jsonl")):
+        meta, rr = _rows(f)
+        runs[meta.get("variante", "base")] = (meta, rr)
+    meta, rr = runs["base"]
+    _, ra = runs["A"]
+    return {
+        "total": len(items),
+        "sinteticos": sum(it["meta"]["grupo"] == "sintético" for it in items),
+        "publicables": sum(it["decision"] == PUBLISH for it in items),
+        "publicables_positivas": sum(
+            it["decision"] == PUBLISH and it["sentiment"] == "positivo" for it in items
+        ),
+        "segundos": round(float(np.median([split_review(r, meta)["total"] for r in rr]))),
+        "borrador": round(float(np.median([r["visible_s"] for r in ra]))),
+    }
+
+
 def main() -> None:
     names = {c.id: c.nombre for c in criterios(RUBRIC)}
     policies = {d.id: d.payload["titulo"] for d in kb.politicas()}
@@ -92,7 +118,7 @@ def main() -> None:
     tour = selection["recorrido"]
     missing = [s["id"] for s in tour if s["id"] not in ids]
     assert not missing, f"el recorrido nombra casos que la página no muestra: {missing}"
-    doc = {"umbral": THRESHOLD, "casos": cases, "recorrido": tour}
+    doc = {"umbral": THRESHOLD, "casos": cases, "recorrido": tour, "resumen": summary(demo)}
     data = json.dumps(doc, ensure_ascii=False, indent=1)
     # Dentro de <script>, «</» cerraría la etiqueta antes de tiempo
     page = (

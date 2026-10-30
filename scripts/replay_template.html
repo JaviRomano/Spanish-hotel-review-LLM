@@ -41,7 +41,20 @@ h2 { font-size: 1rem; margin: 0 0 8px; }
 p { margin: 0 0 10px; }
 .byline { color: var(--muted); font-size: .92rem; margin: 0 0 10px; }
 .lead { margin: 0 0 6px; max-width: 75ch; }
-details.about, details.limits { color: var(--muted); max-width: 75ch; margin: 0 0 14px; }
+details.about, details.limits { color: var(--muted); max-width: 75ch; margin: 0 0 6px; }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 12px 0 6px; max-width: 760px; }
+.stat { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+.stat b { display: block; font-size: clamp(1.2rem, 4vw, 1.6rem); line-height: 1.15; }
+.stat span { color: var(--muted); font-size: .86rem; line-height: 1.35; display: block; margin-top: 2px; }
+.caveat { color: var(--muted); font-size: .88rem; margin: 0 0 4px; max-width: 75ch; }
+.live .short { display: none; }
+@media (max-width: 760px) {
+  .live .long { display: none; }
+  .live .short { display: inline; }
+  .lead { font-size: .95rem; }
+  .stat { padding: 8px 10px; }
+  .stat span { font-size: .8rem; }
+}
 details.about summary, details.limits summary { color: var(--accent); font-weight: 600; cursor: pointer; padding: 4px 0; }
 details.about ul, details.limits ul { margin: 6px 0 8px; padding-left: 20px; }
 .live {
@@ -131,20 +144,30 @@ footer { margin-top: 28px; color: var(--muted); font-size: .88rem; border-top: 1
     <button class="theme" id="theme" type="button" aria-label="Cambiar entre tema claro y oscuro">◐ Tema</button>
   </header>
 
-  <p class="lead">Reseñas ya contestadas por un sistema de IA que corre <strong>en local</strong>: qué respondió, si lo publicaría o lo pasaría a una persona, y por qué. Con sus fallos a la vista.</p>
+  <p class="lead">Un hotel responde a cientos de reseñas, y una respuesta mal escrita puede admitir una culpa, prometer un reembolso o dar la razón a algo falso. Este sistema <strong>redacta la respuesta, comprueba esos riesgos y decide si se publica sola o pasa a una persona</strong>. Corre entero en un PC, sin enviar datos fuera.</p>
+  <div class="stats" id="stats"></div>
+  <p class="caveat" id="caveat"></p>
+
+  <div class="live">
+    <p>🔬 <strong>Esto es una repetición: aquí no se genera nada en directo.</strong> ¿Quieres verlo con tus reseñas? <span class="long">Envíame hasta 5 (inventadas, o reales sin datos personales) y en una sesión en directo verás, para cada una, la respuesta, si se publicaría o pasaría a una persona y por qué, y cuánto tarda.</span><span class="short">Envíame hasta 5 y lo vemos en directo.</span></p>
+    <a class="btn" href="__LINKEDIN__" target="_blank" rel="noopener">Pedir prueba en vivo</a>
+  </div>
+
   <details class="about">
-    <summary>Qué es esto y cómo se hizo</summary>
+    <summary>Qué está demostrado y qué no</summary>
+    <ul>
+      <li><strong>Demostrado</strong>, en local, con reseñas públicas y casos sintéticos: el clasificador, la recuperación de contexto, el juez y las reglas, cada uno medido por separado (<a href="__REPO__#key-figures">cifras clave</a>). Las respuestas negativas, dudosas, trampa o con accidentes y reclamaciones legales pasan siempre por una persona.</li>
+      <li><strong>No demostrado todavía:</strong> el comportamiento con reseñas y fichas de un hotel real, una tasa de error aceptable para producción y el ahorro de trabajo. La evaluación humana es pequeña (24 respuestas calibradas y 30 comparadas a ciegas), y las fichas y políticas de los hoteles son inventadas.</li>
+    </ul>
+  </details>
+  <details class="about">
+    <summary>Qué hay en esta página y cómo se hizo</summary>
     <ul>
       <li><strong>Reseñas propias:</strong> escritas a propósito para ponerlo a prueba (amenazas legales, instrucciones ocultas, datos falsos, ataques al personal…), con <strong>qué se esperaba</strong> escrito <em>antes</em> de generar y la <strong>valoración del autor</strong> después.</li>
       <li><strong>Selección de la demostración:</strong> casos sintéticos y reseñas reales (TripAdvisor, corpus AHR), con una nota escrita <em>después</em> de leer la respuesta.</li>
     </ul>
     <p>Cadena, todo en una GPU AMD y sin enviar datos fuera: clasificador mRoBERTa → contexto del hotel (RAG: ficha, políticas y respuestas aprobadas) → borrador con Qwen 27B → comprobaciones deterministas y un segundo modelo (Gemma 12B) como juez → publicar o pasar a una persona. Los hoteles son ficticios.</p>
   </details>
-
-  <div class="live">
-    <p>🔬 <strong>Repetición: aquí no se genera nada en directo.</strong> ¿Quieres probarlo con tus reseñas? Escríbeme por LinkedIn con «Prueba en vivo» y arranco el sistema en mi ordenador.</p>
-    <a class="btn" href="__LINKEDIN__" target="_blank" rel="noopener">Pedir prueba en vivo</a>
-  </div>
 
   <div class="picker">
     <label for="case">Reseña</label>
@@ -207,6 +230,17 @@ footer { margin-top: 28px; color: var(--muted); font-size: .88rem; border-top: 1
   const el = (tag, text, cls) => { const e = document.createElement(tag); if (text != null) e.textContent = text; if (cls) e.className = cls; return e; };
   const fmt = (x, d) => x.toFixed(d).replace(".", ",");
   const VERDICT = {cumple: "✅ Cumple lo esperado", parcial: "◐ Cumple en parte", no_cumple: "❌ No cumple lo esperado"};
+
+  // Cabecera: cifras de la demostración (calculadas por build_replay.py) y su contexto
+  const S = DATA.resumen;
+  for (const [big, small] of [
+    [`${S.publicables} de ${S.total}`, `se publicarían solas${S.publicables === S.publicables_positivas ? " (todas positivas)" : ""}`],
+    [`${S.total - S.publicables} de ${S.total}`, "pasan a una persona, con el motivo"],
+    [`${S.segundos} s`, `por reseña en un PC con GPU (borrador a los ${S.borrador} s)`],
+  ]) { const d = el("div", null, "stat"); d.append(el("b", big), el("span", small)); $("stats").append(d); }
+  const cav = $("caveat");
+  cav.append(`Demostración con ${S.total} reseñas (${S.sinteticos} sintéticas y ${S.total - S.sinteticos} reales de TripAdvisor): no es una medida en un hotel real. `);
+  const fn = el("a", "Ver un fallo que el sistema no detecta →"); fn.href = "#p08"; cav.append(fn);
 
   // Selector agrupado: primero las propias, después la selección
   const select = $("case");
