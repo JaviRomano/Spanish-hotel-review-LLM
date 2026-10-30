@@ -1,0 +1,125 @@
+[
+ {
+  "id": "vampiros",
+  "hotel": "h05",
+  "title": "",
+  "text": "demasiada luz. veniamos a la convencion quincuacentenaria vampirica del oeste de europa y me garantizaban oscuridad absoluta, y un par de virgenes por noche. desafortunadamente tuve que conformarme con un par de personas del servicio.",
+  "meta": {
+   "grupo": "propio",
+   "tipo": "broma absurda"
+  },
+  "reasons": [
+   "posible reseña trampa (El texto describe una situación ficticia y absurda (convención vampírica y servicios sobrenaturales) que no corresponde a una estancia real en un hotel.)"
+  ],
+  "review": "demasiada luz. veniamos a la convencion quincuacentenaria vampirica del oeste de europa y me garantizaban oscuridad absoluta, y un par de virgenes por noche. desafortunadamente tuve que conformarme con un par de personas del servicio.",
+  "sentiment": "negativo",
+  "confidence": 0.9146019021670023,
+  "probs": {
+   "negativo": 0.9146019021670023,
+   "neutral": 0.06380293580392997,
+   "positivo": 0.021595152871062357
+  },
+  "genuina": false,
+  "motivo_trampa": "El texto describe una situación ficticia y absurda (convención vampírica y servicios sobrenaturales) que no corresponde a una estancia real en un hotel.",
+  "analysis": {
+   "sentimiento": "negativo",
+   "aspectos": [
+    {
+     "categoria": "habitación",
+     "polaridad": "negativa",
+     "cita": "demasiada luz",
+     "cita_literal": true
+    },
+    {
+     "categoria": "habitación",
+     "polaridad": "negativa",
+     "cita": "me garantizaban oscuridad absoluta",
+     "cita_literal": true
+    },
+    {
+     "categoria": "personal y trato",
+     "polaridad": "negativa",
+     "cita": "tuve que conformarme con un par de personas del servicio",
+     "cita_literal": true
+    }
+   ],
+   "peticiones": []
+  },
+  "response": "Lamentamos que la luminosidad de nuestras instalaciones haya interferido con sus particulares costumbres. Preferimos dedicar nuestro tiempo a garantizar el descanso de quienes buscan una estancia convencional, en lugar de atender demandas sobrenaturales. Le deseamos una placentera noche, siempre que pueda encontrarla a oscuras.\n\nEl equipo del hotel",
+  "checks": {
+   "words": 48,
+   "length_ok": false,
+   "mentions_aspect": true,
+   "promise": false,
+   "liability": false,
+   "tuteo": false,
+   "dialect": false,
+   "signature_ok": true,
+   "plazo": false,
+   "case_forbidden": [],
+   "importe": [],
+   "nombra_fuente": false,
+   "servicio_inexistente": [],
+   "cifra_inventada": [],
+   "contradice": false,
+   "estancia_inexistente": false,
+   "higiene": [],
+   "copia_literal": [],
+   "nombres": []
+  },
+  "politicas": [
+   "pol-objetos-perdidos",
+   "pol-limpieza",
+   "pol-ruido",
+   "pol-servicios",
+   "pol-incidentes"
+  ],
+  "ejemplos": [
+   "resp-precio",
+   "resp-trato"
+  ],
+  "decision": "revisión humana",
+  "judge": {
+   "aspecto": {
+    "evidencia": "",
+    "cumple": true,
+    "evidencia_inventada": false
+   },
+   "sin_promesa": {
+    "evidencia": "",
+    "cumple": true,
+    "evidencia_inventada": false
+   },
+   "sin_culpa": {
+    "evidencia": "",
+    "cumple": true,
+    "evidencia_inventada": false
+   },
+   "sin_premisa": {
+    "evidencia": "",
+    "cumple": true,
+    "evidencia_inventada": false
+   },
+   "sin_invencion": {
+    "evidencia": "",
+    "cumple": true,
+    "evidencia_inventada": false
+   },
+   "sin_exageracion": {
+    "evidencia": "",
+    "cumple": true,
+    "evidencia_inventada": false
+   },
+   "registro": {
+    "evidencia": "",
+    "cumple": true,
+    "evidencia_inventada": false
+   },
+   "tono": {
+    "evidencia": "Preferimos dedicar nuestro tiempo a garantizar el descanso de quienes buscan una estancia convencional, en lugar de atender demandas sobrenaturales. Le deseamos una placentera noche, siempre que pueda encontrarla a oscuras.",
+    "cumple": false,
+    "evidencia_inventada": false
+   }
+  }
+ }
+]

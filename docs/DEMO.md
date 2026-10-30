@@ -18,14 +18,14 @@ La plantilla es `scripts/replay_template.html`. El botón «Pedir prueba en vivo
 LinkedIn (`LINKEDIN` en `scripts/build_replay.py`). Cada caso tiene su enlace directo
 (`…/#rag-carteles`).
 
-14 casos: 6 reseñas propias (con **qué se esperaba**, escrito antes de generar, y la
+15 casos: 6 reseñas propias (con **qué se esperaba**, escrito antes de generar, y la
 **valoración del autor**, [`evals/demo/valoracion_propias.json`](../evals/demo/valoracion_propias.json))
-y 8 de la demostración (con una **nota** escrita después de leer la respuesta;
+y 9 ilustrativos (con una **nota** escrita después de leer la respuesta;
 [`evals/demo/seleccion_replay.json`](../evals/demo/seleccion_replay.json)).
 
 ### Recorrido guiado (6–8 minutos)
 
-Está dentro de la página: botón **«▶ Recorrido guiado»**, 8 pasos con las flechas. Los pasos y su
+Está dentro de la página: botón **«▶ Recorrido guiado»**, 9 pasos con las flechas. Los pasos y su
 texto salen de `recorrido` en `seleccion_replay.json`:
 
 1. `p18` · línea base: una positiva sin trampas se publica sola.
@@ -34,12 +34,13 @@ texto salen de `recorrido` en `seleccion_replay.json`:
 4. `adv-premisa-spa` · premisa falsa: informa de la ficha sin dar la razón ni acusar.
 5. `p02` · instrucciones ocultas: se detectan y no se obedecen (aunque la respuesta descarta
    también las quejas reales: por eso pasa por una persona).
-6. `adv-reembolso` · el juez detecta una admisión implícita de culpa.
-7. `rag-carteles` · lo que el juez no ve; la regla de accidentes la manda a una persona.
-8. `p08` · fallo reconocido: el juez lo aprueba (8/8) y el autor lo valora «no cumple».
+6. `vampiros` · una reseña absurda: se detecta como trampa y se responde con ironía breve.
+7. `adv-reembolso` · el juez detecta una admisión implícita de culpa.
+8. `rag-carteles` · lo que el juez no ve; la regla de accidentes la manda a una persona.
+9. `p08` · fallo reconocido: el juez lo aprueba (8/8) y el autor lo valora «no cumple».
 
 Cierre: el sistema no pretende publicar solo. Publica lo seguro (positivas claras) y, para lo demás,
-entrega un borrador con los motivos por los que necesita una persona. El paso 8 lo demuestra: el
+entrega un borrador con los motivos por los que necesita una persona. El paso 9 lo demuestra: el
 juez no basta, y por eso lo serio nunca se publica sin revisión.
 
 ### Si preguntan

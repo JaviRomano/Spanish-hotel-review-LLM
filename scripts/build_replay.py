@@ -27,6 +27,8 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCES = (ROOT / "results" / "demo_propias.json",)  # las reseñas propias, completas
 # Más una selección de la demostración, con una nota escrita después de ver la respuesta
 DEMO = ROOT / "results" / "pipeline_cola.json"
+# Salida real de v6 en la demo en vivo de una reseña del autor, sin regenerar (sin datos de terceros)
+EXTRA = ROOT / "results" / "demo_extra.json"
 SELECTION = ROOT / "evals" / "demo" / "seleccion_replay.json"
 RATINGS = ROOT / "evals" / "demo" / "valoracion_propias.json"  # del autor, frente a lo esperado
 TEMPLATE = ROOT / "scripts" / "replay_template.html"
@@ -159,7 +161,11 @@ def main() -> None:
                     it, c["response"] or "", motivo, "Valoración del autor"
                 )
                 cases.append(c)
-    demo = {it["id"]: it for it in json.loads(DEMO.read_text(encoding="utf-8"))}
+    items = [
+        *json.loads(DEMO.read_text(encoding="utf-8")),
+        *json.loads(EXTRA.read_text(encoding="utf-8")),
+    ]
+    demo = {it["id"]: it for it in items}
     for sel in selection["casos"]:
         it = demo[sel["id"]]
         c = compact(it, policies) | {"nota": sel["nota"], "titulo": sel["titulo"]}

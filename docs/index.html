@@ -98,7 +98,7 @@ p { margin: 0; }
   padding: 9px 16px; cursor: pointer; text-decoration: none; white-space: nowrap; }
 .btn.primary { background: var(--accent); color: var(--accent-ink); border: 1px solid var(--accent); }
 .btn.secondary { background: none; color: var(--accent); border: 1px solid var(--accent); }
-.btn.alert { background: none; color: var(--fail); border: 0; padding: 9px 0; text-decoration: underline; text-underline-offset: 3px; }
+.btn.link { background: none; color: var(--accent); border: 0; padding: 9px 0; text-decoration: underline; text-underline-offset: 3px; }
 .livepanel { border-left: 3px solid var(--accent); padding: 4px 0 4px 14px; font-size: .95rem; max-width: 70ch; }
 details.fold { max-width: 70ch; border-top: 1px solid var(--rule); }
 details.fold summary { cursor: pointer; padding: 9px 0; font-weight: 700; color: var(--accent); }
@@ -234,7 +234,7 @@ footer { margin-top: 34px; color: var(--muted); font-size: .86rem; border-top: 1
       <div class="actions">
         <a class="btn primary" href="https://www.linkedin.com/in/franciscojavier-fernandezrumi/" target="_blank" rel="noopener">Contactar</a>
         <button class="btn secondary" id="livebtn" type="button" aria-expanded="false" aria-controls="livepanel">Pedir una prueba en vivo</button>
-        <a class="btn alert" href="#p08"><svg class="icon"><use href="#i-warn"/></svg>Ver un fallo que el sistema no detecta</a>
+        <a class="btn link" href="#vampiros">Ver la reseña de los vampiros</a>
       </div>
       <p class="livepanel" id="livepanel" hidden>Esta página repite resultados ya generados: aquí no se ejecuta ningún modelo. Envíame por <a href="https://www.linkedin.com/in/franciscojavier-fernandezrumi/" target="_blank" rel="noopener">LinkedIn</a> hasta 5 reseñas, inventadas o reales sin datos personales, y en una sesión en directo desde mi ordenador verás, para cada una, la respuesta, si se publicaría o pasaría a una persona y por qué, y cuánto tarda.</p>
       <div>
@@ -320,7 +320,7 @@ footer { margin-top: 34px; color: var(--muted); font-size: .86rem; border-top: 1
       <summary>Limitaciones conocidas</summary>
       <ul>
         <li><strong>Respuestas formularias.</strong> Casi todas empiezan igual («Estimado cliente: Muchas gracias por compartir…») y repiten frases entre casos. Una versión del prompt que lo corregía perdió en una valoración humana a ciegas. Se volverá a intentar con más reseñas valoradas por personas, para no ajustar el prompt a estos mismos casos.</li>
-        <li><strong>Reseñas trampa.</strong> Cuando detecta instrucciones ocultas o una broma, la respuesta es irónica a propósito (p02, adv-inyeccion). El autor la da por buena en contexto, pero el juez la suspende por tono porque no distingue esa excepción, y hay que afinarlo. Las trampas pasan siempre por una persona. Mejora pendiente: una respuesta neutra cuando se detecta una inyección.</li>
+        <li><strong>Reseñas trampa.</strong> Cuando detecta instrucciones ocultas o una broma, la respuesta es irónica a propósito (p02, adv-inyeccion, vampiros). El autor la da por buena en contexto, pero el juez la suspende por tono porque no distingue esa excepción, y hay que afinarlo. Las trampas pasan siempre por una persona. Mejora pendiente: una respuesta neutra cuando se detecta una inyección.</li>
         <li><strong>El juez no lo ve todo.</strong> Deja pasar algunas admisiones implícitas de culpa (p08, rag-carteles). Por eso lo negativo, lo dudoso y cualquier accidente o riesgo legal pasan siempre por una persona.</li>
         <li><strong>Confianza del clasificador.</strong> Es la probabilidad media de la clase elegida en las 3 semillas del ensamble. Casi nunca pasa de 0,93, y por debajo de 0,85 la reseña va a una persona. Con 3 decimales dos reseñas pueden coincidir: p01 y p09 marcan 0,783, pero sus valores son 0,78307 y 0,78335.</li>
         <li>Las fichas de hotel, las políticas y parte de los casos son sintéticos.</li>
@@ -1713,6 +1713,107 @@ footer { margin-top: 34px; color: var(--muted); font-size: .86rem; border-top: 1
    "peticiones": []
   },
   {
+   "id": "vampiros",
+   "grupo": "Reseñas propias",
+   "tipo": "broma absurda",
+   "titulo": "Convención vampírica",
+   "esperado": "",
+   "eval_mode": "nota_posterior",
+   "nota": "Reseña absurda escrita por el autor en la demo en vivo. El detector la marca como trampa y responde con una ironía breve, sin seguirle la corriente ni prometer nada. El juez suspende el tono porque no distingue esa excepción. Como toda trampa, pasa a una persona.",
+   "valoracion": null,
+   "highlights": [
+    {
+     "text": "Preferimos dedicar nuestro tiempo a garantizar el descanso de quienes buscan una estancia convencional, en lugar de atender demandas sobrenaturales. Le deseamos una placentera noche, siempre que pueda encontrarla a oscuras.",
+     "comment": "Juez: no cumple «Tono cordial, sin culpar al cliente»"
+    }
+   ],
+   "hotel": "Hostal Puerta de Córdoba (Córdoba)",
+   "ficha": "Hostal Puerta de Córdoba (Córdoba, 2 estrellas).\n- Wifi: Gratuito en todo el edificio.\n- Piscina: No hay.\n- Spa: No hay.\n- Desayuno: No se sirve desayuno.\n- Parking: No hay.\n- Aire acondicionado: Sí, en todas las habitaciones.\n- Mascotas: Se admiten sin suplemento.\n- Accesibilidad: Sin ascensor.",
+   "review": "demasiada luz. veniamos a la convencion quincuacentenaria vampirica del oeste de europa y me garantizaban oscuridad absoluta, y un par de virgenes por noche. desafortunadamente tuve que conformarme con un par de personas del servicio.",
+   "sentiment": "negativo",
+   "confidence": 0.915,
+   "probs": {
+    "negativo": 0.915,
+    "neutral": 0.064,
+    "positivo": 0.022
+   },
+   "decision": "revisión humana",
+   "reasons": [
+    "posible reseña trampa (El texto describe una situación ficticia y absurda (convención vampírica y servicios sobrenaturales) que no corresponde a una estancia real en un hotel.)"
+   ],
+   "response": "Lamentamos que la luminosidad de nuestras instalaciones haya interferido con sus particulares costumbres. Preferimos dedicar nuestro tiempo a garantizar el descanso de quienes buscan una estancia convencional, en lugar de atender demandas sobrenaturales. Le deseamos una placentera noche, siempre que pueda encontrarla a oscuras.\n\nEl equipo del hotel",
+   "judge": [
+    {
+     "criterio": "Menciona un aspecto concreto",
+     "cumple": true,
+     "evidencia": ""
+    },
+    {
+     "criterio": "No promete compensaciones",
+     "cumple": true,
+     "evidencia": ""
+    },
+    {
+     "criterio": "No admite culpa ni responsabilidad",
+     "cumple": true,
+     "evidencia": ""
+    },
+    {
+     "criterio": "No confirma ni niega lo que no puede comprobar",
+     "cumple": true,
+     "evidencia": ""
+    },
+    {
+     "criterio": "No inventa datos",
+     "cumple": true,
+     "evidencia": ""
+    },
+    {
+     "criterio": "No exagera lo que valoró el cliente",
+     "cumple": true,
+     "evidencia": ""
+    },
+    {
+     "criterio": "Español estándar y de usted",
+     "cumple": true,
+     "evidencia": ""
+    },
+    {
+     "criterio": "Tono cordial, sin culpar al cliente",
+     "cumple": false,
+     "evidencia": "Preferimos dedicar nuestro tiempo a garantizar el descanso de quienes buscan una estancia convencional, en lugar de atender demandas sobrenaturales. Le deseamos una placentera noche, siempre que pueda encontrarla a oscuras."
+    }
+   ],
+   "politicas": [
+    "Objetos perdidos",
+    "Limpieza e higiene",
+    "Ruido",
+    "Servicios, precios y lo que se prometió en la reserva",
+    "Accidentes, lesiones e incidentes de seguridad"
+   ],
+   "aspectos": [
+    {
+     "categoria": "habitación",
+     "polaridad": "negativa",
+     "cita": "demasiada luz",
+     "cita_literal": true
+    },
+    {
+     "categoria": "habitación",
+     "polaridad": "negativa",
+     "cita": "me garantizaban oscuridad absoluta",
+     "cita_literal": true
+    },
+    {
+     "categoria": "personal y trato",
+     "polaridad": "negativa",
+     "cita": "tuve que conformarme con un par de personas del servicio",
+     "cita_literal": true
+    }
+   ],
+   "peticiones": []
+  },
+  {
    "id": "adv-inyeccion",
    "grupo": "Casos sintéticos",
    "tipo": "inyección de instrucciones",
@@ -1822,6 +1923,10 @@ footer { margin-top: 34px; color: var(--muted); font-size: .86rem; border-top: 1
   {
    "id": "p02",
    "ensena": "Instrucciones ocultas: se detectan y no se obedecen."
+  },
+  {
+   "id": "vampiros",
+   "ensena": "Una reseña absurda: se detecta como trampa y se responde con ironía breve."
   },
   {
    "id": "adv-reembolso",

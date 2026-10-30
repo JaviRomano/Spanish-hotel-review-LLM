@@ -23,7 +23,7 @@ SHOTS = ROOT / "docs" / "screenshots"
 # Texto sobre fondo de color: selector del elemento cuyo color y fondo se comparan
 CONTRAST = [".pill.ok", ".pill.no", ".pill.partial", ".pill.mode", ".pill.neutral", ".note",
             ".rating p", ".rating .head", ".alertbox", ".stamp", ".reasons li",
-            ".spec dt", ".spec dd", ".label", ".btn.alert", ".btn.primary", "mark",
+            ".spec dt", ".spec dd", ".label", ".btn.link", ".btn.primary", "mark",
             ".inspect td", ".criterion p", ".flow li span"]  # fmt: skip
 
 
