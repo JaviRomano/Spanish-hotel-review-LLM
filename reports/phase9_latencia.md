@@ -61,6 +61,33 @@ Carga = `load_duration` de las llamadas a Ollama más el tiempo de pared de la p
 
 Todas las reseñas acabaron con el mismo destino que en la cola cacheada.
 
+## Coste por reseña (resto)
+
+| Medida | Mediana / p90 |
+|---|---|
+| Tiempo de GPU (carga + inferencia, s) | 47.7 / 51.6 |
+| Tokens de entrada | 3483 / 4070 |
+| Tokens generados | 570 / 682 |
+| Llamadas al LLM (chat) | 3 |
+| Llamadas a APIs externas | 0 (todo en local) |
+
+El consumo eléctrico no se ha medido (no hay lectura de potencia de la GPU en estas ejecuciones): el coste en euros no se informa.
+
+## Antes y después de corregir la doble carga (por etapa)
+
+Antes: `latencia_v6_20261029-2115.jsonl` · después: `latencia_v6_20261029-2148.jsonl`. Mediana del tiempo de pared por reseña, en segundos (sin la primera de cada repetición).
+
+| Etapa | Antes | Después | Diferencia |
+|---|---|---|---|
+| clasificador | 0.1 | 0.2 | +0.0 |
+| embeddings | 2.4 | 2.5 | +0.0 |
+| carga_generador | 21.7 | 22.1 | +0.4 |
+| analisis | 23.6 | 6.1 | -17.4 |
+| respuesta | 5.2 | 5.3 | +0.1 |
+| carga_juez | 8.9 | 9.1 | +0.2 |
+| juez | 12.8 | 3.6 | -9.1 |
+| **Total por reseña** | **75.1** | **49.0** | **-26.1** |
+
 ## Juez asíncrono (variante A) frente a la base
 
 Ejecución de A: `latencia_v6_A_20261029-2234.jsonl` (15 reseñas sin contar la primera de cada repetición). Mediana / p90 [mínimo–máximo] en segundos. Diferencia = base − A, con IC 95 % bootstrap pareado (10000 remuestras); con n tan pequeño, el IC es orientativo.

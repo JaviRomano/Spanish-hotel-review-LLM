@@ -266,6 +266,53 @@ def compare_variants() -> list[str]:
     return L
 
 
+def before_after() -> list[str]:
+    """Por etapa, la primera medición base (cada modelo se cargaba dos veces: la precarga de
+    require_gpu usaba otro num_ctx) frente a la última base (una carga). Mediana del tiempo de
+    pared, sin contar la primera reseña de cada repetición."""
+    base = []
+    for f in sorted(RESULTS.glob("latencia_*.jsonl")):
+        meta, rr = _rows(f)
+        if meta.get("variante", "base") == "base":
+            base.append((f, meta, rr))
+    if len(base) < 2:
+        return []
+    (fb, mb, rb), (fa, ma, ra) = base[0], base[-1]
+    wall = lambda rr, st: [sum(e["s"] for e in r["etapas"] if e["etapa"] == st) for r in rr]  # noqa: E731
+    L = ["", "## Antes y después de corregir la doble carga (por etapa)", "",
+         f"Antes: `{fb.name}` · después: `{fa.name}`. Mediana del tiempo de pared por reseña, en "
+         "segundos (sin la primera de cada repetición).", "",
+         "| Etapa | Antes | Después | Diferencia |", "|---|---|---|---|"]  # fmt: skip
+    for st in STAGES:
+        b, a = _q(wall(rb, st), 50), _q(wall(ra, st), 50)
+        if b < 0.05 and a < 0.05:
+            continue
+        L.append(f"| {st} | {b:.1f} | {a:.1f} | {a - b:+.1f} |")
+    tb = [split_review(r, mb)["total"] for r in rb]
+    ta = [split_review(r, ma)["total"] for r in ra]
+    L.append(f"| **Total por reseña** | **{_q(tb, 50):.1f}** | **{_q(ta, 50):.1f}** | "
+             f"**{_q(ta, 50) - _q(tb, 50):+.1f}** |")  # fmt: skip
+    return L
+
+
+def cost(rest: list[dict], meta: dict) -> list[str]:
+    """Coste por reseña con lo que se mide: tiempo de GPU, tokens y llamadas externas."""
+    parts = [split_review(r, meta) for r in rest]
+    gpu = [p["carga"] + p["inferencia"] for p in parts]
+    tin = [sum(c["prompt_eval_count"] for c in r["llamadas"] if not c["cached"]) for r in rest]
+    tout = [sum(c["eval_count"] for c in r["llamadas"] if not c["cached"]) for r in rest]
+    calls = [sum(not c["cached"] and c["tipo"] == "chat" for c in r["llamadas"]) for r in rest]
+    return ["", "## Coste por reseña (resto)", "",
+            "| Medida | Mediana / p90 |", "|---|---|",
+            f"| Tiempo de GPU (carga + inferencia, s) | {_fmt(gpu)} |",
+            f"| Tokens de entrada | {_q(tin, 50):.0f} / {_q(tin, 90):.0f} |",
+            f"| Tokens generados | {_q(tout, 50):.0f} / {_q(tout, 90):.0f} |",
+            f"| Llamadas al LLM (chat) | {_q(calls, 50):.0f} |",
+            "| Llamadas a APIs externas | 0 (todo en local) |", "",
+            "El consumo eléctrico no se ha medido (no hay lectura de potencia de la GPU en estas "
+            "ejecuciones): el coste en euros no se informa."]  # fmt: skip
+
+
 def write_report(path: Path) -> None:
     rows = [json.loads(x) for x in path.read_text(encoding="utf-8").splitlines() if x]
     meta = next(r for r in rows if r["id"] == "_meta")
@@ -377,6 +424,8 @@ def write_report(path: Path) -> None:
     else:
         L.append("Todas las reseñas acabaron con el mismo destino que en la cola cacheada.")
 
+    L += cost(rest, meta)
+    L += before_after()
     L += compare_variants()
     L += ["", "## Todas las mediciones (results/latencia_*.jsonl)", "",
           "Reseñas sin contar la primera de cada repetición. Cargas del generador por reseña: 2 "

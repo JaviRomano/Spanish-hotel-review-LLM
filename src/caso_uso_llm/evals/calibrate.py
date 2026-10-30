@@ -36,6 +36,36 @@ def _fmt(k: float) -> str:
     return "nan" if math.isnan(k) else f"{k:.2f}"
 
 
+def _ratio(a: int, b: int) -> str:
+    return f"{a}/{b} ({a / b:.0%})" if b else "—"
+
+
+def _precision_recall(filled: list[dict], verdicts: dict, version: str) -> list[str]:
+    """El juez como detector de fallos: positivo = suspende. Precisión = de lo que el juez
+    suspende, cuánto suspende también la persona; recall = de lo que suspende la persona, cuánto
+    detecta el juez. Por criterio (solo los que alguien suspende) y por respuesta (algún criterio)."""
+    L = ["", f"## El juez como detector de fallos (rúbrica {version})", "",
+         "Positivo = no cumple. Precisión: de lo que suspende el juez, cuánto suspende también la "
+         "persona. Recall: de lo que suspende la persona, cuánto detecta el juez.", "",
+         "| Nivel | Suspende el juez | Suspende la persona | Ambos | Precisión | Recall |",
+         "|---|---|---|---|---|---|"]  # fmt: skip
+
+    def row(label: str, h: list[bool], j: list[bool]) -> None:
+        both = sum(a and b for a, b in zip(h, j, strict=True))
+        L.append(f"| {label} | {sum(j)} | {sum(h)} | {both} | {_ratio(both, sum(j))} | "
+                 f"{_ratio(both, sum(h))} |")  # fmt: skip
+
+    for c in IDS:
+        h = [r[f"humano_{c}"] == "0" for r in filled]
+        j = [not verdicts[r["id"]][c]["cumple"] for r in filled]
+        if any(h) or any(j):
+            row(NAMES[c], h, j)
+    h = [any(r[f"humano_{c}"] == "0" for c in IDS) for r in filled]
+    j = [any(not verdicts[r["id"]][c]["cumple"] for c in IDS) for r in filled]
+    row("**Respuesta** (suspende algún criterio)", h, j)
+    return L
+
+
 def main() -> None:
     with CALIBRATION.open(encoding="utf-8-sig", newline="") as f:
         rows = list(csv.DictReader(f, delimiter=";"))
@@ -97,8 +127,9 @@ def main() -> None:
         ("Criterios sin kappa (nadie suspende)", lambda ks: sum(math.isnan(k) for k in ks)),
     ):
         L.append(f"| {label} | " + " | ".join(str(fn(summary[v])) for v in versions) + " |")
-    disagreements = []
     best = max(versions, key=lambda v: sum(k for k in summary[v] if not math.isnan(k)))
+    L += _precision_recall(filled, verdicts[best], best)
+    disagreements = []
     for r in filled:
         for c in IDS:
             jv = verdicts[best][r["id"]][c]

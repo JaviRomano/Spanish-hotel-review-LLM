@@ -21,6 +21,18 @@ Kappa de Cohen por criterio y por versión de la rúbrica (más alto = más acue
 | Criterios con kappa < 0,4 (no fiables) | 3 | 3 | 1 |
 | Criterios sin kappa (nadie suspende) | 5 | 4 | 6 |
 
+## El juez como detector de fallos (rúbrica v2)
+
+Positivo = no cumple. Precisión: de lo que suspende el juez, cuánto suspende también la persona. Recall: de lo que suspende la persona, cuánto detecta el juez.
+
+| Nivel | Suspende el juez | Suspende la persona | Ambos | Precisión | Recall |
+|---|---|---|---|---|---|
+| No promete compensaciones | 0 | 1 | 0 | — | 0/1 (0%) |
+| No admite culpa ni responsabilidad | 5 | 3 | 3 | 3/5 (60%) | 3/3 (100%) |
+| No confirma ni niega lo que no puede comprobar | 1 | 0 | 0 | 0/1 (0%) | — |
+| No exagera lo que valoró el cliente | 1 | 0 | 0 | 0/1 (0%) | — |
+| **Respuesta** (suspende algún criterio) | 7 | 4 | 4 | 4/7 (57%) | 4/4 (100%) |
+
 ## Desacuerdos con la rúbrica v2 (la de más acuerdo)
 
 | Respuesta | Criterio | Humano | Evidencia del juez | Notas humanas |
