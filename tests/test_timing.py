@@ -84,13 +84,16 @@ def test_embeddings_sin_persistir_no_escriben_en_disco(tmp_path, monkeypatch):
 
 
 def test_la_muestra_tiene_tres_publicables_y_tres_a_revision():
-    from caso_uso_llm.latency import PUB, REV, SAMPLE, build_sample
+    from caso_uso_llm.latency import PUB, QUEUE, REV, SAMPLE
 
     if not SAMPLE.exists():
         pytest.skip("sin muestra")
     items = json.loads(SAMPLE.read_text(encoding="utf-8"))["items"]
     assert [it["decision_cola"] for it in items] == [PUB, REV] * 3
-    assert [it["id"] for it in items] == [it["id"] for it in build_sample()]
+    # La muestra está congelada: no se vuelve a sortear cuando se regenera la cola, pero sus
+    # reseñas tienen que seguir con el mismo destino en ella.
+    queue = {it["id"]: it["decision"] for it in json.loads(QUEUE.read_text(encoding="utf-8"))}
+    assert [queue[it["id"]] for it in items] == [it["decision_cola"] for it in items]
 
 
 def test_la_precarga_sin_metricas_cuenta_como_carga():

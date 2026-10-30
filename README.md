@@ -146,13 +146,24 @@ What it taught:
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/pipeline_en_dark.png">
-  <img alt="Stacked bar chart: published vs. human review. Synthetic 1 vs 13; AHR 1, 2 and 3 stars 0 vs 8; AHR 4 stars 5 vs 3; AHR 5 stars 7 vs 1." src="docs/img/pipeline_en_light.png" width="720">
+  <img alt="Stacked bar chart: published vs. human review. Synthetic 1 vs 13; AHR 1, 2 and 3 stars 0 vs 8; AHR 4 stars 4 vs 4; AHR 5 stars 3 vs 5." src="docs/img/pipeline_en_light.png" width="720">
 </picture>
 
-- **Demonstration on 54 reviews** (14 synthetic cases + 40 real AHR reviews never used for training or prompt development): 13 published, all positive, and 41 sent to review. The classifier gets 37/40 of the AHR reviews right.
+- **Demonstration on 54 reviews** (14 synthetic cases + 40 real AHR reviews never used for training or prompt development): 8 published, all positive, and 46 sent to review. The classifier gets 37/40 of the AHR reviews right. The first run (2026-10-23) published 13; the guardrails added in Phase 9 since then send 5 more to review, mostly for copying 4+ words from the review.
 - **Neutral reviews always go to a person.** In the first run the three neutral reviews that would have been published sat right on the threshold (confidence 0.851), and neutral is the classifier's weakest class.
-- **Reading the published replies:** none admits blame, promises anything or confirms a premise. Two or three have details a person would fix and the judge does not see: repeating the guest's regional word ("jugo" instead of "zumo"), justifying a price rise, a slightly promotional sentence.
-- **Cost:** about 80 s per new review locally, because the 27B generator and the 12B judge do not fit in VRAM together and Ollama swaps them. In batch mode the pipeline runs in stages (classify all, retrieve all, generate all, judge all) to avoid that.
+- **Reading the published replies:** none admits blame, promises anything or confirms a premise. Some have details a person would fix and the judge does not see: a grammatical slip ("Los tarifas"), an anglicism ("feedback"), an assumption about the nearby beach. And all 8 open the same way ("Estimado cliente: Muchas gracias por compartir su experiencia"): a reader who sees several replies notices.
+- **Cost:** about 49 s per new review locally (median; [`reports/phase9_latencia.md`](reports/phase9_latencia.md)), most of it loading models, because the 27B generator and the 12B judge do not fit in VRAM together and Ollama swaps them. The demo shows the draft at about 36 s and the judge's verdict when it arrives. In batch mode the pipeline runs in stages (classify all, retrieve all, generate all, judge all) to avoid that.
+
+### Prompt versions after v6: why the pipeline stays on v6
+
+Two later versions were tried to fix what reading the replies shows (repeated openings, copied phrases, "we will review this *in order to*…", which hints at a fault). Neither was adopted.
+
+- **v8:** more variety (replies that copy 4+ words from the review: 17/40 → 4/40), but the judge fails it on "does not admit blame" 20 times against 8 for v6, and v6 wins the pairwise comparison 25–10.
+- **v9** fixed what it was aimed at, without being worse on safety (no promises, inventions or confirmed premises beyond v6): an alternating greeting ("Hola:" / "Saludos:") instead of "Estimado cliente:" in every reply, and a deterministic cut of the purpose clause after "revisaremos" (15 of 53 replies). It was **not enough**:
+  - pairwise judge: v6 wins 26–10 ([`reports/phase9_regresion.md`](reports/phase9_regresion.md));
+  - **blind human rating** of 30 new reviews written by hand (not the development cases; greeting removed from both replies so it would not give away the version): v6 preferred 15 times, v9 10, 3 ties (sign test p = 0.42, not significant on its own); publishable as is: v6 8/30, v9 4/30. Script: [`scripts/comparacion_ciegas.py`](scripts/comparacion_ciegas.py); the reviews and ratings stay out of git;
+  - the wording got worse: "nuestro establecimiento", "su anterior afición", "reconocemos su opinión", and a bar service the guest never mentioned.
+- All three measures point the same way, so v6 stays. The fixed opening is a known problem, deferred to the next version together with failures both versions share ("we take note to improve" about things that cannot change, such as room size or the building; assuming a stay when the writer only came in to use the toilet). To avoid overfitting, the prompt is not iterated again on the same cases: the next version waits for more human-rated reviews.
 
 The Gradio demo (`uv run just app`) shows each step for one review and has a review queue where a person approves, edits or discards each draft; every decision is stored for later analysis. The hotels and their fact sheets are fictitious.
 
@@ -396,13 +407,24 @@ Lo que enseñó:
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/pipeline_es_dark.png">
-  <img alt="Gráfica de barras apiladas: publicables frente a revisión humana. Sintéticos 1 frente a 13; AHR 1, 2 y 3 estrellas 0 frente a 8; AHR 4 estrellas 5 frente a 3; AHR 5 estrellas 7 frente a 1." src="docs/img/pipeline_es_light.png" width="720">
+  <img alt="Gráfica de barras apiladas: publicables frente a revisión humana. Sintéticos 1 frente a 13; AHR 1, 2 y 3 estrellas 0 frente a 8; AHR 4 estrellas 4 frente a 4; AHR 5 estrellas 3 frente a 5." src="docs/img/pipeline_es_light.png" width="720">
 </picture>
 
-- **Demostración con 54 reseñas** (14 casos sintéticos y 40 reseñas reales del AHR, que no se usaron para entrenar ni para desarrollar los prompts): 13 publicables, todas positivas, y 41 a revisión. El clasificador acierta 37 de las 40 del AHR.
+- **Demostración con 54 reseñas** (14 casos sintéticos y 40 reseñas reales del AHR, que no se usaron para entrenar ni para desarrollar los prompts): 8 publicables, todas positivas, y 46 a revisión. El clasificador acierta 37 de las 40 del AHR. La primera ejecución (2026-10-23) daba 13 publicables; los guardarraíles añadidos en la Fase 9 mandan 5 más a revisión, sobre todo por copiar 4 o más palabras de la reseña.
 - **Las neutrales van siempre a una persona.** En la primera ejecución, las tres neutrales que se habrían publicado rozaban el umbral (confianza 0,851), y el neutral es la clase más débil del clasificador.
-- **Leyendo las respuestas publicables:** ninguna admite culpa, promete nada ni confirma una premisa. Dos o tres tienen detalles que una persona corregiría y el juez no ve: repetir la palabra regional del cliente («jugo» en lugar de «zumo»), justificar una subida de precios o una frase con tono comercial.
-- **Coste:** unos 80 s por reseña nueva en local, porque el generador de 27B y el juez de 12B no caben juntos en la VRAM y Ollama los alterna. Por lotes, el pipeline va por etapas (clasificar todo, recuperar todo, generar todo, juzgar todo) para evitarlo.
+- **Leyendo las respuestas publicables:** ninguna admite culpa, promete nada ni confirma una premisa. Algunas tienen detalles que una persona corregiría y el juez no ve: una errata («Los tarifas»), un anglicismo («feedback») o una suposición sobre la playa cercana. Además, las 8 abren igual («Estimado cliente: Muchas gracias por compartir su experiencia»), y quien lea varias respuestas lo nota.
+- **Coste:** unos 49 s por reseña nueva en local (mediana; [`reports/phase9_latencia.md`](reports/phase9_latencia.md)), la mayor parte en cargar modelos, porque el generador de 27B y el juez de 12B no caben juntos en la VRAM y Ollama los alterna. La demo muestra el borrador a los ~36 s y el veredicto del juez cuando llega. Por lotes, el pipeline va por etapas (clasificar todo, recuperar todo, generar todo, juzgar todo) para evitarlo.
+
+### Versiones del prompt posteriores a v6: por qué se mantiene v6
+
+Se probaron dos versiones para corregir lo que muestra la lectura de las respuestas: aperturas repetidas, frases copiadas y «revisaremos lo ocurrido *para*…», que sugiere un fallo. No se adoptó ninguna.
+
+- **v8:** más variedad (respuestas que copian 4 o más palabras de la reseña: de 17/40 a 4/40), pero el juez le suspende «no admite culpa» 20 veces frente a 8 de v6, y por pares gana v6, 25 a 10.
+- **v9** corrigió lo que buscaba sin empeorar en seguridad (no promete, inventa ni confirma premisas más que v6): un saludo que alterna entre «Hola:» y «Saludos:» en vez de «Estimado cliente:» en todas las respuestas, y un recorte determinista de la finalidad tras «revisaremos» (15 de 53 respuestas). **No bastó**:
+  - juez por pares: gana v6, 26 a 10 ([`reports/phase9_regresion.md`](reports/phase9_regresion.md));
+  - **valoración humana a ciegas** de 30 reseñas nuevas escritas a mano (no son los casos de desarrollo; se quitó el saludo de las dos respuestas para que no delatara la versión): se prefiere v6 15 veces, v9 10, y hay 3 empates (prueba de signos p = 0,42, no significativa por sí sola). Publicables tal cual: v6 8/30, v9 4/30. Script: [`scripts/comparacion_ciegas.py`](scripts/comparacion_ciegas.py); las reseñas y las valoraciones quedan fuera de git;
+  - empeoró la redacción: «nuestro establecimiento», «su anterior afición», «reconocemos su opinión» y un servicio en barra que el cliente no mencionaba.
+- Las tres medidas apuntan en la misma dirección, así que se mantiene v6. La apertura fija es un problema conocido y se aplaza a la siguiente versión, junto con fallos que comparten las dos: «tomamos nota para mejorar» ante lo que no se puede cambiar, como el tamaño de la habitación o el edificio, o suponer una estancia cuando quien escribe solo entró a usar el baño. Para no sobreajustar, no se itera más el prompt sobre los mismos casos: la siguiente versión espera a tener más reseñas valoradas por personas.
 
 La demo en Gradio (`uv run just app`) muestra cada paso para una reseña y tiene una cola de revisión donde una persona aprueba, edita o descarta cada borrador; cada decisión se guarda para analizarla después. Los hoteles y sus fichas son ficticios.
 
