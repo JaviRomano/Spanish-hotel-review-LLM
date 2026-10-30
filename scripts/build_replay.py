@@ -65,14 +65,18 @@ def compact(it: dict, names: dict, policies: dict) -> dict:
 def main() -> None:
     names = {c.id: c.nombre for c in criterios(RUBRIC)}
     policies = {d.id: d.payload["titulo"] for d in kb.politicas()}
+    selection = json.loads(SELECTION.read_text(encoding="utf-8"))
+    skip = set(selection.get("excluir_propias", []))
     cases = []
     for src in SOURCES:
         if src.exists():
             cases += [
-                compact(it, names, policies) for it in json.loads(src.read_text(encoding="utf-8"))
+                compact(it, names, policies)
+                for it in json.loads(src.read_text(encoding="utf-8"))
+                if it["id"] not in skip
             ]
     demo = {it["id"]: it for it in json.loads(DEMO.read_text(encoding="utf-8"))}
-    for sel in json.loads(SELECTION.read_text(encoding="utf-8"))["casos"]:
+    for sel in selection["casos"]:
         cases.append(compact(demo[sel["id"]], names, policies) | {"nota": sel["nota"]})
     OUT.parent.mkdir(exist_ok=True)
     data = {"umbral": THRESHOLD, "casos": cases}

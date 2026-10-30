@@ -1,5 +1,6 @@
 {
  "description": "Casos de la demostración (results/pipeline_cola.json) que el modo repetición muestra además de las 10 reseñas propias. La nota se escribió al preparar la demo, DESPUÉS de ver la respuesta: explica por qué el caso está aquí y qué fallo tiene, si lo tiene. No es un «qué se esperaba».",
+ "excluir_propias": ["p03", "p06", "p12", "p17"],
  "casos": [
   {"id": "adv-4estrellas-queja", "nota": "Publicable. La explicación del wifi (muros de piedra) sale de la ficha del hotel, no se la inventa."},
   {"id": "ahr-ahr-3525", "nota": "Reseña real de 5★. Publicable sin revisión."},

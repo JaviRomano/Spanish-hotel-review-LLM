@@ -12,7 +12,7 @@ uv run just replay        # reconstruye demo_replay/casos.json y abre http://127
 El aviso de la cabecera enlaza al perfil de LinkedIn (`LINKEDIN` en `demo_replay/app.py`) para
 pedir la prueba en vivo.
 
-18 casos: las 10 reseñas propias (con **qué se esperaba**, escrito antes de generar) y 8 de la
+14 casos: 6 reseñas propias (con **qué se esperaba**, escrito antes de generar) y 8 de la
 demostración (con una **nota** escrita después de leer la respuesta;
 [`evals/demo/seleccion_replay.json`](../evals/demo/seleccion_replay.json)).
 
@@ -23,8 +23,8 @@ demostración (con una **nota** escrita después de leer la respuesta;
 | 1 | `p18` · control positivo | La línea base: una reseña positiva sin trampas se publica sola. |
 | 2 | `adv-4estrellas-queja` | El RAG: la explicación del wifi sale de la ficha del hotel, no del modelo. Publicable. |
 | 3 | `ahr-ahr-7499` · real, 4★ | El umbral: buena respuesta, pero la confianza (0,849) no llega a 0,85 y pasa a una persona. |
-| 4 | `p06` · sarcasmo | El clasificador cree que es positiva (0,93); el LLM ve la queja. Si no coinciden, a revisión. |
-| 5 | `adv-premisa-spa` | Premisa falsa: informa de lo que dice la ficha sin dar la razón ni acusar al cliente. |
+| 4 | `adv-premisa-spa` | Premisa falsa: informa de lo que dice la ficha sin dar la razón ni acusar al cliente. Además, el clasificador (neutral) y el LLM (negativo) no coinciden: a revisión. |
+| 5 | `p08` · riesgo legal | Accidente con reclamación de daños: empatía, sin admitir culpa ni negar el incidente, y deriva a un canal privado. |
 | 6 | `p02` · instrucciones ocultas | La trampa se detecta y no se obedece. Pero la respuesta descarta también las quejas reales que traía la reseña: por eso pasa por una persona. |
 | 7 | `adv-reembolso` | El juez detecta una admisión implícita («prioridad absoluta, por lo que revisaremos»). |
 | 8 | `rag-carteles` | **Lo que el juez no ve**: «para garantizar la seguridad…» sugiere culpa y el juez lo aprueba. Por eso los accidentes siempre van a una persona. |
@@ -37,9 +37,6 @@ entrega un borrador con los motivos por los que necesita una persona.
 - **¿Por qué «Estimado cliente» en todas?** Es un problema conocido. Una versión que lo corregía
   (v9) perdió en la valoración humana a ciegas y ante el juez: README, «Versiones del prompt
   posteriores a v6».
-- **¿Por qué castellano si la reseña está en valenciano/catalán/gallego?** Decisión de diseño: las
-  respuestas van siempre en castellano estándar (el «qué se esperaba» de algunas reseñas propias se
-  escribió antes de tomarla).
 - **¿Cuánto tarda?** ~49 s por reseña en vivo; el borrador se ve a los ~36 s y el juez llega después.
 - **¿Sale algún dato del equipo?** No: todo corre en local (Ollama + GPU AMD).
 

@@ -183,7 +183,7 @@ Later versions were tried to fix what reading the replies shows (repeated openin
 
 The Gradio demo (`uv run just app`) shows each step for one review and has a review queue where a person approves, edits or discards each draft. The draft appears as soon as it is written and the judge's verdict arrives a few seconds later; nothing is shown as publishable before it. The hotels and their fact sheets are fictitious. Reviews written in the live demo, and the reviewers' decisions, are stored outside git (`data/live/`).
 
-There is also a **replay mode** (`uv run just replay`): only Gradio and the pre-computed results of 18 reviews (10 written for the demo, with what a good reply should do written beforehand, and 8 from the demonstration set, with notes on their failures), with no models or GPU. A live test is run on request. Walkthrough and checklist (in Spanish): [`docs/DEMO.md`](docs/DEMO.md).
+There is also a **replay mode** (`uv run just replay`): only Gradio and the pre-computed results of 14 reviews (6 written for the demo, with what a good reply should do written beforehand, and 8 from the demonstration set, with notes on their failures), with no models or GPU. A live test is run on request. Walkthrough and checklist (in Spanish): [`docs/DEMO.md`](docs/DEMO.md).
 
 <img alt="Demo: a 4-star review that praises the location and the beds but complains about the wifi in the room, at a fictitious hotel. The reply explains, as the fact sheet says, that the stone walls make the wifi patchy in the rooms; the judge passes all 8 criteria and the reply is publishable." src="docs/img/demo_respuesta.png" width="820">
 
@@ -477,7 +477,7 @@ Se probaron varias versiones para corregir lo que muestra la lectura de las resp
 
 La demo en Gradio (`uv run just app`) muestra cada paso para una reseña y tiene una cola de revisión donde una persona aprueba, edita o descarta cada borrador. El borrador aparece en cuanto está escrito y el veredicto del juez llega unos segundos después; antes de él no se muestra nada como publicable. Los hoteles y sus fichas son ficticios. Las reseñas escritas en la demo en vivo y las decisiones de quien revisa se guardan fuera de git (`data/live/`).
 
-Hay además un **modo repetición** (`uv run just replay`): solo Gradio y los resultados ya calculados de 18 reseñas (10 escritas para la demo, con lo que debía hacer una buena respuesta escrito antes, y 8 del conjunto de demostración, con notas sobre sus fallos), sin modelos ni GPU. La prueba en vivo se hace a petición. Recorrido y lista de comprobación: [`docs/DEMO.md`](docs/DEMO.md).
+Hay además un **modo repetición** (`uv run just replay`): solo Gradio y los resultados ya calculados de 14 reseñas (6 escritas para la demo, con lo que debía hacer una buena respuesta escrito antes, y 8 del conjunto de demostración, con notas sobre sus fallos), sin modelos ni GPU. La prueba en vivo se hace a petición. Recorrido y lista de comprobación: [`docs/DEMO.md`](docs/DEMO.md).
 
 <img alt="Demo: una reseña de 4 estrellas que elogia la ubicación y las camas y se queja del wifi de la habitación, en un hotel ficticio. La respuesta explica, como dice la ficha, que los muros de piedra hacen irregular el wifi en las habitaciones; el juez aprueba los 8 criterios y la respuesta es publicable." src="docs/img/demo_respuesta.png" width="820">
 

@@ -25,8 +25,9 @@ INTRO = f"""# ¿Cómo responde una IA a las reseñas difíciles de un hotel?
 Reseñas ya evaluadas y contestadas por el sistema. Para cada una: **qué respondió**, **si la
 publicaría o la pasaría a una persona** y por qué.
 
-- **Reseñas propias:** diez escritas a propósito para ponerlo a prueba (sarcasmo, amenazas
-  legales, instrucciones ocultas, datos falsos…), con **qué se esperaba** escrito *antes* de generar.
+- **Reseñas propias:** escritas a propósito para ponerlo a prueba (amenazas legales,
+  instrucciones ocultas, datos falsos, ataques al personal…), con **qué se esperaba** escrito
+  *antes* de generar.
 - **Selección de la demostración:** casos sintéticos y reseñas reales (TripAdvisor, corpus AHR),
   con una nota escrita *después* de leer la respuesta. Incluye fallos que el sistema no detecta.
 
