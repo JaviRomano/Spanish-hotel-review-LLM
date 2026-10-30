@@ -9,8 +9,8 @@ Dos partes: **repetición** (reseñas ya evaluadas y contestadas, sin modelos) y
 uv run just replay        # reconstruye demo_replay/casos.json y abre http://127.0.0.1:7861
 ```
 
-Para que el aviso de la prueba en vivo enlace a LinkedIn, define `DEMO_LINKEDIN` con la URL del
-perfil antes de arrancar (sin ella, el texto aparece sin enlace).
+El aviso de la cabecera enlaza al perfil de LinkedIn (`LINKEDIN` en `demo_replay/app.py`) para
+pedir la prueba en vivo.
 
 18 casos: las 10 reseñas propias (con **qué se esperaba**, escrito antes de generar) y 8 de la
 demostración (con una **nota** escrita después de leer la respuesta;

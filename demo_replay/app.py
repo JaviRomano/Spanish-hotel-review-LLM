@@ -9,7 +9,6 @@ Uso: python demo_replay/app.py     # http://127.0.0.1:7861
 """
 
 import json
-import os
 from pathlib import Path
 
 import gradio as gr
@@ -17,9 +16,9 @@ import gradio as gr
 DATA = json.loads((Path(__file__).parent / "casos.json").read_text(encoding="utf-8"))
 CASES = {c["id"]: c for c in DATA["casos"]}
 REPO = "https://github.com/JaviRomano/Spanish-hotel-review-LLM"
-# URL del perfil de LinkedIn para pedir la prueba en vivo (sin ella, el texto no lleva enlace)
-LINKEDIN = os.environ.get("DEMO_LINKEDIN", "")
-CONTACT = f"[Escríbeme por LinkedIn]({LINKEDIN})" if LINKEDIN else "Escríbeme por LinkedIn"
+# Perfil para pedir la prueba en vivo
+LINKEDIN = "https://www.linkedin.com/in/franciscojavier-fernandezrumi/"
+CONTACT = f"[Escríbeme por LinkedIn]({LINKEDIN})"
 
 INTRO = f"""# ¿Cómo responde una IA a las reseñas difíciles de un hotel?
 
