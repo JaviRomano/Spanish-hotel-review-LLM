@@ -100,10 +100,10 @@ latencia *ARGS:
 regresion *ARGS:
     python -m caso_uso_llm.rag.regresion {{ARGS}}
 
-# Demo en modo repetición: reconstruye casos.json y la abre (sin modelos; http://127.0.0.1:7861)
+# Demo en modo repetición: regenera la página estática docs/index.html (GitHub Pages) y la abre
 replay:
     python scripts/build_replay.py
-    python demo_replay/app.py
+    python -m webbrowser docs/index.html
 
 # Demo en vivo con contraseña (DEMO_USER y DEMO_PASS en el entorno). Publicarla con un túnel:
 #   cloudflared tunnel --url http://127.0.0.1:7860     (Defender bloquea el túnel de Gradio)

@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reseñas de hotel · repetición</title>
+<meta name="description" content="Cómo responde un sistema local de IA (clasificador, RAG, generador y juez) a reseñas de hotel difíciles: respuestas ya evaluadas, con sus fallos.">
+<style>
+:root {
+  --bg: #fcfcfb; --surface: #ffffff; --sunken: #f3f2ef; --border: #dedcd6;
+  --text: #1a1a19; --muted: #5c5b56; --accent: #1f63c4; --accent-ink: #ffffff;
+  --ok: #1d7a43; --ok-bg: #e7f4ec; --warn: #8a5300; --warn-bg: #fbf0dd;
+  --bad: #b3261e; --quote: #e9e7e1;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161615; --surface: #1f1f1e; --sunken: #262624; --border: #3a3a37;
+    --text: #ecebe7; --muted: #a8a7a0; --accent: #6aa3ef; --accent-ink: #0d1b2e;
+    --ok: #6fd39a; --ok-bg: #16301f; --warn: #f0b860; --warn-bg: #33270f;
+    --bad: #ff8a80; --quote: #3a3a37;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #161615; --surface: #1f1f1e; --sunken: #262624; --border: #3a3a37;
+  --text: #ecebe7; --muted: #a8a7a0; --accent: #6aa3ef; --accent-ink: #0d1b2e;
+  --ok: #6fd39a; --ok-bg: #16301f; --warn: #f0b860; --warn-bg: #33270f;
+  --bad: #ff8a80; --quote: #3a3a37;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+.wrap { max-width: 1120px; margin: 0 auto; padding: 24px 16px 56px; }
+a { color: var(--accent); }
+h1 { font-size: clamp(1.5rem, 4vw, 2.1rem); line-height: 1.2; margin: 0 0 12px; text-wrap: balance; }
+h2 { font-size: 1rem; margin: 0 0 8px; }
+p { margin: 0 0 10px; }
+.lead { color: var(--muted); max-width: 70ch; }
+.lead ul { margin: 6px 0 10px; padding-left: 20px; }
+.live {
+  display: flex; gap: 16px; align-items: center; flex-wrap: wrap;
+  background: var(--sunken); border: 1px solid var(--border); border-radius: 12px;
+  padding: 14px 16px; margin: 18px 0 22px;
+}
+.live p { margin: 0; flex: 1 1 320px; }
+.btn {
+  display: inline-block; background: var(--accent); color: var(--accent-ink); text-decoration: none;
+  font-weight: 600; padding: 10px 16px; border-radius: 8px; white-space: nowrap;
+}
+.btn:focus-visible, select:focus-visible, button:focus-visible, summary:focus-visible {
+  outline: 3px solid var(--accent); outline-offset: 2px;
+}
+.picker { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 18px; }
+.picker label { font-weight: 600; }
+select {
+  flex: 1 1 320px; min-width: 0; font: inherit; color: var(--text); background: var(--surface);
+  border: 1px solid var(--border); border-radius: 8px; padding: 9px 10px;
+}
+@media (max-width: 760px) {
+  .picker label { flex: 1; }
+  .picker select { order: 3; flex-basis: 100%; }
+}
+.nav { font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 9px 14px; cursor: pointer; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+@media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; min-width: 0; }
+.meta { color: var(--muted); font-size: .9rem; margin-bottom: 8px; }
+blockquote {
+  margin: 0 0 14px; padding: 2px 0 2px 14px; border-left: 4px solid var(--quote);
+  white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.reply { white-space: pre-wrap; overflow-wrap: anywhere; background: var(--sunken); border-radius: 8px; padding: 12px 14px; margin: 0; font: inherit; }
+.context h2 { font-size: .95rem; }
+.context small { color: var(--muted); font-weight: 400; }
+.decision { border-radius: 10px; padding: 12px 14px; margin-top: 14px; }
+.decision.pub { background: var(--ok-bg); }
+.decision.rev { background: var(--warn-bg); }
+.decision strong { display: block; margin-bottom: 4px; }
+.decision.pub strong { color: var(--ok); }
+.decision.rev strong { color: var(--warn); }
+.decision ul { margin: 4px 0 0; padding-left: 20px; }
+details { margin-top: 18px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 4px 16px; }
+summary { cursor: pointer; font-weight: 600; padding: 10px 0; }
+.judge { list-style: none; padding: 0; margin: 0 0 14px; }
+.judge li { padding: 3px 0; }
+.judge .no { color: var(--bad); }
+.judge q { color: var(--muted); }
+pre.ficha { white-space: pre-wrap; background: var(--sunken); border-radius: 8px; padding: 10px 12px; font-size: .88rem; overflow-wrap: anywhere; }
+dl { margin: 0 0 12px; }
+dt { font-weight: 600; margin-top: 8px; }
+dd { margin: 2px 0 0; color: var(--muted); }
+footer { margin-top: 36px; color: var(--muted); font-size: .88rem; border-top: 1px solid var(--border); padding-top: 14px; }
+.theme { float: right; font: inherit; font-size: .85rem; color: var(--muted); background: none; border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <button class="theme" id="theme" type="button" aria-label="Cambiar entre tema claro y oscuro">◐ Tema</button>
+  <h1>¿Cómo responde una IA a las reseñas difíciles de un hotel?</h1>
+  <div class="lead">
+    <p>Reseñas ya evaluadas y contestadas por el sistema. Para cada una: <strong>qué respondió</strong>, <strong>si la publicaría o la pasaría a una persona</strong> y por qué.</p>
+    <ul>
+      <li><strong>Reseñas propias:</strong> escritas a propósito para ponerlo a prueba (amenazas legales, instrucciones ocultas, datos falsos, ataques al personal…), con <strong>qué se esperaba</strong> escrito <em>antes</em> de generar.</li>
+      <li><strong>Selección de la demostración:</strong> casos sintéticos y reseñas reales (TripAdvisor, corpus AHR), con una nota escrita <em>después</em> de leer la respuesta. Incluye fallos que el sistema no detecta.</li>
+    </ul>
+    <p>Todo se generó <strong>en local, sobre una GPU AMD</strong>: clasificador mRoBERTa → contexto del hotel (RAG) → borrador con Qwen 27B → comprobaciones y un segundo modelo (Gemma 12B) como juez. Los hoteles son ficticios. <a href="__REPO__">Código, informes y cifras</a>.</p>
+  </div>
+
+  <div class="live">
+    <p>🔬 <strong>Esto es una repetición: aquí no se genera nada en directo.</strong> ¿Quieres probarlo con tus propias reseñas? Escríbeme por LinkedIn con «Prueba en vivo» y cuándo te viene bien: arranco el sistema en mi ordenador y te paso un enlace y una contraseña. Cada reseña tarda alrededor de un minuto, y lo que escribas se guarda solo para evaluar el sistema, sin tu nombre.</p>
+    <a class="btn" href="__LINKEDIN__" target="_blank" rel="noopener">Pedir prueba en vivo</a>
+  </div>
+
+  <div class="picker">
+    <label for="case">Reseña</label>
+    <button class="nav" id="prev" type="button" aria-label="Reseña anterior">←</button>
+    <select id="case"></select>
+    <button class="nav" id="next" type="button" aria-label="Reseña siguiente">→</button>
+  </div>
+
+  <div class="grid">
+    <section class="card" aria-labelledby="h-review">
+      <h2 id="h-review">Reseña</h2>
+      <div class="meta" id="hotel"></div>
+      <blockquote id="review"></blockquote>
+      <div class="context" id="context"></div>
+    </section>
+    <section class="card" aria-labelledby="h-reply">
+      <h2 id="h-reply">Respuesta generada</h2>
+      <pre class="reply" id="reply"></pre>
+      <div class="decision" id="decision"></div>
+    </section>
+  </div>
+
+  <details id="detail">
+    <summary>Cómo llegó a esa decisión (juez, clasificador, contexto)</summary>
+    <div id="detail-body"></div>
+  </details>
+
+  <footer>
+    <p>Generado con <code>scripts/build_replay.py</code> a partir de los resultados versionados del <a href="__REPO__">repositorio</a> (código MIT). Las reseñas reales proceden del corpus <a href="https://www.kaggle.com/datasets/chizhikchi/andalusian-hotels-reviews-unbalanced">Andalusian Hotels' Reviews</a> (CC BY-NC 4.0); hoteles, fichas y políticas son ficticios.</p>
+  </footer>
+</div>
+
+<script id="data" type="application/json">__DATA__</script>
+<script>
+(() => {
+  const DATA = JSON.parse(document.getElementById("data").textContent);
+  const cases = DATA.casos;
+  const byId = Object.fromEntries(cases.map(c => [c.id, c]));
+  const GROUP = {"Reseñas propias": "Propia", "Casos sintéticos": "Sintético", "Reseñas reales (AHR)": "Real"};
+  const $ = id => document.getElementById(id);
+  const el = (tag, text, cls) => { const e = document.createElement(tag); if (text != null) e.textContent = text; if (cls) e.className = cls; return e; };
+  const fmt = (x, d) => x.toFixed(d).replace(".", ",");
+
+  // Selector agrupado: primero las propias, después la selección
+  const select = $("case");
+  const groups = [["Reseñas propias", c => c.grupo === "Reseñas propias"], ["Selección de la demostración", c => c.grupo !== "Reseñas propias"]];
+  for (const [name, test] of groups) {
+    const og = document.createElement("optgroup"); og.label = name;
+    for (const c of cases.filter(test)) {
+      const icon = c.decision === "publicable" ? "✅" : "👤";
+      const tag = GROUP[c.grupo] || c.grupo;
+      og.append(new Option(`${icon} ${tag} · ${c.id}${c.tipo ? " · " + c.tipo : ""}`, c.id));
+    }
+    select.append(og);
+  }
+  const order = [...select.options].map(o => o.value);
+
+  function show(id) {
+    const c = byId[id] || byId[order[0]];
+    select.value = c.id;
+    if (location.hash.slice(1) !== c.id) history.replaceState(null, "", "#" + c.id);
+    $("hotel").textContent = c.hotel;
+    $("review").textContent = c.review;
+
+    const ctx = $("context"); ctx.replaceChildren();
+    if (c.esperado || c.nota) {
+      const h = el("h2", c.esperado ? "Qué se esperaba de una buena respuesta " : "Por qué está aquí ");
+      h.append(el("small", c.esperado ? "(escrito antes de generar)" : "(nota escrita después de leer la respuesta)"));
+      ctx.append(h, el("p", c.esperado || c.nota));
+    }
+
+    $("reply").textContent = c.response || "(sin respuesta)";
+    const dec = $("decision"); dec.replaceChildren();
+    if (c.decision === "publicable") {
+      dec.className = "decision pub"; dec.append(el("strong", "✅ Se publicaría sin revisión"));
+    } else {
+      dec.className = "decision rev"; dec.append(el("strong", "👤 Pasa a una persona antes de publicar"));
+      const ul = el("ul"); c.reasons.forEach(r => ul.append(el("li", r))); dec.append(ul);
+    }
+
+    const body = $("detail-body"); body.replaceChildren();
+    if (c.judge.length) {
+      const passed = c.judge.filter(j => j.cumple).length;
+      body.append(el("h2", `Juez: ${passed}/${c.judge.length} criterios cumplidos`));
+      const ul = el("ul", null, "judge");
+      for (const j of c.judge) {
+        const li = el("li", (j.cumple ? "✅ " : "❌ ") + j.criterio, j.cumple ? "" : "no");
+        if (!j.cumple && j.evidencia) { li.append(": "); li.append(el("q", j.evidencia)); }
+        ul.append(li);
+      }
+      body.append(ul);
+    }
+    const dl = el("dl");
+    const probs = Object.entries(c.probs).map(([k, v]) => `${k} ${fmt(v, 2)}`).join(" · ");
+    const add = (t, d) => { dl.append(el("dt", t), el("dd", d)); };
+    add("Sentimiento (clasificador)", `${c.sentiment}, confianza ${fmt(c.confidence, 3)} (umbral ${fmt(DATA.umbral, 2)}) — ${probs}`);
+    add("Políticas recuperadas", c.politicas.join(", ") || "—");
+    add("Peticiones detectadas", c.peticiones.join(", ") || "ninguna");
+    body.append(dl);
+    if (c.ficha) { body.append(el("h2", "Ficha del hotel"), el("pre", c.ficha, "ficha")); }
+  }
+
+  const step = d => { const i = order.indexOf(select.value); show(order[(i + d + order.length) % order.length]); };
+  select.addEventListener("change", () => show(select.value));
+  $("prev").addEventListener("click", () => step(-1));
+  $("next").addEventListener("click", () => step(1));
+  window.addEventListener("hashchange", () => show(location.hash.slice(1)));
+
+  // Tema: sigue al sistema; el botón lo fija (se recuerda si el navegador lo permite)
+  const root = document.documentElement;
+  try { const t = localStorage.getItem("tema"); if (t) root.dataset.theme = t; } catch (e) {}
+  $("theme").addEventListener("click", () => {
+    const dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    root.dataset.theme = dark ? "light" : "dark";
+    try { localStorage.setItem("tema", root.dataset.theme); } catch (e) {}
+  });
+
+  show(location.hash.slice(1));
+})();
+</script>
+</body>
+</html>

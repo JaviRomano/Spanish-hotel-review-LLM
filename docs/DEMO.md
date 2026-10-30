@@ -5,12 +5,17 @@ Dos partes: **repetición** (reseñas ya evaluadas y contestadas, sin modelos) y
 
 ## 1. Repetición
 
+En línea: <https://javiromano.github.io/Spanish-hotel-review-LLM/> (GitHub Pages, carpeta `docs/`
+de `main`). Es una página estática con los datos dentro: funciona sin servidor y sin conexión
+abriendo `docs/index.html`.
+
 ```bash
-uv run just replay        # reconstruye demo_replay/casos.json y abre http://127.0.0.1:7861
+uv run just replay        # regenera docs/index.html y la abre; después, commit + push para publicarla
 ```
 
-El aviso de la cabecera enlaza al perfil de LinkedIn (`LINKEDIN` en `demo_replay/app.py`) para
-pedir la prueba en vivo.
+La plantilla es `scripts/replay_template.html`. El botón «Pedir prueba en vivo» enlaza al perfil de
+LinkedIn (`LINKEDIN` en `scripts/build_replay.py`). Cada caso tiene su enlace directo
+(`…/#rag-carteles`).
 
 14 casos: 6 reseñas propias (con **qué se esperaba**, escrito antes de generar) y 8 de la
 demostración (con una **nota** escrita después de leer la respuesta;

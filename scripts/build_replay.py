@@ -1,9 +1,10 @@
-"""Construye los datos del modo repetición (demo_replay/casos.json) desde los resultados del pipeline.
+"""Construye la página estática del modo repetición (docs/index.html, servida por GitHub Pages).
 
 Toma las reseñas propias escritas para la demo (results/demo_propias.json, de `just pipeline
 --csv … --out …`) y una selección de la demostración (evals/demo/seleccion_replay.json, sobre
-results/pipeline_cola.json) con una nota sobre cada caso. Guarda solo lo que la demo muestra:
-nada de modelos, pesos ni cachés.
+results/pipeline_cola.json) con una nota sobre cada caso, y las incrusta como JSON en
+scripts/replay_template.html. Un solo fichero, sin servidor ni modelos: solo lo que la página
+muestra (nada de pesos ni cachés).
 
 Uso: uv run python scripts/build_replay.py
 """
@@ -16,11 +17,14 @@ from caso_uso_llm.pipeline import RUBRIC, THRESHOLD
 from caso_uso_llm.rag import kb
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCES = (ROOT / "results" / "demo_propias.json",)  # las 10 reseñas propias, completas
+SOURCES = (ROOT / "results" / "demo_propias.json",)  # las reseñas propias, completas
 # Más una selección de la demostración, con una nota escrita después de ver la respuesta
 DEMO = ROOT / "results" / "pipeline_cola.json"
 SELECTION = ROOT / "evals" / "demo" / "seleccion_replay.json"
-OUT = ROOT / "demo_replay" / "casos.json"
+TEMPLATE = ROOT / "scripts" / "replay_template.html"
+OUT = ROOT / "docs" / "index.html"
+REPO = "https://github.com/JaviRomano/Spanish-hotel-review-LLM"
+LINKEDIN = "https://www.linkedin.com/in/franciscojavier-fernandezrumi/"  # prueba en vivo
 GROUP = {
     "propio": "Reseñas propias",
     "sintético": "Casos sintéticos",
@@ -78,9 +82,15 @@ def main() -> None:
     demo = {it["id"]: it for it in json.loads(DEMO.read_text(encoding="utf-8"))}
     for sel in selection["casos"]:
         cases.append(compact(demo[sel["id"]], names, policies) | {"nota": sel["nota"]})
-    OUT.parent.mkdir(exist_ok=True)
-    data = {"umbral": THRESHOLD, "casos": cases}
-    OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8", newline="\n")
+    data = json.dumps({"umbral": THRESHOLD, "casos": cases}, ensure_ascii=False, indent=1)
+    # Dentro de <script>, «</» cerraría la etiqueta antes de tiempo
+    page = (
+        TEMPLATE.read_text(encoding="utf-8")
+        .replace("__DATA__", data.replace("</", "<\\/"))
+        .replace("__REPO__", REPO)
+        .replace("__LINKEDIN__", LINKEDIN)
+    )
+    OUT.write_text(page, encoding="utf-8", newline="\n")
     print(f"{len(cases)} casos -> {OUT.relative_to(ROOT)}")
 
 
