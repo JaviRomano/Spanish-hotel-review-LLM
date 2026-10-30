@@ -7,7 +7,7 @@ scripts/replay_template.html. Un solo fichero, sin servidor ni modelos: solo lo 
 muestra (nada de pesos ni cachés). Genera también la imagen para redes (docs/og.png).
 
 No genera ni cambia ninguna respuesta del modelo: todo lo que muestra sale de resultados ya
-versionados. Las cifras de la cabecera se calculan aquí.
+versionados.
 
 Uso: uv run python scripts/build_replay.py
 """
@@ -16,14 +16,10 @@ import json
 import re
 from pathlib import Path
 
-import numpy as np
-
 from caso_uso_llm.evals.judge import JUDGE_MODEL
 from caso_uso_llm.evals.rubric import IDS, criterios
 from caso_uso_llm.generate.run import MODEL
-from caso_uso_llm.latency import _rows, split_review
-from caso_uso_llm.paths import RESULTS
-from caso_uso_llm.pipeline import PUBLISH, RUBRIC, THRESHOLD
+from caso_uso_llm.pipeline import RUBRIC, THRESHOLD
 from caso_uso_llm.rag import kb
 from caso_uso_llm.rag.retrieve import EMBED_MODEL
 
@@ -41,7 +37,6 @@ REPO = "https://github.com/JaviRomano/Spanish-hotel-review-LLM"
 LINKEDIN = "https://www.linkedin.com/in/franciscojavier-fernandezrumi/"  # contacto y prueba en vivo
 GITHUB = "https://github.com/JaviRomano"
 AUTHOR = "Fco Javier Fdez"
-ROLE = "Data Engineer / ML"
 GPU = "AMD RX 7900 XTX"  # README, «Requisitos»: el hardware no está en ningún fichero de config
 GROUP = {
     "propio": "Reseñas propias",
@@ -107,38 +102,6 @@ def compact(it: dict, policies: dict) -> dict:
     }
 
 
-def summary(demo: dict) -> dict:
-    """Cifras de la cabecera, calculadas aquí desde los resultados versionados (no a mano): la
-    demostración de 54 reseñas y la última medición de latencia de cada variante.
-
-    Riesgo con una referencia independiente del sistema: las estrellas que puso el cliente. «X de
-    las 46 que van a revisión» sería 0 por construcción; «reseñas reales de 1–3★ publicadas sin
-    revisión» no lo es."""
-    items = list(demo.values())
-    runs = {}
-    for f in sorted(RESULTS.glob("latencia_*.jsonl")):
-        meta, rr = _rows(f)
-        runs[meta.get("variante", "base")] = (meta, rr)
-    meta, rr = runs["base"]
-    _, ra = runs["A"]
-    low = [it for it in items if it["meta"].get("rating") in (1, 2, 3)]
-    return {
-        "total": len(items),
-        "sinteticos": sum(it["meta"]["grupo"] == "sintético" for it in items),
-        "publicables": sum(it["decision"] == PUBLISH for it in items),
-        "publicables_positivas": sum(
-            it["decision"] == PUBLISH and it["sentiment"] == "positivo" for it in items
-        ),
-        "riesgo_total": len(low),
-        "riesgo_publicadas": sum(it["decision"] == PUBLISH for it in low),
-        "segundos": round(float(np.median([split_review(r, meta)["total"] for r in rr]))),
-        "borrador": round(float(np.median([r["visible_s"] for r in ra]))),
-        "generador": MODEL,
-        "juez": JUDGE_MODEL,
-        "gpu": GPU,
-    }
-
-
 def _size(tag: str) -> str:
     """«qwen3.6:27b-q4_K_M» -> «27B»: el tamaño sale de la etiqueta del modelo."""
     m = re.search(r":(\d+)b", tag)
@@ -153,8 +116,8 @@ def stack() -> list[list[str]]:
             ["Clasificador", "mRoBERTa ×3"], ["Ejecución", "local · " + GPU.removeprefix("AMD ")]]  # fmt: skip
 
 
-def og_image(s: dict) -> None:
-    """Imagen para enlaces compartidos (1200×630), con las mismas cifras que la cabecera."""
+def og_image() -> None:
+    """Imagen para enlaces compartidos (1200×630): título, autor y ficha técnica."""
     import matplotlib
 
     matplotlib.use("Agg")
@@ -165,18 +128,16 @@ def og_image(s: dict) -> None:
     paper, ink, muted, rule, accent = "#f4f6f3", "#17201c", "#56615b", "#cdd4ce", "#0f5c4a"
     fig.patch.set_facecolor(paper)
     t = lambda x, y, s_, **kw: fig.text(x, y, s_, color=kw.pop("c", ink), **kw)  # noqa: E731
-    t(0.06, 0.82, "¿Cómo responde una IA a las", fontsize=40, fontweight="bold", family="serif")
-    t(0.06, 0.70, "reseñas difíciles de un hotel?", fontsize=40, fontweight="bold", family="serif")
-    t(0.06, 0.60, f"Clasificador + RAG + generador + juez LLM, 100 % local · {AUTHOR}",
-      fontsize=19, c=muted)  # fmt: skip
-    kpis = [(f"{s['riesgo_publicadas']} de {s['riesgo_total']}", "reseñas reales de 1–3★\npublicadas sin revisión"),
-            (f"{s['publicables']} de {s['total']}", "se publican solas\n(conservador por diseño)"),
-            (f"{s['segundos']} s", f"por reseña en una\n{GPU}")]  # fmt: skip
-    fig.lines.append(plt.Line2D([0.06, 0.94], [0.50, 0.50], transform=fig.transFigure, color=rule))
-    for i, (big, small) in enumerate(kpis):
-        x = 0.06 + i * 0.30
-        t(x, 0.33, big, fontsize=44, fontweight="bold", family="serif", c=accent if i == 0 else ink)
-        t(x, 0.15, small, fontsize=16, c=muted)
+    t(0.06, 0.76, "¿Cómo responde una IA a las", fontsize=44, fontweight="bold", family="serif")
+    t(0.06, 0.62, "reseñas difíciles de un hotel?", fontsize=44, fontweight="bold", family="serif")
+    t(0.06, 0.50, "Redacta la respuesta, comprueba los riesgos y decide si se publica o pasa a "
+      "una persona.", fontsize=16, c=muted)  # fmt: skip
+    fig.lines.append(plt.Line2D([0.06, 0.94], [0.40, 0.40], transform=fig.transFigure, color=rule))
+    for i, (k, v) in enumerate(stack()[:4]):
+        x = 0.06 + i * 0.225
+        t(x, 0.31, k.upper(), fontsize=13, family="monospace", c=muted)
+        t(x, 0.25, v, fontsize=17, family="monospace")
+    t(0.06, 0.09, f"{AUTHOR} · 100 % local", fontsize=18, fontweight="bold", c=accent)
     fig.savefig(OG, facecolor=fig.get_facecolor())
     plt.close(fig)
 
@@ -208,19 +169,17 @@ def main() -> None:
     tour = selection["recorrido"]
     missing = [s["id"] for s in tour if s["id"] not in ids]
     assert not missing, f"el recorrido nombra casos que la página no muestra: {missing}"
-    s = summary(demo)
-    doc = {"umbral": THRESHOLD, "casos": cases, "recorrido": tour, "resumen": s,
-           "stack": stack()}  # fmt: skip
+    doc = {"umbral": THRESHOLD, "casos": cases, "recorrido": tour, "stack": stack()}
     data = json.dumps(doc, ensure_ascii=False, indent=1)
     # Dentro de <script>, «</» cerraría la etiqueta antes de tiempo
     page = TEMPLATE.read_text(encoding="utf-8").replace("__DATA__", data.replace("</", "<\\/"))
     for key, value in {"__REPO__": REPO, "__LINKEDIN__": LINKEDIN, "__GITHUB__": GITHUB,
-                       "__AUTHOR__": AUTHOR, "__ROLE__": ROLE, "__PAGE_URL__": PAGE_URL}.items():  # fmt: skip
+                       "__AUTHOR__": AUTHOR, "__PAGE_URL__": PAGE_URL}.items():  # fmt: skip
         page = page.replace(key, value)
     left = re.findall(r"__[A-Z_]+__", page)
     assert not left, f"marcadores sin sustituir en la plantilla: {sorted(set(left))}"
     OUT.write_text(page, encoding="utf-8", newline="\n")
-    og_image(s)
+    og_image()
     print(f"{len(cases)} casos -> {OUT.relative_to(ROOT)} · {OG.relative_to(ROOT)}")
 
 
