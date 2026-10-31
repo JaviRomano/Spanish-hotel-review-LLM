@@ -10,7 +10,7 @@ demostración) y por el mismo juez, con la rúbrica v2i y la ficha:
 - comparación por pares con la base (v6), en los dos órdenes (lo inconsistente cuenta como empate);
 - aperturas: saludos y la primera frase más repetida; finalidades recortadas tras «revisaremos».
 
-Antes, dos puertas con canaries escritos a mano: la del juez de pares v2 (prefiere el usted al
+Antes, dos puertas con canaries redactados por Claude: la del juez de pares v2 (prefiere el usted al
 tuteo; no prefiere «Estimado» a «Hola») y la de la rúbrica v2i («Hola:» con usted cumple el
 registro; el tuteo no).
 
@@ -52,7 +52,7 @@ NAMES = {c.id: c.nombre for c in criterios(RUBRIC)}
 SALUDO = re.compile(r"^\s*(?:Estimad[oa]s?|Hola|Buenas|Saludos)\b", re.IGNORECASE)
 ESTIMADO = re.compile(r"^\s*Estimad[oa]s?\b", re.IGNORECASE)
 PAIR_VERSION = "v2"  # el saludo no cuenta (judge.PAIR_SALUDO)
-# Puerta del juez de pares: una reseña neutra inventada y tres respuestas escritas a mano.
+# Puerta del juez de pares: una reseña neutra inventada y tres respuestas redactadas por Claude.
 CANARY_REVIEW = "Habitación limpia y amplia, el desayuno correcto. Volveríamos."
 _BODY = (
     "Nos alegra que la habitación le resultara limpia y amplia, y tomamos nota de su opinión sobre "
@@ -213,7 +213,7 @@ def write_report(s: dict) -> None:
     gate = s["_puerta_pares"]
     L += ["", f"## Por pares frente a {BASE} (juez de pares {PAIR_VERSION}: el saludo no cuenta; "
           "los dos órdenes; lo inconsistente, empate)", "",
-          f"Puertas (canaries escritos a mano). Pares: usted frente a tuteo → «{gate['usted_frente_a_tu']}» "
+          f"Puertas (canaries redactados por Claude). Pares: usted frente a tuteo → «{gate['usted_frente_a_tu']}» "
           f"(debe ser A, el usted); «Hola:» frente a «Estimado cliente:» con el mismo texto → "
           f"«{gate['hola_frente_a_estimado']}» (no debe ser B). Rúbrica {RUBRIC}, registro: «Hola:» "
           f"con usted {'cumple' if gate['registro_hola_cumple'] else 'NO cumple'} (debe cumplir); "

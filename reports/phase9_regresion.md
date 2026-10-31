@@ -29,7 +29,7 @@ Generado por `uv run just regresion` · generador `qwen3.6:27b-q4_K_M` · juez `
 
 ## Por pares frente a v6 (juez de pares v2: el saludo no cuenta; los dos órdenes; lo inconsistente, empate)
 
-Puertas (canaries escritos a mano). Pares: usted frente a tuteo → «A» (debe ser A, el usted); «Hola:» frente a «Estimado cliente:» con el mismo texto → «empate» (no debe ser B). Rúbrica v2i, registro: «Hola:» con usted cumple (debe cumplir); tuteo no cumple (no debe cumplir). **Pasan**.
+Puertas (canaries redactados por Claude). Pares: usted frente a tuteo → «A» (debe ser A, el usted); «Hola:» frente a «Estimado cliente:» con el mismo texto → «empate» (no debe ser B). Rúbrica v2i, registro: «Hola:» con usted cumple (debe cumplir); tuteo no cumple (no debe cumplir). **Pasan**.
 
 - v9: gana 10, pierde 26, empata 18.
 

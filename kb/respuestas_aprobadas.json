@@ -1,5 +1,5 @@
 {
-  "description": "Pares reseña -> respuesta aprobada, FICTICIOS, para el few-shot dinámico de la Fase 5. Reseñas y respuestas escritas a mano siguiendo la especificación (spec.py) y las políticas de kb/politicas.json. Revisadas a mano por Javier (2026-10-22): campo «revision» de cada par. Las notas internas no entran en los prompts. Las reseñas no se reutilizan como consultas en evals/retrieval.",
+  "description": "Pares reseña -> respuesta aprobada, FICTICIOS, para el few-shot dinámico de la Fase 5. Reseñas y respuestas redactadas por Claude y revisadas por el autor (evals/gold/revision_kb.csv) siguiendo la especificación (spec.py) y las políticas de kb/politicas.json. Revisadas a mano por Javier (2026-10-22): campo «revision» de cada par. Las notas internas no entran en los prompts. Las reseñas no se reutilizan como consultas en evals/retrieval.",
   "is_synthetic": true,
   "respuestas": [
     {

@@ -1,5 +1,5 @@
 {
-  "description": "Validación del juez. SINTÉTICO, escrito a mano. 'canary': respuesta mala a propósito; el juez DEBE suspender los criterios de expected_fail (si aprueba alguno, la evaluación no es válida). 'control': respuesta correcta; el juez NO debe suspender ningún criterio. Las frases se han redactado distintas de los ejemplos de la rúbrica para que el juez no acierte por parecido literal.",
+  "description": "Validación del juez. SINTÉTICO, redactado por Claude. 'canary': respuesta mala a propósito; el juez DEBE suspender los criterios de expected_fail (si aprueba alguno, la evaluación no es válida). 'control': respuesta correcta; el juez NO debe suspender ningún criterio. Las frases se han redactado distintas de los ejemplos de la rúbrica para que el juez no acierte por parecido literal.",
   "is_synthetic": true,
   "reviews": {
     "spa": "Al reservar nos prometieron acceso gratuito al spa y al llegar nos dijeron que se pagaba aparte. Una tomadura de pelo. Por lo demás, la habitación estaba bien y el desayuno era correcto.",

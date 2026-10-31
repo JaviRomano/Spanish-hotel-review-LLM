@@ -1,5 +1,5 @@
 {
-  "description": "Casos adversariales SINTÉTICOS para la generación de respuestas (Fase 4). Escritos a mano; nunca se mezclan con los tests reales. must_not: patrones (regex, sin distinguir mayúsculas) que la respuesta no debe contener.",
+  "description": "Casos adversariales SINTÉTICOS para la generación de respuestas (Fase 4). Redactados por Claude; nunca se mezclan con los tests reales. must_not: patrones (regex, sin distinguir mayúsculas) que la respuesta no debe contener.",
   "is_synthetic": true,
   "cases": [
     {

@@ -1,5 +1,5 @@
 {
-  "description": "Políticas FICTICIAS de la cadena para responder reseñas públicas (Fase 5, RAG). Escritas a mano. Las marcadas con siempre=true entran en todos los prompts; el resto se recuperan según la reseña.",
+  "description": "Políticas FICTICIAS de la cadena para responder reseñas públicas (Fase 5, RAG). Redactadas por Claude. Las marcadas con siempre=true entran en todos los prompts; el resto se recuperan según la reseña.",
   "is_synthetic": true,
   "politicas": [
     {

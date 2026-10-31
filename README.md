@@ -106,7 +106,7 @@ The judge is `gemma4:12b` (a different family from the generator, to avoid self-
 
 What it taught:
 
-- **Passing every canary is not enough.** The judge fails 19 of 19 hand-written bad replies, including the "subtle" ones, but detects only 1–2 of 5 real generator failures: hand-written canaries are more blatant than real errors.
+- **Passing every canary is not enough.** The judge fails 19 of 19 bad replies drafted by Claude, including the "subtle" ones, but detects only 1–2 of 5 real generator failures: hand-written canaries are more blatant than real errors.
 - **Relaxing the rubric makes it worse without anyone noticing.** v3 adds allowed phrases: every control comes out clean, but it detects fewer real failures.
 - **Position bias.** When comparing two replies in both orders, the judge is consistent in only 58–67 % of pairs and picks the first option about twice as often as the second. So every pair is judged in both orders and inconsistent results count as a tie.
 - **Calibration against a person:** 24 replies from three prompt versions, with opaque IDs and labelled blind ([guide](evals/gold/guia_calibracion.md)). With rubric v2, the judge is reliable on "no admission of blame" (kappa 0.70) but **misses the covert promise** ("esperamos poder resolver esta situación", *we hope to resolve this situation*, in reply to a refund demand). On the other six criteria the person failed no reply, so kappa is undefined.
@@ -117,7 +117,7 @@ Design conclusion: the judge works as a **regression test** for prompt or model 
 
 ## RAG: hotel fact sheet, policies and approved replies
 
-A review arrives with its hotel, so **the fact sheet is not searched for**: it goes into the prompt in full. What is retrieved by search are the **policies** that apply to the review (compensation, incidents, complaints…) and **approved replies** to similar reviews, as examples. The knowledge base is **synthetic** ([`kb/`](kb/)): 8 fact sheets of fictitious hotels, 18 policies and 16 approved replies, reviewed by hand. Reports: [retrieval](reports/phase5_rag.md), [generation](reports/phase5_generacion.md) and [judge](reports/phase5_juez.md).
+A review arrives with its hotel, so **the fact sheet is not searched for**: it goes into the prompt in full. What is retrieved by search are the **policies** that apply to the review (compensation, incidents, complaints…) and **approved replies** to similar reviews, as examples. The knowledge base is **synthetic** ([`kb/`](kb/)): 8 fact sheets of fictitious hotels, 18 policies and 16 approved replies, drafted by Claude; the author reviewed the approved replies. Reports: [retrieval](reports/phase5_rag.md), [generation](reports/phase5_generacion.md) and [judge](reports/phase5_juez.md).
 
 **Retrieval** (30 labelled queries; recall@3 with 95 % CI). BM25 and `bge-m3` via Ollama, in memory and fused with RRF; with a few dozen documents, a vector database adds nothing.
 
@@ -415,7 +415,7 @@ Juez `gemma4:12b` (otra familia que el generador, para evitar la autopreferencia
 
 Lo que enseñó:
 
-- **Aprobar todos los *canaries* no basta.** El juez suspende 19 de 19 respuestas malas escritas a mano, incluidas las «sutiles», pero solo detecta 1–2 de 5 fallos reales del generador: los *canaries* escritos a mano son más explícitos que los errores de verdad.
+- **Aprobar todos los *canaries* no basta.** El juez suspende 19 de 19 respuestas malas redactadas por Claude, incluidas las «sutiles», pero solo detecta 1–2 de 5 fallos reales del generador: los *canaries* escritos a mano son más explícitos que los errores de verdad.
 - **Relajar la rúbrica la empeora sin que se note.** La v3 añade fórmulas permitidas: deja limpios todos los controles, pero detecta menos fallos reales.
 - **Sesgo de posición.** Al comparar dos respuestas en los dos órdenes, el juez solo es consistente en el 58–67 % de los pares y elige la primera opción unas dos veces más que la segunda. Por eso cada par se juzga en ambos órdenes y lo inconsistente cuenta como empate.
 - **Calibración frente a una persona:** 24 respuestas de tres versiones del prompt, con identificadores opacos y etiquetadas a ciegas ([guía](evals/gold/guia_calibracion.md)). Con la rúbrica v2, el juez es fiable en «sin admitir culpa» (kappa 0,70), pero **no detecta la promesa encubierta** («esperamos poder resolver esta situación» ante una petición de reembolso). En los otros seis criterios la persona no suspende ninguna respuesta y la kappa no está definida.
@@ -426,7 +426,7 @@ Conclusión de diseño: el juez sirve como **prueba de regresión** ante cambios
 
 ## RAG: ficha, políticas y respuestas aprobadas
 
-La reseña llega con su hotel, así que **la ficha no se busca**: entra completa en el prompt. Lo que se recupera por búsqueda son las **políticas** que aplican a la reseña (compensaciones, incidentes, reclamaciones…) y **respuestas aprobadas** a reseñas parecidas, como ejemplos. La base de conocimiento es **sintética** ([`kb/`](kb/)): 8 fichas de hoteles ficticios, 18 políticas y 16 respuestas aprobadas, revisadas a mano. Informes: [recuperación](reports/phase5_rag.md), [generación](reports/phase5_generacion.md) y [juez](reports/phase5_juez.md).
+La reseña llega con su hotel, así que **la ficha no se busca**: entra completa en el prompt. Lo que se recupera por búsqueda son las **políticas** que aplican a la reseña (compensaciones, incidentes, reclamaciones…) y **respuestas aprobadas** a reseñas parecidas, como ejemplos. La base de conocimiento es **sintética** ([`kb/`](kb/)): 8 fichas de hoteles ficticios, 18 políticas y 16 respuestas aprobadas, redactadas por Claude; el autor revisó las respuestas aprobadas. Informes: [recuperación](reports/phase5_rag.md), [generación](reports/phase5_generacion.md) y [juez](reports/phase5_juez.md).
 
 **Recuperación** (30 consultas etiquetadas; recall@3 con IC 95 %). BM25 y `bge-m3` vía Ollama, en memoria y fusionados con RRF; con unas decenas de documentos, una base vectorial no aporta nada.
 

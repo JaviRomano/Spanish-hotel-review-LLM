@@ -1,5 +1,5 @@
 {
-  "description": "Fichas de hoteles FICTICIOS para la Fase 5 (RAG). Escritas a mano; no describen establecimientos reales. La ficha se selecciona por id del hotel (la reseña llega con su hotel), no por búsqueda. Algunas están diseñadas para contradecir premisas de los casos adversariales (spa, piscina, wifi).",
+  "description": "Fichas de hoteles FICTICIOS para la Fase 5 (RAG). Redactadas por Claude; no describen establecimientos reales. La ficha se selecciona por id del hotel (la reseña llega con su hotel), no por búsqueda. Algunas están diseñadas para contradecir premisas de los casos adversariales (spa, piscina, wifi).",
   "is_synthetic": true,
   "hoteles": [
     {

@@ -1,5 +1,5 @@
 {
- "description": "Validación del juez, v2 = v1 + casos SUTILES y controles empáticos. SINTÉTICO, escrito a mano. 'canary': respuesta mala a propósito; el juez DEBE suspender los criterios de expected_fail. 'control': respuesta correcta; el juez NO debe suspender ninguno. v1 resultó demasiado fácil: el juez detectó 15/15 canaries pero solo 2 de 5 fallos reales sutiles. Los añadidos imitan el TIPO de fallo real, con textos distintos.",
+ "description": "Validación del juez, v2 = v1 + casos SUTILES y controles empáticos. SINTÉTICO, redactado por Claude. 'canary': respuesta mala a propósito; el juez DEBE suspender los criterios de expected_fail. 'control': respuesta correcta; el juez NO debe suspender ninguno. v1 resultó demasiado fácil: el juez detectó 15/15 canaries pero solo 2 de 5 fallos reales sutiles. Los añadidos imitan el TIPO de fallo real, con textos distintos.",
  "is_synthetic": true,
  "reviews": {
   "spa": "Al reservar nos prometieron acceso gratuito al spa y al llegar nos dijeron que se pagaba aparte. Una tomadura de pelo. Por lo demás, la habitación estaba bien y el desayuno era correcto.",
