@@ -44,6 +44,9 @@ fieldset{border:1px solid var(--bd);border-radius:4px;margin:0;padding:.4rem .6r
 legend{font-size:.8rem;color:var(--muted);text-transform:uppercase}
 fieldset label{display:block;padding:.15rem 0;cursor:pointer}
 fieldset label.none{border-bottom:1px solid var(--bd);margin-bottom:.25rem;font-weight:600}
+.doc{padding:.2rem 0}
+.doc details{margin-left:1.6rem;font-size:.9rem;color:var(--muted);white-space:pre-wrap}
+.doc summary{cursor:pointer;font-size:.8rem}
 """
 )
 
@@ -110,12 +113,12 @@ def rows(seed: int = DEFAULT_SEED) -> list[dict]:
     return out
 
 
-def checks(qid: str, group: str, docs: list[tuple[str, str, str]]) -> str:
+def checks(qid: str, group: str, docs: list[tuple[str, str, str]], more: str) -> str:
     none = (f"<label class=none><input type=checkbox data-id={qid} data-g={group} value={NONE}> "
             "Ninguna</label>")  # fmt: skip
     items = "".join(
-        f"<label title='{esc(full).replace(chr(39), '&#39;')}'>"
-        f"<input type=checkbox data-id={qid} data-g={group} value={did}> {esc(short)}</label>"
+        f"<div class=doc><label><input type=checkbox data-id={qid} data-g={group} value={did}> "
+        f"{esc(short)}</label><details><summary>{more}</summary>{esc(full)}</details></div>"
         for did, short, full in docs
     )
     return none + items
@@ -123,7 +126,7 @@ def checks(qid: str, group: str, docs: list[tuple[str, str, str]]) -> str:
 
 def main() -> None:
     policies = [(d.id, d.payload["titulo"], d.payload["texto"]) for d in kb.politicas()]
-    replies = [(d.id, d.payload["resena"][:95] + "…", d.payload["resena"]) for d in kb.respuestas()]
+    replies = [(d.id, d.payload["resena"], d.payload["respuesta"]) for d in kb.respuestas()]
     ref_pol = "".join(f"<li><b>{esc(s)}</b><small>{esc(f)}</small></li>" for _, s, f in policies)
     ref_res = "".join(
         f"<li>{esc(d.payload['resena'])}<small>{esc(d.payload['respuesta'])}</small></li>"
@@ -144,8 +147,8 @@ def main() -> None:
         body.append(
             f"<section class=card id=card-{qid}><h2>{qid}</h2>"
             f"<div class=lab>Reseña</div><div class=txt>{esc(r['texto'])}</div><br><div class=cols>"
-            f"<fieldset><legend>Políticas</legend>{checks(qid, 'politicas', policies)}</fieldset>"
-            f"<fieldset><legend>Respuestas aprobadas</legend>{checks(qid, 'respuestas', replies)}</fieldset>"
+            f"<fieldset><legend>Políticas</legend>{checks(qid, 'politicas', policies, 'Ver política')}</fieldset>"
+            f"<fieldset><legend>Respuestas aprobadas (se muestra la reseña a la que responden)</legend>{checks(qid, 'respuestas', replies, 'Ver respuesta')}</fieldset>"
             f"</div><textarea rows=2 data-id={qid} placeholder='Notas (dudas, casos frontera)'></textarea></section>"
         )
     script = f"const IDS={json.dumps([r['id'] for r in data])},NONE={json.dumps(NONE)};{JS}"
