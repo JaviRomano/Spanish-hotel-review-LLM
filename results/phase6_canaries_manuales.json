@@ -1,0 +1,47 @@
+{
+ "rows": [
+  {
+   "id": "man-01",
+   "clase": "canary",
+   "origen": "real",
+   "esperado": [
+    "sin_culpa"
+   ],
+   "juez": [],
+   "ok": false
+  },
+  {
+   "id": "man-02",
+   "clase": "canary",
+   "origen": "real",
+   "esperado": [
+    "aspecto",
+    "sin_invencion"
+   ],
+   "juez": [],
+   "ok": false
+  },
+  {
+   "id": "man-03",
+   "clase": "canary",
+   "origen": "real",
+   "esperado": [
+    "sin_premisa"
+   ],
+   "juez": [],
+   "ok": false
+  }
+ ],
+ "canaries": [
+  0,
+  3
+ ],
+ "reales": [
+  0,
+  3
+ ],
+ "controles": [
+  0,
+  0
+ ]
+}

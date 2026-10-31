@@ -17,7 +17,7 @@ from caso_uso_llm.ollama_gpu import require_gpu
 from caso_uso_llm.paths import EVALS, RESULTS, ROOT
 from caso_uso_llm.pipeline import JUDGE_CACHE, RUBRIC, ficha
 
-SRC = EVALS / "canaries" / "manuales_v1.json"
+SRC = EVALS / "canaries" / "manuales_v2.json"
 OUT = RESULTS / "phase6_canaries_manuales.json"
 REPORT = ROOT / "reports" / "phase6_canaries_manuales.md"
 NAMES = {c.id: c.nombre for c in criterios(RUBRIC)}
@@ -57,8 +57,9 @@ def write_report(s: dict) -> None:
         "",
         f"Generado por `uv run just canaries-manuales` · juez `{JUDGE_MODEL}`, rúbrica {RUBRIC}, con "
         "la ficha si el caso tiene hotel. Casos del autor en "
-        "[`manuales_v1.json`](../evals/canaries/manuales_v1.json). Es un informe, no una puerta. "
-        "No editar a mano.",
+        f"[`{SRC.name}`](../evals/canaries/{SRC.name}). Es un informe, no una puerta. "
+        "Los 3 fallos reales iniciales se eligieron porque el juez ya los dejaba pasar: no son una "
+        "tasa de detección. No editar a mano.",
         "",
         f"- Canaries detectados: {pair(s['canaries'])} (fallos reales: {pair(s['reales'])}).",
         f"- Controles limpios: {pair(s['controles'])}.",
