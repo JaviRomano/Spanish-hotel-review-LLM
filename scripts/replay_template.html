@@ -98,6 +98,7 @@ p { margin: 0; }
   padding: 9px 16px; cursor: pointer; text-decoration: none; white-space: nowrap; }
 .btn.primary { background: var(--accent); color: var(--accent-ink); border: 1px solid var(--accent); }
 .btn.secondary { background: none; color: var(--accent); border: 1px solid var(--accent); }
+.why { color: var(--muted); max-width: 70ch; }
 .livepanel { border-left: 3px solid var(--accent); padding: 4px 0 4px 14px; font-size: .95rem; max-width: 70ch; }
 #liveform { display: grid; gap: 12px; }
 .remove[hidden], #addreview[hidden] { display: none; }
@@ -247,6 +248,7 @@ footer { margin-top: 34px; color: var(--muted); font-size: .86rem; border-top: 1
     <div class="intro">
       <h1>¿Cómo responde una IA a las reseñas difíciles de un hotel?</h1>
       <p class="lead">Un hotel responde a cientos de reseñas, y una respuesta mal escrita puede admitir una culpa, prometer un reembolso o dar la razón a algo falso. Este sistema redacta la respuesta, comprueba esos riesgos y decide si se publica sola o pasa a una persona.</p>
+      <p class="why">Elegí este problema porque he trabajado en hostelería gestionando personalmente incidencias tratando directamente con clientes, y entiendo hasta qué punto puede resultar complejo responder bien a una incidencia.</p>
       <dl class="spec" id="spec" aria-label="Ficha técnica"></dl>
       <div class="actions">
         <a class="btn primary" href="__LINKEDIN__" target="_blank" rel="noopener">Contactar</a>
@@ -284,6 +286,24 @@ footer { margin-top: 34px; color: var(--muted); font-size: .86rem; border-top: 1
             <li><strong>Casos ilustrativos:</strong> casos sintéticos y reseñas reales de TripAdvisor (corpus AHR), con una nota escrita después de leer la respuesta.</li>
           </ul>
           <p>Ni las reglas ni el juez son infalibles. Por eso lo dudoso o delicado lo decide una persona.</p>
+        </details>
+        <details class="fold">
+          <summary>Por qué se rehízo</summary>
+          <p>La primera versión daba unas métricas que no eran válidas, y este proyecto nace de auditarla:</p>
+          <ul>
+            <li><strong>Fuga de datos:</strong> el 50,8 % del test aparecía literal en train, porque el dataset se sobremuestreó antes de partirlo (<a href="__REPO__/blob/main/reports/data_report.md#5-reproducción-de-la-fuga-del-proyecto-original">reproducción, §5</a>).</li>
+            <li><strong>Selección con el test:</strong> el modelo se elegía con el test, sin conjunto de validación.</li>
+            <li><strong>Falta el 4★:</strong> «positivo» significaba solo 5★, y en producción llegan reseñas de 4★.</li>
+          </ul>
+        </details>
+        <details class="fold">
+          <summary>Para revisores técnicos</summary>
+          <ul>
+            <li><a href="__REPO__/blob/main/reports/phase3b_realista.md">Evaluación fuera de distribución</a>: el clasificador medido con reseñas que no vio, no solo con el test limpio.</li>
+            <li><a href="__REPO__/blob/main/reports/phase6_calibracion.md">Juez frente a una persona</a>: dónde coinciden, dónde no y cómo se corrigieron las etiquetas.</li>
+            <li><a href="__REPO__/blob/main/reports/phase9_regresion.md">Regresión</a> y <a href="__REPO__/blob/main/reports/phase9_ciegas.md">comparación a ciegas</a>: por qué se mantiene v6 frente a versiones posteriores.</li>
+            <li><a href="__REPO__/blob/main/src/caso_uso_llm/ollama_gpu.py"><code>ollama_gpu.py</code></a>: la comprobación que impide ejecutar en CPU sin avisar, añadida tras ese incidente.</li>
+          </ul>
         </details>
       </div>
     </div>
