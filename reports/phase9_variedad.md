@@ -8,6 +8,7 @@ Generado por `uv run just variedad` a partir de `results/pipeline_cola.json`, si
 | Saludo más repetido (`Estimado cliente:`) | 53 de 54 |
 | Saludos distintos | 2 |
 | Primeras frases distintas | 14 de 54 |
+| Inicio más repetido («gracias por compartir su…») | 27 de 54 |
 | Abren con «gracias por…» | 50 de 54 (93%) |
 | Abren con «gracias por compartir…» | 44 de 54 (81%) |
 

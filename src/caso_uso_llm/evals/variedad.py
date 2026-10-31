@@ -23,6 +23,7 @@ COMPARTIR = re.compile(r"^(?:muchas )?gracias por compartir\b")
 DEFAULT = RESULTS / "pipeline_cola.json"
 REPORT = ROOT / "reports" / "phase9_variedad.md"
 TOP = 10
+START_WORDS = 4  # el inicio: delata fórmulas que cambian solo al final de la frase
 
 
 def opening(response: str) -> tuple[str, str]:
@@ -43,6 +44,8 @@ def measure(responses: list[str]) -> dict:
     pairs = [opening(r) for r in responses]
     greetings = Counter(g for g, _ in pairs)
     firsts = Counter(normalize(f) for _, f in pairs)
+    starts = Counter(" ".join(f.split()[:START_WORDS]) for f in firsts.elements())
+    top_start, top_start_n = starts.most_common(1)[0] if starts else ("", 0)
     top_greeting, top_greeting_n = greetings.most_common(1)[0] if greetings else ("", 0)
     return {
         "n": len(responses),
@@ -50,6 +53,8 @@ def measure(responses: list[str]) -> dict:
         "saludo_top_n": top_greeting_n,
         "saludos_distintos": len(greetings),
         "frases_distintas": len(firsts),
+        "inicio_top": top_start,
+        "inicio_top_n": top_start_n,
         "gracias_por": sum(n for f, n in firsts.items() if GRACIAS.match(f)),
         "gracias_por_compartir": sum(n for f, n in firsts.items() if COMPARTIR.match(f)),
         "top": firsts.most_common(TOP),
@@ -76,6 +81,7 @@ def write_report(m: dict, source: Path) -> None:
         f"| Saludo más repetido (`{m['saludo_top']}`) | {m['saludo_top_n']} de {n} |",
         f"| Saludos distintos | {m['saludos_distintos']} |",
         f"| Primeras frases distintas | {m['frases_distintas']} de {n} |",
+        f"| Inicio más repetido («{m['inicio_top']}…») | {m['inicio_top_n']} de {n} |",
         f"| Abren con «gracias por…» | {m['gracias_por']} de {n} ({m['gracias_por'] / n:.0%}) |",
         f"| Abren con «gracias por compartir…» | {m['gracias_por_compartir']} de {n} "
         f"({m['gracias_por_compartir'] / n:.0%}) |",

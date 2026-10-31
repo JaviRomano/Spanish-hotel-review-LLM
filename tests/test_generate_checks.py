@@ -82,12 +82,22 @@ def test_plazo(text, flag):
     assert C.run_checks(text, [{"cita": "x"}])["plazo"] is flag
 
 
+def test_el_nombre_que_da_el_cliente_se_admite_en_el_saludo_y_solo_ahi():
+    from caso_uso_llm.generate.checks import person_names
+
+    review = "Una tal Lucía fue maleducada. Llamadme (soy Andrés)."
+    assert person_names("Estimado Andrés:\n\nGracias por su reseña.", review) == []
+    assert person_names("Estimado Andrés:\n\nAndrés, gracias.", review) == ["Andrés"]
+    assert person_names("Estimado cliente:\n\nAndrés, gracias.", review) == ["Andrés"]
+    assert person_names("Estimado Andrés:\n\nGracias.", "Todo mal.") == ["Andrés"]
+
+
 def test_person_names_detecta_nombres_de_la_resena_y_saludos_personalizados():
     from caso_uso_llm.generate.checks import person_names
 
     review = "La recepcionista, una tal Lucía, fue maleducada. Llamadme (soy Andrés)."
-    assert person_names("Estimado Andrés: Gracias por su reseña.", review) == ["Andrés"]
     assert person_names("Estimado cliente: lo trasladaremos a Lucía.", review) == ["Lucía"]
+    assert person_names("Estimada Lucía: Gracias por su reseña.", review) == ["Lucía"]
     assert person_names("Estimada clienta: Gracias por su reseña.", review) == []
     # Lugares con mayúscula no son personas: solo cuentan nombres presentados como tales
     assert person_names("Estimado cliente: disfrute de la Alhambra.", "Vistas a la Alhambra.") == []

@@ -96,6 +96,7 @@ NAME_IN_REVIEW = re.compile(
     rf"\b(?:soy|me llamo|mi nombre es|una tal|un tal|la chica|el chico|recepcionista|camarer[oa])"
     rf",?\s+{_NAME}"
 )
+SELF_NAME = re.compile(rf"\b(?:soy|me llamo|mi nombre es),?\s+{_NAME}")
 # Saludo personalizado en la primera línea: «Estimado Andrés:», «Hola, Andrés:». Solo dentro de esa
 # línea: «Hola:» seguido de un salto de línea (el saludo de v9) no captura la palabra siguiente.
 SALUTATION = re.compile(
@@ -106,12 +107,17 @@ GENERIC_SALUTATION = {"cliente", "clienta", "clientes", "huésped", "huéspedes"
 
 def person_names(response: str, review: str) -> list[str]:
     """Nombres de persona en la respuesta: los que la reseña presenta como tales, o un saludo
-    personalizado («Estimado Andrés:») en vez de genérico."""
-    found = [
-        n for n in NAME_IN_REVIEW.findall(review) if re.search(rf"\b{re.escape(n)}\b", response)
-    ]
+    personalizado («Estimado Andrés:») en vez de genérico. El nombre que da el propio cliente se
+    admite en el saludo y solo ahí (Javier, 2026-10-31); el del personal nunca."""
     m = SALUTATION.match(response)
-    if m and m.group(1).lower() not in GENERIC_SALUTATION and m.group(1) not in found:
+    rest = response[m.end() :] if m else response
+    own = {n.split()[0] for n in SELF_NAME.findall(review)}
+    found = [
+        n
+        for n in NAME_IN_REVIEW.findall(review)
+        if re.search(rf"\b{re.escape(n)}\b", rest if n.split()[0] in own else response)
+    ]
+    if m and m.group(1).lower() not in GENERIC_SALUTATION and m.group(1) not in own | set(found):
         found.append(m.group(1))
     return found
 

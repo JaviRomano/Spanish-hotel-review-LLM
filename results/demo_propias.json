@@ -676,8 +676,7 @@
   "reasons": [
    "reseña negativa",
    "confianza 0.783 < 0.85",
-   "el cliente pide: Llamadme al [TELEFONO] (soy Andrés) para darme una explicación.",
-   "nombre de una persona en la respuesta"
+   "el cliente pide: Llamadme al [TELEFONO] (soy Andrés) para darme una explicación."
   ],
   "review": "Recepcionista impresentable. La recepcionista, una tal Lucía, fue una maleducada y una incompetente. Llamadme al [TELEFONO] (soy Andrés) para darme una explicación. Por lo demás, la piscina interior estaba bien.",
   "sentiment": "negativo",
@@ -730,9 +729,7 @@
    "estancia_inexistente": false,
    "higiene": [],
    "copia_literal": [],
-   "nombres": [
-    "Andrés"
-   ],
+   "nombres": [],
    "incidente": []
   },
   "politicas": [

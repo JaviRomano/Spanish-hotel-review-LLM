@@ -115,6 +115,9 @@ def hoja(a_path: Path, b_path: Path, resenas: Path, tag: str) -> None:
         r["id"]: r for r in map(json.loads, resenas.read_text(encoding="utf-8").splitlines()) if r
     }
     ids = [i for i in a if i in b and a[i].get("response") and b[i].get("response")]
+    ids = [
+        i for i in ids if body(a[i]["response"]) != body(b[i]["response"])
+    ]  # sin nada que comparar
     rng = random.Random(f"{DEFAULT_SEED}-{tag}")
     rng.shuffle(ids)  # el orden tampoco delata la tanda
     mapa, cards = {}, []

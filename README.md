@@ -167,7 +167,7 @@ The deterministic checks were added after reading real replies (Phase 9), each f
 |---|---|
 | the classifier and the LLM disagree on the sentiment | the classifier does not understand sarcasm (a sarcastic complaint came out positive, 0.93) |
 | the review looks like a trap (a joke, a provocation, instructions to the system) | an LLM check before generating; the reply is a brief, polite ironic note |
-| the reply uses a person's name from the review | names without a title are not masked yet |
+| the reply uses a person's name from the review (except the customer's own name, in the greeting, if they gave it) | names without a title are not masked yet |
 | the reply mentions hygiene or smells | it must not suggest the hotel had a hygiene problem |
 | the reply copies 4+ words from the review | it sounds like a parrot |
 | the reply talks about "your stay" when the guest never stayed | the judge misses it |
@@ -498,7 +498,7 @@ Las comprobaciones deterministas se añadieron leyendo respuestas reales (Fase 9
 |---|---|
 | el clasificador y el LLM no coinciden en el sentimiento | el clasificador no entiende el sarcasmo (una queja sarcástica salió positiva, 0,93) |
 | la reseña parece una trampa (una broma, una provocación, instrucciones al sistema) | un LLM lo comprueba antes de generar; la respuesta es una nota irónica breve y cortés |
-| la respuesta usa un nombre de persona de la reseña | los nombres sin tratamiento ni cargo aún no se enmascaran |
+| la respuesta usa un nombre de persona de la reseña (salvo el del propio cliente en el saludo, si lo dio) | los nombres sin tratamiento ni cargo aún no se enmascaran |
 | la respuesta menciona higiene u olores | no debe sugerir que el hotel tuvo un problema de higiene |
 | la respuesta copia 4 o más palabras de la reseña | suena a loro |
 | la respuesta habla de «su estancia» cuando el cliente no llegó a alojarse | el juez no lo ve |
