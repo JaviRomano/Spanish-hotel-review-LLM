@@ -40,8 +40,8 @@ LINKEDIN = "https://www.linkedin.com/in/franciscojavier-fernandezrumi/"  # conta
 GITHUB = "https://github.com/JaviRomano"
 AUTHOR = "Fco Javier Fdez"
 # Google Form de la prueba en vivo (una pregunta, «datos»). Vacíos: la página solo enlaza a LinkedIn.
-FORM_ID = ""  # lo que va entre /forms/d/e/ y /viewform en el enlace del Form
-FORM_ENTRY = ""  # entry.NNNN del enlace prefilled
+FORM_ID = "1FAIpQLScCvrn_HKvm9EooIP2s5c6CmSLLD9yJup3bYXDRVialtUbjyQ"
+FORM_ENTRY = "entry.749536420"
 GPU = "AMD RX 7900 XTX"  # README, «Requisitos»: el hardware no está en ningún fichero de config
 GROUP = {
     "propio": "Reseñas propias",

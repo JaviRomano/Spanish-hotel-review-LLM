@@ -4,7 +4,7 @@
 
 **English** · [Español](#reseñas-de-hotel-sentimiento-y-respuesta-con-llms-locales)
 
-A pipeline for a hotel chain that **classifies the sentiment** of a review (negative, neutral, positive) and **drafts a professional, personalised reply**. Everything runs locally on an AMD GPU; no review is sent to external services. The data and the replies are in Spanish (Spain).
+A pipeline for a hotel chain that **classifies the sentiment** of a review (negative, neutral, positive) and **drafts a professional, personalised reply**. The models run locally on an AMD GPU: no review goes through an external model. The data and the replies are in Spanish (Spain).
 
 It is a rebuild of a first attempt (in [`legacy/`](legacy/), tag `v1-original`) whose metrics were not valid. See [why it was rebuilt](#why-it-was-rebuilt).
 
@@ -310,7 +310,7 @@ The code of the first attempt is in [`legacy/`](legacy/) as audited (tag `v1-ori
 
 [English](#hotel-reviews-sentiment-and-replies-with-local-llms) · **Español**
 
-Pipeline para una cadena hotelera que **clasifica el sentimiento** de una reseña (negativo, neutral, positivo) y **redacta una respuesta** profesional y personalizada. Todo se ejecuta en local, sobre una GPU AMD, sin enviar reseñas a servicios externos.
+Pipeline para una cadena hotelera que **clasifica el sentimiento** de una reseña (negativo, neutral, positivo) y **redacta una respuesta** profesional y personalizada. Los modelos se ejecutan en local, sobre una GPU AMD: ninguna reseña pasa por un modelo externo.
 
 Es la reconstrucción de un primer intento (en [`legacy/`](legacy/), etiqueta `v1-original`) cuyas métricas no eran válidas. Ver [por qué se rehízo](#por-qué-se-rehízo).
 
