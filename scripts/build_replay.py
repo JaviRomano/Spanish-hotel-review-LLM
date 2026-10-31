@@ -38,7 +38,7 @@ PAGE_URL = "https://javiromano.github.io/Spanish-hotel-review-LLM/"
 REPO = "https://github.com/JaviRomano/Spanish-hotel-review-LLM"
 LINKEDIN = "https://www.linkedin.com/in/franciscojavier-fernandezrumi/"  # contacto y prueba en vivo
 GITHUB = "https://github.com/JaviRomano"
-AUTHOR = "Fco Javier Fdez"
+AUTHOR = "Fco Javier Fernández Rumí"
 # Google Form de la prueba en vivo (una pregunta, «datos»). Vacíos: la página solo enlaza a LinkedIn.
 FORM_ID = "1FAIpQLScCvrn_HKvm9EooIP2s5c6CmSLLD9yJup3bYXDRVialtUbjyQ"
 FORM_ENTRY = "entry.749536420"
@@ -142,9 +142,18 @@ def og_image() -> None:
         x = 0.06 + i * 0.225
         t(x, 0.31, k.upper(), fontsize=13, family="monospace", c=muted)
         t(x, 0.25, v, fontsize=17, family="monospace")
-    t(0.06, 0.09, f"{AUTHOR} · 100 % local", fontsize=18, fontweight="bold", c=accent)
+    t(0.06, 0.09, f"{AUTHOR} · modelos en local", fontsize=18, fontweight="bold", c=accent)
     fig.savefig(OG, facecolor=fig.get_facecolor())
     plt.close(fig)
+
+
+def live_panel(page: str, has_form: bool) -> str:
+    """Deja en el HTML solo una variante de la prueba en vivo: la otra no debe llegar ni oculta."""
+    keep, drop = ("CON_FORM", "SIN_FORM") if has_form else ("SIN_FORM", "CON_FORM")
+    pattern = rf"[ \t]*<!--{drop}-->.*?<!--/{drop}-->\n?"
+    page, removed = re.subn(pattern, "", page, flags=re.DOTALL)
+    assert removed == 1, f"falta el bloque {drop} en la plantilla"
+    return page.replace(f"<!--{keep}-->", "").replace(f"<!--/{keep}-->", "")
 
 
 def main() -> None:
@@ -188,6 +197,7 @@ def main() -> None:
     data = json.dumps(doc, ensure_ascii=False, indent=1)
     # Dentro de <script>, «</» cerraría la etiqueta antes de tiempo
     page = TEMPLATE.read_text(encoding="utf-8").replace("__DATA__", data.replace("</", "<\\/"))
+    page = live_panel(page, bool(form))
     for key, value in {"__REPO__": REPO, "__LINKEDIN__": LINKEDIN, "__GITHUB__": GITHUB,
                        "__AUTHOR__": AUTHOR, "__PAGE_URL__": PAGE_URL}.items():  # fmt: skip
         page = page.replace(key, value)

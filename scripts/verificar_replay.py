@@ -59,6 +59,12 @@ def check_form(browser) -> list[str]:
     """Formulario de punta a punta sin Google: se inyecta una configuración de prueba, se intercepta
     el envío y el importador debe aceptar lo que sale de la página."""
     html = (ROOT / "docs" / "index.html").read_text(encoding="utf-8")
+    if ('id="liveform"' in html) == ('id="livetext"' in html):
+        return [
+            "prueba en vivo: la página debe llevar el formulario o el texto, no ambos ni ninguno"
+        ]
+    if 'id="liveform"' not in html:
+        return []
     fake = '"formulario": {"url": "https://docs.google.com/forms/d/e/PRUEBA/formResponse", "entry": "entry.1"}'
     assert '"formulario": null' in html or '"formulario": {' in html
     html = re.sub(r'"formulario": (null|\{[^}]*\})', fake, html, count=1)

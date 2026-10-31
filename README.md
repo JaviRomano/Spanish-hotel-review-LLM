@@ -4,6 +4,8 @@
 
 **English** · [Español](#reseñas-de-hotel-sentimiento-y-respuesta-con-llms-locales)
 
+**Fco Javier Fernández Rumí** · [LinkedIn](https://www.linkedin.com/in/franciscojavier-fernandezrumi/) · [GitHub (@JaviRomano)](https://github.com/JaviRomano)
+
 A pipeline for a hotel chain that **classifies the sentiment** of a review (negative, neutral, positive) and **drafts a professional, personalised reply**. The models run locally on an AMD GPU: no review goes through an external model. The data and the replies are in Spanish (Spain).
 
 It is a rebuild of a first attempt (in [`legacy/`](legacy/), tag `v1-original`) whose metrics were not valid. See [why it was rebuilt](#why-it-was-rebuilt).
@@ -309,6 +311,8 @@ The code of the first attempt is in [`legacy/`](legacy/) as audited (tag `v1-ori
 [![CI](https://github.com/JaviRomano/Spanish-hotel-review-LLM/actions/workflows/ci.yml/badge.svg)](https://github.com/JaviRomano/Spanish-hotel-review-LLM/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 [English](#hotel-reviews-sentiment-and-replies-with-local-llms) · **Español**
+
+**Fco Javier Fernández Rumí** · [LinkedIn](https://www.linkedin.com/in/franciscojavier-fernandezrumi/) · [GitHub (@JaviRomano)](https://github.com/JaviRomano)
 
 Pipeline para una cadena hotelera que **clasifica el sentimiento** de una reseña (negativo, neutral, positivo) y **redacta una respuesta** profesional y personalizada. Los modelos se ejecutan en local, sobre una GPU AMD: ninguna reseña pasa por un modelo externo.
 

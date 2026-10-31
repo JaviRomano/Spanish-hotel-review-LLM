@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Hotel Review LLM · Fco Javier Fdez</title>
-<meta name="author" content="Fco Javier Fdez">
-<meta name="description" content="Cómo responde un sistema local de IA (clasificador, RAG, generador y juez) a reseñas de hotel difíciles: respuestas ya evaluadas, con sus fallos. Un proyecto de Fco Javier Fdez.">
+<title>Hotel Review LLM · Fco Javier Fernández Rumí</title>
+<meta name="author" content="Fco Javier Fernández Rumí">
+<meta name="description" content="Cómo responde un sistema local de IA (clasificador, RAG, generador y juez) a reseñas de hotel difíciles: respuestas ya evaluadas, con sus fallos. Un proyecto de Fco Javier Fernández Rumí.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://javiromano.github.io/Spanish-hotel-review-LLM/">
-<meta property="og:title" content="Hotel Review LLM · Fco Javier Fdez">
+<meta property="og:title" content="Hotel Review LLM · Fco Javier Fernández Rumí">
 <meta property="og:description" content="Un sistema 100 % local redacta respuestas a reseñas de hotel, comprueba los riesgos y decide si se publican o pasan a una persona. Respuestas reales, con sus fallos.">
 <meta property="og:image" content="https://javiromano.github.io/Spanish-hotel-review-LLM/og.png">
 <meta property="og:image:width" content="1200">
@@ -16,7 +16,7 @@
 <meta property="og:image:alt" content="Título del proyecto y sus tres cifras principales">
 <meta property="og:locale" content="es_ES">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Hotel Review LLM · Fco Javier Fdez">
+<meta name="twitter:title" content="Hotel Review LLM · Fco Javier Fernández Rumí">
 <meta name="twitter:image" content="https://javiromano.github.io/Spanish-hotel-review-LLM/og.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -100,7 +100,7 @@ p { margin: 0; }
 .btn.secondary { background: none; color: var(--accent); border: 1px solid var(--accent); }
 .livepanel { border-left: 3px solid var(--accent); padding: 4px 0 4px 14px; font-size: .95rem; max-width: 70ch; }
 #liveform { display: grid; gap: 12px; }
-#liveform[hidden], #livetext[hidden], .remove[hidden], #addreview[hidden] { display: none; }
+.remove[hidden], #addreview[hidden] { display: none; }
 #formreviews { display: grid; gap: 12px; }
 #formreviews fieldset { border: 0; border-top: 1px solid var(--rule); margin: 0; padding: 10px 0 0; display: grid; gap: 8px; min-width: 0; }
 #formreviews legend { font: 600 .72rem var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); padding: 0 8px 0 0; }
@@ -239,7 +239,7 @@ footer { margin-top: 34px; color: var(--muted); font-size: .86rem; border-top: 1
 </svg>
 <div class="wrap">
   <div class="topbar">
-    <p class="who"><strong>Fco Javier Fdez</strong> · <a href="https://www.linkedin.com/in/franciscojavier-fernandezrumi/" target="_blank" rel="noopener">LinkedIn</a> · <a href="https://github.com/JaviRomano">GitHub</a> · <a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM">Código e informes</a></p>
+    <p class="who"><strong>Fco Javier Fernández Rumí</strong> · <a href="https://www.linkedin.com/in/franciscojavier-fernandezrumi/" target="_blank" rel="noopener">LinkedIn</a> · <a href="https://github.com/JaviRomano">GitHub (@JaviRomano)</a> · <a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM">Código e informes</a></p>
     <button class="theme" id="theme" type="button">Cambiar tema</button>
   </div>
 
@@ -253,8 +253,7 @@ footer { margin-top: 34px; color: var(--muted); font-size: .86rem; border-top: 1
         <button class="btn secondary" id="livebtn" type="button" aria-expanded="false" aria-controls="livepanel">Pedir una prueba en vivo</button>
       </div>
       <div class="livepanel" id="livepanel" hidden>
-        <p id="livetext">Esta página repite resultados ya generados: aquí no se ejecuta ningún modelo. Envíame por <a href="https://www.linkedin.com/in/franciscojavier-fernandezrumi/" target="_blank" rel="noopener">LinkedIn</a> hasta 5 reseñas, inventadas o reales sin datos personales, y en una sesión en directo desde mi ordenador verás, para cada una, la respuesta, si se publicaría o pasaría a una persona y por qué, y cuánto tarda.</p>
-        <form id="liveform" hidden novalidate>
+        <form id="liveform" novalidate>
           <p>Esta página repite resultados ya generados. Escribe de 1 a 5 reseñas, inventadas o reales sin datos personales. Las pasaré por el sistema en mi ordenador y te enviaré, para cada una, la respuesta, si se publicaría o pasaría a una persona, y por qué.</p>
           <div id="formreviews"></div>
           <button class="btn secondary" id="addreview" type="button">Añadir otra reseña</button>
@@ -360,7 +359,7 @@ footer { margin-top: 34px; color: var(--muted); font-size: .86rem; border-top: 1
   </section>
 
   <footer>
-    <p>© 2026 Fco Javier Fdez · <a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM">repositorio</a> (código MIT). Página generada con <code>scripts/build_replay.py</code> a partir de resultados versionados. Las reseñas reales proceden del corpus <a href="https://www.kaggle.com/datasets/chizhikchi/andalusian-hotels-reviews-unbalanced">Andalusian Hotels' Reviews</a> (CC BY-NC 4.0). Hoteles, fichas y políticas son ficticios.</p>
+    <p>© 2026 Fco Javier Fernández Rumí · <a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM">repositorio</a> (código MIT). Página generada con <code>scripts/build_replay.py</code> a partir de resultados versionados. Las reseñas reales proceden del corpus <a href="https://www.kaggle.com/datasets/chizhikchi/andalusian-hotels-reviews-unbalanced">Andalusian Hotels' Reviews</a> (CC BY-NC 4.0). Hoteles, fichas y políticas son ficticios.</p>
   </footer>
 </div>
 
@@ -2052,11 +2051,9 @@ footer { margin-top: 34px; color: var(--muted); font-size: .86rem; border-top: 1
   });
 
   // Formulario de prueba en vivo: la página es estática y envía a un Google Form (build_replay.py).
-  // Sin Form configurado se queda el texto con el enlace a LinkedIn.
   if (DATA.formulario) {
     const MAX = 5, NICK = /^[\p{L}\p{N}_.\-]{2,30}$/u, list = $("formreviews");
     let serial = 0;
-    $("livetext").hidden = true; $("liveform").hidden = false;
     const field = (label, control) => { const d = el("div", null, "field"), l = el("label", label); control.id = `f-r${++serial}`; l.htmlFor = control.id; d.append(l, control); return d; };
     const renumber = () => {
       [...list.children].forEach((f, i) => { f.querySelector("legend").textContent = `Reseña ${i + 1}`; f.querySelector(".remove").hidden = list.children.length === 1; });

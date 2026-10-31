@@ -14,9 +14,8 @@ uv run just replay        # regenera docs/index.html y la abre; después, commit
 uv run --with playwright python scripts/verificar_replay.py   # capturas (docs/screenshots/), consola, contraste AA, teclado
 ```
 
-La plantilla es `scripts/replay_template.html`. El botón «Pedir prueba en vivo» enlaza al perfil de
-LinkedIn (`LINKEDIN` en `scripts/build_replay.py`). Cada caso tiene su enlace directo
-(`…/#rag-carteles`).
+La plantilla es `scripts/replay_template.html`. El botón «Pedir una prueba en vivo» abre el formulario
+(sección 2). Cada caso tiene su enlace directo (`…/#rag-carteles`).
 
 15 casos: 6 reseñas propias (con **qué se esperaba**, escrito antes de generar, y la
 **valoración del autor**, [`evals/demo/valoracion_propias.json`](../evals/demo/valoracion_propias.json))
@@ -49,13 +48,15 @@ juez no basta, y por eso lo serio nunca se publica sin revisión.
   (v9) perdió en la valoración humana a ciegas y ante el juez: README, «Versiones del prompt
   posteriores a v6».
 - **¿Cuánto tarda?** ~49 s por reseña en vivo; el borrador se ve a los ~36 s y el juez llega después.
-- **¿Sale algún dato del equipo?** No: todo corre en local (Ollama + GPU AMD).
+- **¿Pasa alguna reseña por un modelo externo?** No: los modelos corren en local (Ollama + GPU AMD).
+  Las reseñas llegan de fuera, como en cualquier sistema real: en esta demo, por Google Forms.
 
 ## 2. Peticiones por el formulario
 
 La página es estática: el formulario de «Pedir una prueba en vivo» envía a un Google Form con una
 sola pregunta, `datos`, que guarda el JSON de la petición. Se configura con `FORM_ID` y `FORM_ENTRY`
-en `scripts/build_replay.py`; vacíos, el botón solo muestra el texto con el enlace a LinkedIn.
+en `scripts/build_replay.py`. La página generada lleva solo una de las dos variantes: con ellos, el
+formulario; vacíos, un texto con el enlace a LinkedIn.
 
 1. Exporta la hoja de respuestas a CSV (Archivo > Descargar > CSV).
 2. `uv run just formulario ruta/respuestas.csv`: valida, enmascara datos personales y añade a
@@ -67,7 +68,7 @@ en `scripts/build_replay.py`; vacíos, el botón solo muestra el texto con el en
 El CSV descargado contiene reseñas y contactos de terceros: no lo guardes dentro del repositorio
 salvo en `data/live/`, y borra las respuestas del Form cuando hayas contestado.
 
-## 3. Prueba en vivo (cuando alguien la pide por LinkedIn)
+## 3. Prueba en vivo (cuando alguien la pide)
 
 1. Acordar día y hora. Avisar: una reseña tarda ~1 minuto, y lo que escriba se guarda sin su nombre.
 2. Comprobar la GPU: `uv run just gpu-ollama` (si Ollama se actualizó, reinstalar el zip de ROCm de
