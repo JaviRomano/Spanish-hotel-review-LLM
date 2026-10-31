@@ -265,9 +265,9 @@ def write_report(o: dict) -> None:
     ]
     for label, fn in rows:
         L.append(f"| {label} | " + " | ".join(fn(R[v]) for v in versions) + " |")
-    if not R[versions[-1]]["gold"]["human_reviewed"]:
-        L += ["", "Las etiquetas del gold son una **propuesta de Claude pendiente de revisión humana**: el recall "
-              "frente a ellas orienta, no calibra."]  # fmt: skip
+    L += ["", "Las etiquetas del gold son de Claude; una persona las revisó a ciegas y coincide solo en "
+          "1 suspenso ([`phase6_semillas_humanas.md`](phase6_semillas_humanas.md)): el recall frente a "
+          "ellas orienta, no calibra."]  # fmt: skip
 
     last = R[versions[-1]]
     L += ["", f"## 2. Canaries y controles caso a caso ({versions[-1]})", "",

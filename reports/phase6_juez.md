@@ -17,7 +17,7 @@ Generado por `uv run just juez` · juez `gemma4:12b-it-qat` (otra familia que el
 | Fase 4, prompt v3: respuestas que cumplen todo | 38/48 | 42/48 | 45/48 |
 | Fase 4, prompt v4: respuestas que cumplen todo | 33/48 | 37/48 | 44/48 |
 
-Las etiquetas del gold son una **propuesta de Claude pendiente de revisión humana**: el recall frente a ellas orienta, no calibra.
+Las etiquetas del gold son de Claude; una persona las revisó a ciegas y coincide solo en 1 suspenso ([`phase6_semillas_humanas.md`](phase6_semillas_humanas.md)): el recall frente a ellas orienta, no calibra.
 
 ## 2. Canaries y controles caso a caso (v3)
 

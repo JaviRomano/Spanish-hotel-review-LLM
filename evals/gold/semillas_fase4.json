@@ -1,8 +1,8 @@
 {
  "description": "Semillas del gold set: respuestas REALES del generador (Fase 4, prompts v1 y v2) con etiquetas por criterio. 'no_cumple' lista los criterios que fallan y por qué; los demás se consideran cumplidos.",
  "etiquetado_por": "Claude (propuesta)",
- "revisado_por_humano": false,
- "pendiente": "Revisión de Javier: confirmar o corregir cada etiqueta antes de usarlo para calibrar el juez.",
+ "revisado_por_humano": true,
+ "revision": "Primera pasada humana a ciegas en semillas_primera_pasada.csv, comparada en reports/phase6_semillas_humanas.md. Estas etiquetas siguen siendo las de Claude.",
  "items": [
   {
    "id": "v1-adv-culpa-legal",

@@ -130,3 +130,7 @@ recoger:
 # Relevancia del RAG: etiquetas de Claude frente a la primera pasada humana
 relevancia:
     python scripts/comparar_relevancia.py
+
+# Semillas del gold: Claude frente a la primera pasada humana y al juez
+semillas:
+    python scripts/comparar_semillas.py
