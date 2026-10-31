@@ -3,8 +3,9 @@
 `hoja`: para cada reseña, las dos respuestas como A y B en orden aleatorio (semilla fija) y con
 ids opacos; la persona elige la mejor (o empate) y marca si publicaría cada una tal cual. La hoja
 no lleva ninguna pista de la versión: la correspondencia va aparte, en <tag>_mapa.json (no
-abrirlo antes de terminar). Guarda en el navegador y exporta <tag>.csv; servida con
-scripts/servir_notas.py, guarda también en el PC (para valorar desde el móvil).
+abrirlo antes de terminar). Guarda en el navegador y exporta <tag>.csv, por descarga o copiando el
+texto que muestra; servida con scripts/servir_notas.py, guarda también en el PC (para valorar desde
+el móvil).
 
 `resultado`: une el CSV con el mapa y cuenta victorias por versión, con una prueba de signos
 exacta (los empates no cuentan), y cuántas respuestas de cada versión se publicarían tal cual.
@@ -38,6 +39,7 @@ CSS = """
 body{font:15px/1.5 system-ui,sans-serif;background:var(--bg);color:var(--fg);margin:0 auto;max-width:1200px;padding:0 16px 80px}
 header{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--bd);padding:10px 0;display:flex;gap:12px;align-items:center;flex-wrap:wrap;z-index:2}
 header b{margin-right:auto}
+#rescate{flex-basis:100%}
 button{font:inherit;padding:6px 12px;border-radius:6px;border:1px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer}
 .card{background:var(--card);border:1px solid var(--bd);border-left:6px solid var(--bd);border-radius:8px;padding:14px;margin:16px 0}
 .card.done{border-left-color:var(--ok)}
@@ -81,9 +83,14 @@ document.getElementById("exp").onclick = () => {
   const L = ["id;preferida;a_publicable;b_publicable;notas"];
   for (const id of IDS) { const s = get(id); L.push([q(id), q(s.preferida), s.a_pub ? 1 : 0, s.b_pub ? 1 : 0, q(s.notas)].join(";")); }
   const out = "\\ufeff" + L.join("\\n") + "\\n";
-  if (SERVED) { fetch("csv", {method: "POST", body: out}).then(r => alert(r.ok ? "Guardado en el PC (__CSV__)." : "No se pudo guardar en el PC.")).catch(() => alert("No se pudo guardar en el PC.")); return; }
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([out], {type: "text/csv;charset=utf-8"})); a.download = "__CSV__"; a.click();
+  const local = () => {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([out], {type: "text/csv;charset=utf-8"})); a.download = "__CSV__"; a.click();
+    const box = document.getElementById("rescate"); box.hidden = false; box.querySelector("textarea").value = out;
+  };
+  if (!SERVED) return local();
+  // Solo servir_notas.py acepta el POST; con cualquier otro servidor se descarga.
+  fetch("csv", {method: "POST", body: out}).then(r => { if (!r.ok) throw 0; alert("Guardado en el PC (__CSV__)."); }).catch(local);
 };
 fill(); paint();
 if (SERVED) fetch("estado").then(r => r.ok ? r.json() : {}).then(srv => {
@@ -154,7 +161,9 @@ def hoja(a_path: Path, b_path: Path, resenas: Path, tag: str) -> None:
         "<meta name=viewport content='width=device-width,initial-scale=1'>"
         f"<title>Comparación a ciegas</title><style>{CSS}</style></head><body>"
         f"<header><b>Comparación a ciegas · {len(mapa)} reseñas</b><span id=prog></span>"
-        f"<button id=exp>Exportar {csv_name}</button></header>"
+        f"<button id=exp>Exportar {csv_name}</button>"
+        f"<div id=rescate hidden><div class=meta>Si no se ha descargado, copia este texto en "
+        f"data/live/{csv_name}.</div><textarea rows=5 readonly></textarea></div></header>"
         "<p class=meta>Cada reseña tiene dos respuestas de versiones distintas del sistema, en orden "
         "aleatorio. Elige la mejor (o empate) y marca las que publicarías tal cual. No hace falta "
         "justificar; las notas ayudan si algo destaca.</p>"
