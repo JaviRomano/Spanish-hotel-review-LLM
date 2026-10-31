@@ -4,6 +4,28 @@
   "coinciden": 1,
   "de_mas": 4
  },
+ "respuestas_claude_frente_a_persona": {
+  "referencia": 3,
+  "coinciden": 2,
+  "de_mas": 2
+ },
+ "respuestas_juez_frente_a_persona": {
+  "v1": {
+   "referencia": 3,
+   "coinciden": 1,
+   "de_mas": 2
+  },
+  "v2": {
+   "referencia": 3,
+   "coinciden": 1,
+   "de_mas": 2
+  },
+  "v3": {
+   "referencia": 3,
+   "coinciden": 1,
+   "de_mas": 0
+  }
+ },
  "juez_frente_a_persona": {
   "v1": {
    "referencia": 3,

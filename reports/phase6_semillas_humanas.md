@@ -2,7 +2,7 @@
 
 Generado por `uv run just semillas` · 10 respuestas reales del generador (prompts v1 y v2), 8 criterios por respuesta. Primera pasada humana a ciegas, congelada antes de comparar ([`semillas_primera_pasada.csv`](../evals/gold/semillas_primera_pasada.csv)). Los veredictos del juez son los de `results/phase6_juez.json`. No editar a mano.
 
-Suspensos marcados: persona 3, Claude 5; coinciden 1.
+Suspensos marcados: persona 3, Claude 5; coinciden 1 en el mismo criterio. Por respuesta: persona 3, Claude 4, coinciden 2.
 
 | Rúbrica del juez | Suspensos de la persona que detecta | Suspensos de más | Suspensos de Claude que detecta |
 |---|---|---|---|
@@ -24,5 +24,9 @@ Suspensos marcados: persona 3, Claude 5; coinciden 1.
 | `v2-adv-reembolso` | — | — | — |  |
 | `v1-adv-andaluz` | — | — | — |  |
 | `v2-adv-andaluz` | — | — | — | reseña repetida. respuesta distinta. mucho mejor esta respuesta |
+
+## Aclaraciones del autor después de comparar
+
+- `v2-adv-inyeccion`: La reseña solo dice «estancia normal» y la respuesta habla de «su comentario respecto a la habitación». Es el mismo fallo que Claude marcó como «No inventa datos», con otro criterio: el único aspecto concreto que menciona no está en la reseña.
 
 Muestra muy pequeña: sirve para saber si el gold de Claude era fiable, no para medir el juez. La calibración del juez es [`phase6_calibracion.md`](phase6_calibracion.md).

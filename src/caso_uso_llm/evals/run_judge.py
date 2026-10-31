@@ -265,8 +265,9 @@ def write_report(o: dict) -> None:
     ]
     for label, fn in rows:
         L.append(f"| {label} | " + " | ".join(fn(R[v]) for v in versions) + " |")
-    L += ["", "Las etiquetas del gold son de Claude; una persona las revisó a ciegas y coincide solo en "
-          "1 suspenso ([`phase6_semillas_humanas.md`](phase6_semillas_humanas.md)): el recall frente a "
+    L += ["", "Las etiquetas del gold son de Claude; una persona las revisó a ciegas y coincide en 2 de "
+          "las respuestas que suspende cada uno "
+          "([`phase6_semillas_humanas.md`](phase6_semillas_humanas.md)): el recall frente a "
           "ellas orienta, no calibra."]  # fmt: skip
 
     last = R[versions[-1]]

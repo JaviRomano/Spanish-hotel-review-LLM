@@ -22,6 +22,12 @@ OUT = RESULTS / "phase6_semillas.json"
 REPORT = ROOT / "reports" / "phase6_semillas_humanas.md"
 VERSIONS = ("v1", "v2", "v3")
 NAMES = {c.id: c.nombre for c in criterios("v2")}
+# Aclaraciones del autor DESPUÉS de comparar: no cambian la primera pasada, solo la explican
+ACLARACIONES = {
+    "v2-adv-inyeccion": "La reseña solo dice «estancia normal» y la respuesta habla de «su comentario "
+    "respecto a la habitación». Es el mismo fallo que Claude marcó como «No inventa datos», con otro "
+    "criterio: el único aspecto concreto que menciona no está en la reseña.",
+}
 
 
 def fails(by_item: dict[str, list[str]]) -> set[tuple[str, str]]:
@@ -47,6 +53,11 @@ def compare(reference: set, other: set) -> dict:
             "de_mas": len(other - reference)}  # fmt: skip
 
 
+def replies(by_item: dict[str, list[str]]) -> set[str]:
+    """Respuestas con algún suspenso, sea cual sea el criterio."""
+    return {item for item, cs in by_item.items() if cs}
+
+
 def main() -> None:
     gold = {it["id"]: sorted(it["no_cumple"]) for it in
             json.loads(GOLD.read_text(encoding="utf-8"))["items"]}  # fmt: skip
@@ -55,6 +66,10 @@ def main() -> None:
     judge = {v: {r["id"]: r["got"] for r in judge_doc[v]["gold"]["rows"]} for v in VERSIONS}
     results = {
         "claude_frente_a_persona": compare(fails(human), fails(gold)),
+        "respuestas_claude_frente_a_persona": compare(replies(human), replies(gold)),
+        "respuestas_juez_frente_a_persona": {
+            v: compare(replies(human), replies(judge[v])) for v in VERSIONS
+        },
         "juez_frente_a_persona": {v: compare(fails(human), fails(judge[v])) for v in VERSIONS},
         "juez_frente_a_claude": {v: compare(fails(gold), fails(judge[v])) for v in VERSIONS},
         "items": [
@@ -75,7 +90,7 @@ def main() -> None:
 
 
 def write_report(r: dict) -> None:
-    c = r["claude_frente_a_persona"]
+    c, rc = r["claude_frente_a_persona"], r["respuestas_claude_frente_a_persona"]
     label = lambda ids: ", ".join(NAMES[i] for i in ids) or "—"  # noqa: E731
     L = [
         "# Fase 6 · Semillas del gold: etiquetas de Claude frente a una persona",
@@ -86,7 +101,8 @@ def write_report(r: dict) -> None:
         "Los veredictos del juez son los de `results/phase6_juez.json`. No editar a mano.",
         "",
         f"Suspensos marcados: persona {c['referencia']}, Claude {c['coinciden'] + c['de_mas']}; "
-        f"coinciden {c['coinciden']}.",
+        f"coinciden {c['coinciden']} en el mismo criterio. Por respuesta: persona "
+        f"{rc['referencia']}, Claude {rc['coinciden'] + rc['de_mas']}, coinciden {rc['coinciden']}.",
         "",
         "| Rúbrica del juez | Suspensos de la persona que detecta | Suspensos de más | "
         "Suspensos de Claude que detecta |",
@@ -102,6 +118,8 @@ def write_report(r: dict) -> None:
         note = it["nota"].replace("|", "/")
         L.append(f"| `{it['id']}` | {label(it['claude'])} | {label(it['persona'])} | "
                  f"{label(it['juez_v2'])} | {note} |")  # fmt: skip
+    L += ["", "## Aclaraciones del autor después de comparar", ""]
+    L += [f"- `{item}`: {text}" for item, text in ACLARACIONES.items()]
     L += [
         "",
         "Muestra muy pequeña: sirve para saber si el gold de Claude era fiable, no para medir el juez. "
