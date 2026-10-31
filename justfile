@@ -138,3 +138,10 @@ semillas:
 # Variedad de las aperturas de una ejecución (sin modelos)
 variedad *ARGS:
     python -m caso_uso_llm.evals.variedad {{ARGS}}
+
+# Canaries manuales: hoja para escribirlos e informe frente al juez
+hoja-canaries:
+    python scripts/canaries_vista.py
+
+canaries-manuales:
+    python -m caso_uso_llm.evals.canaries_manuales

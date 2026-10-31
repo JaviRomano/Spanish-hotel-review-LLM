@@ -34,6 +34,7 @@ logs/
 evals/gold/calibracion_vista.html
 evals/gold/semillas_vista.html
 evals/retrieval/relevancia_vista.html
+evals/canaries/manuales_vista.html
 kb/revision.html
 
 # Decisiones de la persona que revisa y cola de la app (trabajo humano, no resultados reproducibles)
