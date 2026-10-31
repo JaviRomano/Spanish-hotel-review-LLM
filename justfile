@@ -134,3 +134,7 @@ relevancia:
 # Semillas del gold: Claude frente a la primera pasada humana y al juez
 semillas:
     python scripts/comparar_semillas.py
+
+# Variedad de las aperturas de una ejecución (sin modelos)
+variedad *ARGS:
+    python -m caso_uso_llm.evals.variedad {{ARGS}}

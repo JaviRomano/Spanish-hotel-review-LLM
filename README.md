@@ -249,6 +249,7 @@ uv run just replay             # rebuilds the static replay page (docs/index.htm
 uv run just recoger            # form to collect reviews only (no models); answered later in batch
 uv run just latencia           # Phase 9: time per stage (loading vs inference) -> reports/phase9_latencia.md
 uv run just regresion          # Phase 9: prompt versions under the same conditions, safety filter and pairs
+uv run just variedad           # Phase 9: distinct greetings and first sentences in a run, no models
 uv run just modelo-pequeno     # Phase 9: smaller generator (qwen3.5:9b) against the 27B
 uv run just check-raw          # verifies the data/raw hashes
 uv run just lint               # ruff check + format --check
@@ -558,6 +559,7 @@ uv run just replay             # regenera la página estática de repetición (d
 uv run just recoger            # solo un formulario para recoger reseñas (sin modelos); se responden después por lotes
 uv run just latencia           # Fase 9: tiempo por etapa (carga frente a inferencia) -> reports/phase9_latencia.md
 uv run just regresion          # Fase 9: versiones del prompt en las mismas condiciones, filtro de seguridad y pares
+uv run just variedad           # Fase 9: saludos y primeras frases distintas de una ejecución, sin modelos
 uv run just modelo-pequeno     # Fase 9: generador más pequeño (qwen3.5:9b) frente al de 27B
 uv run just check-raw          # verifica los hashes de data/raw
 uv run just lint               # ruff check + format --check

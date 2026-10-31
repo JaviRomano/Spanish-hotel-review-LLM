@@ -30,6 +30,7 @@ from collections import Counter
 
 from caso_uso_llm.evals.judge import JUDGE_MODEL, compare, judge
 from caso_uso_llm.evals.rubric import IDS, criterios
+from caso_uso_llm.evals.variedad import opening
 from caso_uso_llm.generate.run import MODEL, Cache
 from caso_uso_llm.log import log
 from caso_uso_llm.paths import RESULTS, ROOT
@@ -49,7 +50,6 @@ BASE = "v6"
 REPORT = ROOT / "reports" / "phase9_regresion.md"
 OUT = RESULTS / "phase9_regresion.json"
 NAMES = {c.id: c.nombre for c in criterios(RUBRIC)}
-SALUDO = re.compile(r"^\s*(?:Estimad[oa]s?|Hola|Buenas|Saludos)\b", re.IGNORECASE)
 ESTIMADO = re.compile(r"^\s*Estimad[oa]s?\b", re.IGNORECASE)
 PAIR_VERSION = "v2"  # el saludo no cuenta (judge.PAIR_SALUDO)
 # Puerta del juez de pares: una reseña neutra inventada y tres respuestas redactadas por Claude.
@@ -74,11 +74,7 @@ def demo_items() -> list[dict]:
 
 def first_sentence(response: str) -> str:
     """Primera frase tras el saludo (si lo hay), en sus 5 primeras palabras."""
-    lines = [x.strip() for x in response.strip().splitlines() if x.strip()]
-    if lines and SALUDO.match(lines[0]) and len(lines) > 1:
-        lines = lines[1:]
-    first = re.split(r"(?<=[.!?])\s", lines[0])[0] if lines else ""
-    return " ".join(first.split()[:5])
+    return " ".join(opening(response)[1].split()[:5])
 
 
 def both_orders(review: str, a: str, b: str, cache, f) -> str:
