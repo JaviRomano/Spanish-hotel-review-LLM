@@ -54,15 +54,15 @@ def quote_in_review(quote: str, review: str) -> bool:
     return bool(q) and q in dedup_key(review)
 
 
-def _content_words(text: str) -> set[str]:
+def content_words(text: str) -> set[str]:
     return {w[:5] for w in dedup_key(text).split() if len(w) >= 5 and w not in _STOP}
 
 
 def mentions_aspect(response: str, aspects: list[dict]) -> bool:
     """Aproximación: la respuesta comparte alguna palabra con contenido (por su raíz de 5 letras)
     con la cita de algún aspecto. No detecta paráfrasis sin palabras en común."""
-    resp = _content_words(response)
-    return any(_content_words(a["cita"]) & resp for a in aspects)
+    resp = content_words(response)
+    return any(content_words(a["cita"]) & resp for a in aspects)
 
 
 def word_count(text: str) -> int:
