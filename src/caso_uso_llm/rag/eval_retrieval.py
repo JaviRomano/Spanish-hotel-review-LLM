@@ -101,7 +101,8 @@ def write_report(results: dict) -> None:
         "",
         "Base de conocimiento **sintética** ([`kb/`](../kb/)): la ficha del hotel se selecciona por id "
         "(no se busca); se recuperan las políticas aplicables y las respuestas aprobadas a reseñas "
-        "parecidas. Las etiquetas de relevancia son de Claude, pendientes de revisión humana.",
+        "parecidas. Las etiquetas de relevancia son de Claude; la revisión humana a ciegas está en "
+        "[`phase5_relevancia_humana.md`](phase5_relevancia_humana.md).",
         "",
     ]
     for index, res in results["indices"].items():

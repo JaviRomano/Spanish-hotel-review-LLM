@@ -126,3 +126,7 @@ formulario *ARGS:
 # (sin contraseña; --auth la pide con DEMO_USER y DEMO_PASS). Se publica con el mismo túnel que app-live
 recoger:
     python -m caso_uso_llm.recoger
+
+# Relevancia del RAG: etiquetas de Claude frente a la primera pasada humana
+relevancia:
+    python scripts/comparar_relevancia.py

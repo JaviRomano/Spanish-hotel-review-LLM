@@ -2,7 +2,7 @@
 
 Generado por `uv run just rag` · embeddings `bge-m3` vía Ollama · 30 consultas ([`consultas_v1.json`](../evals/retrieval/consultas_v1.json)). No editar a mano.
 
-Base de conocimiento **sintética** ([`kb/`](../kb/)): la ficha del hotel se selecciona por id (no se busca); se recuperan las políticas aplicables y las respuestas aprobadas a reseñas parecidas. Las etiquetas de relevancia son de Claude, pendientes de revisión humana.
+Base de conocimiento **sintética** ([`kb/`](../kb/)): la ficha del hotel se selecciona por id (no se busca); se recuperan las políticas aplicables y las respuestas aprobadas a reseñas parecidas. Las etiquetas de relevancia son de Claude; la revisión humana a ciegas está en [`phase5_relevancia_humana.md`](phase5_relevancia_humana.md).
 
 ## Índice de politicas (17 documentos, 30 consultas)
 

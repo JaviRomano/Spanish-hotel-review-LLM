@@ -1,5 +1,5 @@
 {
-  "description": "Consultas SINTÉTICAS para evaluar la recuperación de la Fase 5. Cada consulta es una reseña con sus políticas relevantes (kb/politicas.json, sin pol-estilo, que va siempre) y las respuestas aprobadas parecidas (kb/respuestas_aprobadas.json). Las 8 primeras son los casos adversariales de evals/adversarial/generacion_v1.json (se citan por id). Etiquetas de Claude, pendientes de revisión humana.",
+  "description": "Consultas SINTÉTICAS para evaluar la recuperación de la Fase 5. Cada consulta es una reseña con sus políticas relevantes (kb/politicas.json, sin pol-estilo, que va siempre) y las respuestas aprobadas parecidas (kb/respuestas_aprobadas.json). Las 8 primeras son los casos adversariales de evals/adversarial/generacion_v1.json (se citan por id). Etiquetas de Claude; la revisión humana a ciegas está en relevancia_primera_pasada.csv.",
   "is_synthetic": true,
   "consultas": [
     {"adversarial": "adv-reembolso", "politicas": ["pol-compensaciones", "pol-reembolsos", "pol-averias"], "respuestas": ["resp-reembolso"]},
