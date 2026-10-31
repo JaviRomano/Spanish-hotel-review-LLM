@@ -1,18 +1,27 @@
-"""Hoja de etiquetado HTML para evals/gold/calibracion_humana.csv (el CSV no se modifica).
+"""Hoja de etiquetado HTML para evals/gold/calibracion_humana.csv (el CSV no se modifica) y, con
+--semillas, para las semillas del gold (evals/gold/semillas_fase4.json).
 
 Muestra cada reseña con su respuesta y, debajo, los 8 criterios como preguntas con botones
 Sí (1) / No (0). Guarda el progreso en el navegador y exporta `id;criterios;notas` para integrarlo
-en el CSV. No lee calibracion_mapa.json: la hoja es a ciegas.
+en el CSV. No lee calibracion_mapa.json: la hoja es a ciegas. Las semillas llevan ids opacos, en orden
+barajado y sin `no_cumple` (las etiquetas de Claude); la correspondencia queda en semillas_mapa.json.
 """
 # ruff: noqa: E501  (textos de la guía y CSS: partirlos los haría menos legibles)
 
 import csv
 import json
+import random
+import sys
 from pathlib import Path
+
+from caso_uso_llm.seed import DEFAULT_SEED
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "evals" / "gold" / "calibracion_humana.csv"
 OUT = ROOT / "evals" / "gold" / "calibracion_vista.html"
+SEEDS = ROOT / "evals" / "gold" / "semillas_fase4.json"
+SEEDS_OUT = ROOT / "evals" / "gold" / "semillas_vista.html"
+SEEDS_MAP = ROOT / "evals" / "gold" / "semillas_mapa.json"
 
 # (columna, nombre corto, pregunta, ayuda con los casos frontera de guia_calibracion.md)
 CRITERIA = [
@@ -57,7 +66,7 @@ textarea{width:100%;box-sizing:border-box;margin-top:.5rem;font:inherit}
 """
 
 JS = r"""
-const KEY = "calibracion_humana_v1";
+const KEY = STORE;
 const state = (() => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } })();
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
 const cols = CRITERIA.map(c => c[0]);
@@ -96,7 +105,7 @@ function csv() {
 document.getElementById("exp").onclick = () => {
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob(["﻿" + csv()], { type: "text/csv;charset=utf-8" }));
-  a.download = "calibracion_etiquetas.csv"; a.click();
+  a.download = FILE; a.click();
 };
 document.getElementById("cp").onclick = async () => {
   try { await navigator.clipboard.writeText(csv()); alert("Copiado al portapapeles"); }
@@ -110,18 +119,41 @@ def esc(s: str) -> str:
     return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
-def main() -> None:
+def calibration_rows() -> list[dict]:
     with SRC.open(encoding="utf-8-sig", newline="") as f:
-        rows = [
+        return [
             {"id": r["id"], "reseña": r["reseña"], "respuesta": r["respuesta"]}
             for r in csv.DictReader(f, delimiter=";")
         ]
+
+
+def seed_rows(seed: int = DEFAULT_SEED) -> tuple[list[dict], dict[str, str]]:
+    """Filas de las semillas sin sus etiquetas, y la correspondencia id opaco -> id real."""
+    items = json.loads(SEEDS.read_text(encoding="utf-8"))["items"]
+    random.Random(seed).shuffle(items)
+    rows = [
+        {"id": f"s{i:02d}", "reseña": it["review"], "respuesta": it["response"]}
+        for i, it in enumerate(items, 1)
+    ]
+    return rows, {r["id"]: it["id"] for r, it in zip(rows, items, strict=True)}
+
+
+def main() -> None:
+    seeds = "--semillas" in sys.argv
+    if seeds:
+        rows, mapping = seed_rows()
+        SEEDS_MAP.write_text(json.dumps(mapping, indent=1) + "\n", encoding="utf-8", newline="\n")
+    else:
+        rows = calibration_rows()
+    title = "Semillas del gold" if seeds else "Calibración humana"
+    out, store = (SEEDS_OUT, "semillas_humanas_v1") if seeds else (OUT, "calibracion_humana_v1")
+    file = "semillas_primera_pasada.csv" if seeds else "calibracion_etiquetas.csv"
 
     guia = "".join(
         f"<li><b>{n}</b>: {esc(p)}<small>{esc(h)}</small></li>" for _, n, p, h in CRITERIA
     )
     body = [
-        "<header><b>Calibración humana</b><span id=prog></span>",
+        f"<header><b>{title}</b><span id=prog></span>",
         "<button class=main id=exp>Descargar etiquetas (CSV)</button>",
         "<button class=main id=cp>Copiar etiquetas</button></header>",
         "<details class=guia open><summary>Reglas (Sí = 1 = cumple · No = 0 = no cumple)</summary>",
@@ -148,15 +180,16 @@ def main() -> None:
     data = (
         f"const ROWS={json.dumps([{'id': r['id']} for r in rows])};"
         f"const CRITERIA={json.dumps([[c[0]] for c in CRITERIA])};"
+        f"const STORE={json.dumps(store)},FILE={json.dumps(file)};"
     )
     doc = (
         "<!doctype html><html lang=es><meta charset=utf-8>"
         "<meta name=viewport content='width=device-width,initial-scale=1'>"
-        f"<title>Calibración humana</title><style>{CSS}</style><body>{''.join(body)}"
+        f"<title>{title}</title><style>{CSS}</style><body>{''.join(body)}"
         f"<script>{data}{JS}</script></body></html>"
     )
-    OUT.write_text(doc, encoding="utf-8")
-    print(OUT)
+    out.write_text(doc, encoding="utf-8")
+    print(out)
 
 
 if __name__ == "__main__":

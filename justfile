@@ -62,6 +62,13 @@ juez:
 calibrar:
     python -m caso_uso_llm.evals.calibrate
 
+# Hojas de etiquetado a ciegas: relevancia del RAG y semillas del gold
+hoja-relevancia:
+    python scripts/relevancia_vista.py
+
+hoja-semillas:
+    python scripts/calibracion_vista.py --semillas
+
 # Fase 5: recuperación de políticas y respuestas aprobadas (BM25, bge-m3 e híbrida), con recall@k y MRR
 rag:
     python -m caso_uso_llm.rag.eval_retrieval
