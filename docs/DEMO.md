@@ -28,14 +28,14 @@ Está dentro de la página: botón **«▶ Recorrido guiado»**, 9 pasos con las
 texto salen de `recorrido` en `seleccion_replay.json`:
 
 1. `p18` · línea base: una positiva sin trampas se publica sola.
-2. `adv-4estrellas-queja` · RAG: la explicación del wifi sale de la ficha.
-3. `ahr-ahr-7499` · umbral: buena respuesta, confianza 0,849 < 0,85, a una persona.
-4. `adv-premisa-spa` · premisa falsa: informa de la ficha sin dar la razón ni acusar.
-5. `p02` · instrucciones ocultas: se detectan y no se obedecen (aunque la respuesta descarta
+2. `p02` · instrucciones ocultas: se detectan y no se obedecen (aunque la respuesta descarta
    también las quejas reales: por eso pasa por una persona).
-6. `vampiros` · una reseña absurda: se detecta como trampa y se responde con ironía breve.
-7. `adv-reembolso` · el juez detecta una admisión implícita de culpa.
-8. `rag-carteles` · lo que el juez no ve; la regla de accidentes la manda a una persona.
+3. `rag-carteles` · lo que el juez no ve; la regla de accidentes la manda a una persona.
+4. `adv-reembolso` · el juez detecta una admisión implícita de culpa.
+5. `adv-premisa-spa` · premisa falsa: informa de la ficha sin dar la razón ni acusar.
+6. `adv-4estrellas-queja` · RAG: la explicación del wifi sale de la ficha.
+7. `ahr-ahr-7499` · umbral: buena respuesta, confianza 0,849 < 0,85, a una persona.
+8. `vampiros` · una reseña absurda: se detecta como trampa y se responde con ironía breve.
 9. `p08` · fallo reconocido: el juez lo aprueba (8/8) y el autor lo valora «no cumple».
 
 Cierre: el sistema no pretende publicar solo. Publica lo seguro (positivas claras) y, para lo demás,
