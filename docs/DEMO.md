@@ -28,14 +28,14 @@ Está dentro de la página: botón **«▶ Recorrido guiado»**, 9 pasos con las
 texto salen de `recorrido` en `seleccion_replay.json`:
 
 1. `p18` · línea base: una positiva sin trampas se publica sola.
-2. `p02` · instrucciones ocultas: se detectan y no se obedecen (aunque la respuesta descarta
+2. `adv-reembolso` · fallo que la puerta detecta: el juez ve una admisión implícita de culpa.
+3. `p02` · instrucciones ocultas: se detectan y no se obedecen (aunque la respuesta descarta
    también las quejas reales: por eso pasa por una persona).
-3. `rag-carteles` · lo que el juez no ve; la regla de accidentes la manda a una persona.
-4. `adv-reembolso` · el juez detecta una admisión implícita de culpa.
-5. `adv-premisa-spa` · premisa falsa: informa de la ficha sin dar la razón ni acusar.
-6. `adv-4estrellas-queja` · RAG: la explicación del wifi sale de la ficha.
-7. `ahr-ahr-7499` · umbral: buena respuesta, confianza 0,849 < 0,85, a una persona.
-8. `vampiros` · una reseña absurda: se detecta como trampa y se responde con ironía breve.
+4. `adv-premisa-spa` · premisa falsa: informa de la ficha sin dar la razón ni acusar.
+5. `adv-4estrellas-queja` · RAG: la explicación del wifi sale de la ficha.
+6. `ahr-ahr-7499` · umbral: buena respuesta, confianza 0,849 < 0,85, a una persona. Es a propósito.
+7. `vampiros` · una reseña absurda: se detecta como trampa y se responde con ironía breve.
+8. `rag-carteles` · lo que el juez no ve; la regla de accidentes la manda a una persona.
 9. `p08` · fallo reconocido: el juez lo aprueba (8/8) y el autor lo valora «no cumple».
 
 Cierre: el sistema no pretende publicar solo. Publica lo seguro (positivas claras) y, para lo demás,
@@ -50,6 +50,8 @@ juez no basta, y por eso lo serio nunca se publica sin revisión.
 - **¿Cuánto tarda?** ~49 s por reseña en vivo; el borrador se ve a los ~36 s y el juez llega después.
 - **¿Pasa alguna reseña por un modelo externo?** No: los modelos corren en local (Ollama + GPU AMD).
   Las reseñas llegan de fuera, como en cualquier sistema real: en esta demo, por Google Forms.
+- **¿Por qué `p01` y `p09` marcan la misma confianza?** Con 3 decimales coinciden en 0,783, pero sus
+  valores son 0,78307 y 0,78335 (`results/demo_propias.json`, campo `confidence`).
 
 ## 2. Peticiones por el formulario
 

@@ -16,6 +16,8 @@ import json
 import re
 from pathlib import Path
 
+import replay_metricas as M
+
 from caso_uso_llm.evals.judge import JUDGE_MODEL
 from caso_uso_llm.evals.rubric import IDS, criterios
 from caso_uso_llm.generate.run import MODEL
@@ -169,9 +171,7 @@ def main() -> None:
                     continue
                 c = compact(it, policies) | {"valoracion": ratings.get(it["id"])}
                 motivo = (c["valoracion"] or {}).get("motivo", "")
-                c["highlights"] = highlights(
-                    it, c["response"] or "", motivo, "Valoración del autor"
-                )
+                c["highlights"] = highlights(it, c["response"] or "", motivo, "Mi valoración")
                 cases.append(c)
     items = [
         *json.loads(DEMO.read_text(encoding="utf-8")),
@@ -192,13 +192,20 @@ def main() -> None:
         url = f"https://docs.google.com/forms/d/e/{FORM_ID}/formResponse"
         form = {"url": url, "entry": FORM_ENTRY}
     hotels = [[k, f"{h['nombre']} ({h['ciudad']})"] for k, h in kb.fichas().items()]
-    doc = {"umbral": THRESHOLD, "casos": cases, "recorrido": tour, "stack": stack(),
-           "formulario": form, "hoteles": hotels}  # fmt: skip
+    doc = {"umbral": THRESHOLD, "casos": cases, "recorrido": tour, "formulario": form,
+           "hoteles": hotels}  # fmt: skip
+    facts = M.facts()
+    own = sum(c["eval_mode"] == "criterio_previo" for c in cases)
+    cells = M.matrix(cases)
     data = json.dumps(doc, ensure_ascii=False, indent=1)
     # Dentro de <script>, «</» cerraría la etiqueta antes de tiempo
     page = TEMPLATE.read_text(encoding="utf-8").replace("__DATA__", data.replace("</", "<\\/"))
     page = live_panel(page, bool(form))
-    for key, value in {"__REPO__": REPO, "__LINKEDIN__": LINKEDIN, "__GITHUB__": GITHUB,
+    for key, value in {"__HEADLINE__": M.headline(facts, REPO), "__REBUILT__": M.rebuilt(facts, REPO),
+                       "__MATRIX_NOTE__": M.matrix_note(cells), "__MATRIX__": M.matrix_table(cells),
+                       "__RESULTS_TABLE__": M.results_table(facts, REPO),
+                       "__SETS_TABLE__": M.sets_table(facts, len(cases), own),
+                       "__REPO__": REPO, "__LINKEDIN__": LINKEDIN, "__GITHUB__": GITHUB,
                        "__AUTHOR__": AUTHOR, "__PAGE_URL__": PAGE_URL}.items():  # fmt: skip
         page = page.replace(key, value)
     left = re.findall(r"__[A-Z_]+__", page)

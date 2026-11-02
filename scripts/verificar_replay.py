@@ -30,7 +30,7 @@ SHOTS = ROOT / "docs" / "screenshots"
 # Texto sobre fondo de color: selector del elemento cuyo color y fondo se comparan
 CONTRAST = [".pill.ok", ".pill.no", ".pill.partial", ".pill.mode", ".pill.neutral", ".note",
             ".rating p", ".rating .head", ".alertbox", ".stamp", ".reasons li",
-            ".spec dt", ".spec dd", ".label", ".btn.primary", "mark",
+            ".headline", ".evidence > p", "table.data td", ".label", ".btn.primary", "mark",
             ".inspect td", ".criterion p", ".flow li span"]  # fmt: skip
 
 
@@ -106,6 +106,48 @@ def check_form(browser) -> list[str]:
     return problems
 
 
+def check_text(browser) -> list[str]:
+    """Jerarquía de títulos sin saltos y un solo «Por eso» en el texto y los pasos."""
+    page = browser.new_page()
+    page.goto(PAGE)
+    levels = page.evaluate("[...document.querySelectorAll('h1,h2,h3,h4')].map(h => +h.tagName[1])")
+    html = (ROOT / "docs" / "index.html").read_text(encoding="utf-8")
+    page.close()
+    problems = []
+    if levels[0] != 1 or any(b - a > 1 for a, b in zip(levels, levels[1:], strict=False)):
+        problems.append(f"títulos: la jerarquía tiene saltos: {levels}")
+    if len(re.findall("por eso", html, re.IGNORECASE)) != 1:
+        problems.append("texto: debe quedar un solo «Por eso»")
+    return problems
+
+
+def check_links(browser) -> list[str]:
+    """Matriz, enlaces a secciones y resaltado al tocarlo en una pantalla táctil."""
+    problems = []
+    page = browser.new_context(viewport={"width": 375, "height": 760}, has_touch=True).new_page()
+    page.goto(PAGE)
+    page.click(".fold summary")
+    page.click('a[href="#resultados"]')
+    page.wait_for_timeout(200)
+    if page.evaluate("location.hash") != "#resultados":
+        problems.append("enlaces: un enlace a una sección lo captura el visor de casos")
+    page.goto(PAGE + "#conjuntos")
+    page.wait_for_timeout(200)
+    if page.evaluate("location.hash") != "#conjuntos":
+        problems.append("enlaces: abrir la página en una sección no la respeta")
+    page.locator("table.matrix a").last.click()
+    page.wait_for_timeout(200)
+    if page.input_value("#case") != page.evaluate("location.hash.slice(1)"):
+        problems.append("matriz: el identificador no abre su caso en el visor")
+    page.goto(PAGE + "#p02")
+    page.wait_for_timeout(200)
+    page.locator("mark").first.tap()
+    if not page.locator("mark .tip").first.is_visible():
+        problems.append("táctil: tocar un resaltado no muestra su explicación")
+    page.close()
+    return problems
+
+
 def main() -> int:
     SHOTS.mkdir(parents=True, exist_ok=True)
     problems = []
@@ -156,6 +198,8 @@ def main() -> int:
         page.focus("mark")
         if not page.locator("mark .tip").first.is_visible():
             problems.append("teclado: el resaltado enfocado no muestra su explicación")
+        problems += check_links(browser)
+        problems += check_text(browser)
         problems += check_form(browser)
         browser.close()
 
