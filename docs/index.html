@@ -104,6 +104,7 @@ table.matrix a { display: inline-block; margin-right: 12px; }
 .actions { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
 .btn { display: inline-flex; gap: 6px; align-items: center; font: 700 .95rem var(--body); border-radius: 3px;
   padding: 9px 16px; cursor: pointer; text-decoration: none; white-space: nowrap; }
+[hidden] { display: none !important; }  /* un `display` de componente no debe anularlo */
 .btn.primary { background: var(--accent); color: var(--accent-ink); border: 1px solid var(--accent); }
 .btn.secondary { background: none; color: var(--accent); border: 1px solid var(--accent); }
 .why { color: var(--muted); max-width: 70ch; }

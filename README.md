@@ -10,6 +10,10 @@ A pipeline for a hotel chain that **classifies the sentiment** of a review (nega
 
 It is a rebuild of a first attempt (in [`legacy/`](legacy/), tag `v1-original`) whose metrics were not valid. See [why it was rebuilt](#why-it-was-rebuilt).
 
+[![Guided tour of the demo page: nine cases, from a clean success to the failure the judge misses](docs/img/recorrido.gif)](https://javiromano.github.io/Spanish-hotel-review-LLM/)
+
+*Guided tour of the [demo page](https://javiromano.github.io/Spanish-hotel-review-LLM/), which replays saved results. The page is in Spanish.*
+
 ## Status
 
 | Phase | Content | Status |
@@ -340,6 +344,10 @@ The code of the first attempt is in [`legacy/`](legacy/) as audited (tag `v1-ori
 Pipeline para una cadena hotelera que **clasifica el sentimiento** de una reseña (negativo, neutral, positivo) y **redacta una respuesta** profesional y personalizada. Los modelos se ejecutan en local, sobre una GPU AMD: ninguna reseña pasa por un modelo externo.
 
 Es la reconstrucción de un primer intento (en [`legacy/`](legacy/), etiqueta `v1-original`) cuyas métricas no eran válidas. Ver [por qué se rehízo](#por-qué-se-rehízo).
+
+[![Recorrido guiado de la página de demostración: nueve casos, del acierto limpio al fallo que el juez no ve](docs/img/recorrido.gif)](https://javiromano.github.io/Spanish-hotel-review-LLM/)
+
+*Recorrido guiado de la [página de demostración](https://javiromano.github.io/Spanish-hotel-review-LLM/), que repite resultados ya guardados.*
 
 ## Estado
 

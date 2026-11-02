@@ -55,6 +55,25 @@ BG = """el => { let n = el; while (n) { const c = getComputedStyle(n).background
   return getComputedStyle(document.body).backgroundColor; }"""
 
 
+def check_tour(browser) -> list[str]:
+    """Al recorrer los casos no queda ningún aviso vacío, y el botón se oculta durante el recorrido."""
+    page = browser.new_page(viewport={"width": 1280, "height": 800})
+    page.goto(PAGE)
+    page.click("#tour")
+    problems = []
+    if page.locator("#tour").is_visible():
+        problems.append("recorrido: el botón sigue visible durante el recorrido")
+    steps = page.evaluate(
+        "JSON.parse(document.getElementById('data').textContent).recorrido.length"
+    )
+    for _ in range(steps):
+        if page.locator("#alert").is_visible() and not page.inner_text("#alert").strip():
+            problems.append(f"recorrido: aviso vacío en {page.input_value('#case')}")
+        page.click("#next")
+    page.close()
+    return problems
+
+
 def check_form(browser) -> list[str]:
     """Formulario de punta a punta sin Google: se inyecta una configuración de prueba, se intercepta
     el envío y el importador debe aceptar lo que sale de la página."""
@@ -199,6 +218,7 @@ def main() -> int:
         if not page.locator("mark .tip").first.is_visible():
             problems.append("teclado: el resaltado enfocado no muestra su explicación")
         problems += check_links(browser)
+        problems += check_tour(browser)
         problems += check_text(browser)
         problems += check_form(browser)
         browser.close()
