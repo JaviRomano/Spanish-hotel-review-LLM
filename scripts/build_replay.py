@@ -229,7 +229,9 @@ def render(cases, tour, facts, form, hotels, english: bool) -> None:
     page = page.replace("__DATA__", data.replace("</", "<\\/"))
     page = live_panel(page, bool(form))
     other = ("../", "es", "Español") if english else ("en/", "en", "English")
-    for key, value in {"__HEADLINE__": M.headline(facts, REPO), "__REBUILT__": M.rebuilt(facts, REPO),
+    for key, value in {"__CASES_INTRO__": M.cases_intro(len(tour)),
+                       "__HOW__": M.how(facts, THRESHOLD, len(NAMES)),
+                       "__LESSONS__": M.lessons(facts, REPO),
                        "__MATRIX_NOTE__": M.matrix_note(cells), "__MATRIX__": M.matrix_table(cells),
                        "__RESULTS_TABLE__": M.results_table(facts, REPO),
                        "__SETS_TABLE__": M.sets_table(facts, len(cases), own),

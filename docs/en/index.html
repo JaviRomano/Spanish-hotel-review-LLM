@@ -90,10 +90,18 @@ p { margin: 0; }
 }
 .hero .intro { display: grid; gap: 16px; }
 .lead { max-width: 62ch; font-size: 1.06rem; }
-.headline, .rebuilt { max-width: 70ch; margin: 0; }
-.evidence { margin-top: 44px; display: grid; gap: 12px; }
-.evidence > p { max-width: 70ch; color: var(--muted); margin: 0; }
-.evidence h2 { scroll-margin-top: 16px; }
+.jump { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .95rem; }
+.deskintro { max-width: 70ch; margin-bottom: 14px; }
+.prose, .evidence { margin-top: 48px; border-top: 2px solid var(--ink); padding-top: 14px; display: grid; gap: 14px; }
+.prose > *, .evidence > *, .evidence details > * { min-width: 0; }
+.prose h2, .evidence h2 { font-size: 1.5rem; scroll-margin-top: 16px; }
+.prose h3 { font: 700 1.02rem/1.35 var(--body); margin-bottom: 4px; }
+.prose > ul, .evidence > p, .tablenote { max-width: 70ch; }
+.prose > ul { margin: 0; padding-left: 20px; display: grid; gap: 8px; }
+.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 22px 40px; }
+.steps > div { min-width: 0; }
+.steps.pairs { grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); }
+.tablenote { color: var(--muted); margin-bottom: 10px; }
 .tablewrap { overflow-x: auto; }
 table.data { border-collapse: collapse; width: 100%; font-size: .9rem; }
 table.data th { text-align: left; font-weight: 700; border-bottom: 1px solid var(--ink); padding: 6px 12px 6px 0; white-space: nowrap; }
@@ -129,11 +137,6 @@ table.matrix a { display: inline-block; margin-right: 12px; }
 .formstatus { font-weight: 700; min-height: 1.4em; }
 .formstatus.bad { color: var(--fail); } .formstatus.good { color: var(--pass); }
 #addreview, #sendform { justify-self: start; }
-details.fold { max-width: 70ch; border-top: 1px solid var(--rule); }
-details.fold summary { cursor: pointer; padding: 9px 0; font-weight: 700; color: var(--accent); }
-details.fold ul { margin: 0 0 12px; padding-left: 20px; color: var(--muted); }
-details.fold li + li { margin-top: 6px; }
-details.fold p { color: var(--muted); margin-bottom: 12px; }
 
 /* Diagrama: el recorrido de una reseña por el mostrador */
 .flow { border-left: 1px solid var(--rule); padding-left: 28px; }
@@ -236,7 +239,8 @@ pre.ficha { white-space: pre-wrap; background: var(--sheet); border: 1px solid v
 dl.facts { margin: 0 0 14px; }
 dl.facts dt { font: 600 .82rem var(--body); color: var(--muted); margin-top: 10px; }
 dl.facts dd { margin: 2px 0 0; }
-details.limits { margin-top: 0; }
+details.detail ul { margin: 0 0 14px; padding-left: 20px; }
+.evidence details.detail { margin-top: 0; scroll-margin-top: 16px; }
 footer { margin-top: 34px; color: var(--muted); font-size: .86rem; border-top: 1px solid var(--rule); padding-top: 14px; max-width: 90ch; }
 </style>
 </head>
@@ -259,22 +263,20 @@ footer { margin-top: 34px; color: var(--muted); font-size: .86rem; border-top: 1
   <header class="hero">
     <div class="intro">
       <h1>How does an AI respond to a hotel's difficult reviews?</h1>
-      <p class="lead">A hotel answers hundreds of reviews, and one badly written sentence can admit a fault nobody has verified. This system drafts the reply, checks it and decides whether it is published on its own or goes to a person.</p>
-      <p class="why">I spent years in hospitality handling guest complaints, and I know how hard it is to do well.</p>
-      <p class="headline">Of the 24 real 1 to 3★ reviews in the test, none was published without review, and that is by design (<a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/results/pipeline_cola.json">data</a>). The judge let 2 implicit admissions of fault through (<code>p08</code> and <code>rag-carteles</code>): these are cases flagged by reading the replies, not a rate.</p>
-      <p class="rebuilt"><strong>Why I rebuilt it:</strong> 50.8% of the first version's test set was literally in train (<a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/reports/data_report.md#5-reproducción-de-la-fuga-del-proyecto-original">reproduction</a>), so that F1 is worthless. On clean data, the classifier reaches a macro F1 of 0.797 on the test set and 0.781 on 11,414 unseen reviews.</p>
+      <p class="lead">A hotel receives hundreds of reviews, and one badly written sentence can admit a fault nobody has verified. This system interprets the review, drafts the reply, checks it and decides whether it is published on its own or goes to a person.</p>
+      <p class="why">I spent years in hospitality handling guest complaints, and I know how delicate it is to do well.</p>
       <div class="actions">
         <a class="btn primary" href="https://www.linkedin.com/in/franciscojavier-fernandezrumi/" target="_blank" rel="noopener">Contact</a>
-        <button class="btn secondary" id="livebtn" type="button" aria-expanded="false" aria-controls="livepanel">Ask for a live test</button>
+        <button class="btn secondary" id="livebtn" type="button" aria-expanded="false" aria-controls="livepanel">Try it</button>
       </div>
       <div class="livepanel" id="livepanel" hidden>
         <form id="liveform" novalidate>
-          <p>This page replays saved results. Write 1 to 5 reviews, made up or real, without personal data. I will run them through the system on my computer and send you, for each one, the reply, whether it would be published or go to a person, and why. The system works in Spanish, so please write them in Spanish.</p>
+          <p>This page shows saved results. Write one or more reviews, made up or real, without personal data. I will run them through the system and send you the replies and the reasoning. The system works in Spanish, so please write them in Spanish.</p>
           <div id="formreviews"></div>
           <button class="btn secondary" id="addreview" type="button">Add another review</button>
           <div class="formrow">
             <div class="field"><label for="f-nick">Nickname (not your name)</label><input id="f-nick" maxlength="30" autocomplete="off" required></div>
-            <div class="field"><label for="f-contact">Where should I send the result?</label><input id="f-contact" maxlength="120" placeholder="LinkedIn profile or email" required></div>
+            <div class="field"><label for="f-contact">Where should I send the result?</label><input id="f-contact" maxlength="120" placeholder="email" required></div>
           </div>
           <div class="trap" aria-hidden="true"><label for="f-web">Leave empty</label><input id="f-web" tabindex="-1" autocomplete="off"></div>
           <label class="check"><input id="f-consent" type="checkbox" required> <span>I agree that my reviews and contact details are sent through Google Forms and kept to evaluate and improve the system and to send me the result. They will not be published. Do not include personal data in the reviews.</span></label>
@@ -282,42 +284,7 @@ footer { margin-top: 34px; color: var(--muted); font-size: .86rem; border-top: 1
           <p class="formstatus" id="formstatus" role="status"></p>
         </form>
       </div>
-      <div>
-        <details class="fold">
-          <summary>What works today and what I have not tested yet</summary>
-          <ul>
-            <li><strong>It works</strong>, locally, on public reviews and synthetic cases: the classifier, context retrieval, the judge and the rules, each measured separately (<a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM#key-figures">key figures</a>). Negative, doubtful and trap reviews, and those with accidents or legal claims, always go to a person.</li>
-            <li><strong>What it offers today:</strong> it prepares drafts and a person decides; it is not auto-publishing. Only some positive reviews pass every check, and negative ones always go to a person (<a href="#resultados">results</a>).</li>
-            <li><strong>Not tested yet:</strong> behaviour with a real hotel's reviews and fact sheets, an acceptable error rate for production, and the work saved. The human evaluation is small (<a href="#conjuntos">evaluation sets</a>), and the hotels' fact sheets and policies are made up.</li>
-          </ul>
-        </details>
-        <details class="fold">
-          <summary>What is on this page and how it was made</summary>
-          <ul>
-            <li><strong>Test reviews:</strong> written on purpose to stress the system (legal threats, hidden instructions, false data, attacks on staff), with the criteria for a good reply written before generating and my rating afterwards.</li>
-            <li><strong>Illustrative cases:</strong> synthetic cases and real reviews from the Andalusian Hotels' Reviews (AHR) corpus, originally from TripAdvisor, with a note written after reading the reply.</li>
-          </ul>
-          <p>Neither the rules nor the judge are infallible: a person decides anything doubtful or delicate.</p>
-          <p><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM#how-it-was-made">What I decided and what was done with Claude Code</a>.</p>
-        </details>
-        <details class="fold">
-          <summary>Why it was rebuilt</summary>
-          <p>This project comes from auditing the first version. Besides the leak, which came from oversampling before splitting the dataset:</p>
-          <ul>
-            <li><strong>Selection on the test set:</strong> the model was picked with the test set, with no validation set.</li>
-            <li><strong>No 4★ reviews:</strong> “positive” meant 5★ only, while real traffic includes 4★ reviews.</li>
-          </ul>
-        </details>
-        <details class="fold">
-          <summary>For technical reviewers</summary>
-          <ul>
-            <li><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/reports/phase3b_realista.md">Out-of-distribution evaluation</a>: the classifier measured on reviews it never saw, not only on the clean test set.</li>
-            <li><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/reports/phase6_calibracion.md">Judge against a person</a>: where they agree and how the labels were corrected.</li>
-            <li><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/reports/phase9_regresion.md">Regression</a> and <a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/reports/phase9_ciegas.md">blind comparison</a>: why v6 stays over later versions.</li>
-            <li><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/src/caso_uso_llm/ollama_gpu.py"><code>ollama_gpu.py</code></a>: the check that prevents running on the CPU without warning, added after that incident.</li>
-          </ul>
-        </details>
-      </div>
+      <nav class="jump" aria-label="On this page"><a href="#casos">See the cases</a><a href="#como">How it works</a><a href="#aprendido">What I learned</a><a href="#limites">What is missing</a><a href="#evidencia">Evidence</a></nav>
     </div>
 
     <aside class="flow" aria-labelledby="flow-title">
@@ -328,14 +295,15 @@ footer { margin-top: 34px; color: var(--muted); font-size: .86rem; border-top: 1
         <li><b>Hotel fact sheet and policies</b><span>full fact sheet · RAG: policies and approved replies</span></li>
         <li><b>Draft</b><span>Qwen3.6 27B · aspects as JSON and reply</span></li>
         <li><b>Rules and judge</b><span>Gemma 4 12B · 8 criteria with evidence</span></li>
-        <li class="gate"><b>Gate</b><span>published on its own or goes to a person</span></li>
+        <li class="gate"><b>Gate (final decision)</b><span>published on its own or goes to a person</span></li>
       </ol>
-      <p class="note">The models run on one PC, on a single GPU: no review goes through an external model.</p>
+      <p class="note">The models run on one PC, on a single GPU: <b>no review goes through an external model</b>.</p>
     </aside>
   </header>
 
   <section class="desk" aria-labelledby="casos">
     <h2 class="deskhead" id="casos">Cases</h2>
+    <p class="deskintro">Start with the guided tour: 9 cases, from a clean success to the failure the judge misses.</p>
     <div class="picker">
       <label for="case">Review</label>
       <button class="nav" id="prev" type="button" aria-label="Previous">←</button>
@@ -360,7 +328,7 @@ footer { margin-top: 34px; color: var(--muted); font-size: .86rem; border-top: 1
       <div class="right">
         <article class="letter" aria-labelledby="letter-hotel">
           <div class="letterhead">
-            <div><h3 id="letter-hotel"></h3><span class="label">Hotel reply · draft, in Spanish</span></div>
+            <div><h3 id="letter-hotel"></h3><span class="label">Generated reply · draft, in Spanish</span></div>
             <div class="stamp" id="stamp"></div>
           </div>
           <pre class="reply" id="reply"></pre>
@@ -381,28 +349,56 @@ footer { margin-top: 34px; color: var(--muted); font-size: .86rem; border-top: 1
       <summary>Classifier and retrieved context</summary>
       <div id="detail-body"></div>
     </details>
-    <details class="detail limits">
-      <summary>Known limitations</summary>
-      <ul>
-        <li><strong>Formulaic replies.</strong> Almost all start the same way («Estimado cliente: Muchas gracias por compartir…», Dear guest: Thank you so much for sharing…) and repeat sentences across cases. A prompt version that fixed this lost in a blind human rating. I will try again with more human-rated reviews, so as not to fit the prompt to these same cases.</li>
-        <li><strong>Trap reviews.</strong> When it detects hidden instructions or a joke, the reply is deliberately ironic (p02, adv-inyeccion, vampiros). I accept it in context, but the judge fails the tone because it cannot tell this exception apart, and that needs tuning. Traps always go to a person. Pending improvement: a neutral reply when an injection is detected.</li>
-        <li><strong>The judge does not see everything.</strong> It lets some implicit admissions of fault through (p08, rag-carteles). That is why negative or doubtful reviews, and any accident or legal risk, always go to a person.</li>
-        <li><strong>Classifier confidence.</strong> It is the mean probability of the chosen class across the ensemble's 3 seeds. It almost never exceeds 0.93, and below 0.85 the review goes to a person.</li>
-        <li>The hotel fact sheets, the policies and some of the cases are synthetic.</li>
-      </ul>
-    </details>
   </section>
 
-  <section class="evidence" aria-labelledby="matriz">
-    <h2 id="matriz">The judge against my rating</h2>
-    <p>Only 6 cases have my verdict, with the criteria written before generating, and 1 fails: the matrix shows which cases they are, it does not measure the judge. Each ID opens the case in the viewer.</p>
-    <div class="tablewrap"><table class="data matrix"><thead><tr><td></td><th scope="col">Me: passes</th><th scope="col">Me: fails</th></tr></thead><tbody><tr><th scope="row">Judge approves</th><td><a href="#p01"><code>p01</code></a> <a href="#p09"><code>p09</code></a> <a href="#p18"><code>p18</code></a> <a href="#p20"><code>p20</code></a></td><td><a href="#p08"><code>p08</code></a></td></tr><tr><th scope="row">Judge fails</th><td><a href="#p02"><code>p02</code></a></td><td>None</td></tr></tbody></table></div>
-    <h2 id="resultados">Results</h2>
-    <p>Each figure links to its file. Intervals on proportions are Wilson intervals; those on F1 come from each report's bootstrap. Calibration used rubric v2, and production uses v2g.</p>
-    <div class="tablewrap"><table class="data"><thead><tr><th>Set</th><th>n</th><th>Metric</th><th>Value</th><th>95% CI</th><th>Source</th></tr></thead><tbody><tr><td>AHR, never used for training</td><td class="n">11,414</td><td>F1 macro</td><td>0.781</td><td>0.770 to 0.791</td><td><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/results/phase3b_realista.json">phase3b_realista.json</a></td></tr><tr><td>AHR</td><td class="n">11,414</td><td>F1 of the neutral class</td><td>0.549</td><td>—</td><td><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/results/phase3b_realista.json">phase3b_realista.json</a></td></tr><tr><td>AHR, confidence ≥ 0.85</td><td class="n">8,487</td><td>Error</td><td>264 of 8,487 (3.1%)</td><td>2.8% to 3.5%</td><td><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/results/phase3b_realista.json">phase3b_realista.json</a></td></tr><tr><td>Clean COAH test</td><td class="n">269</td><td>F1 macro</td><td>0.797</td><td>0.732 to 0.853</td><td><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/results/phase3b_realista.json">phase3b_realista.json</a></td></tr><tr><td>COAH, confidence ≥ 0.85</td><td class="n">191</td><td>Error</td><td>2 of 191 (1.0%)</td><td>0.3% to 3.7%</td><td><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/results/phase3b_realista.json">phase3b_realista.json</a></td></tr><tr><td>SFU, another website</td><td class="n">50</td><td>Correct</td><td>39 of 50 (78%)</td><td>64.8% to 87.2%</td><td><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/results/phase3b_realista.json">phase3b_realista.json</a></td></tr><tr><td>Calibration, rubric v2</td><td class="n">24</td><td>Judge precision</td><td>4 of 7 (57%)</td><td>25.0% to 84.2%</td><td><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/reports/phase6_calibracion.md">phase6_calibracion.md</a></td></tr><tr><td>Calibration, rubric v2</td><td class="n">24</td><td>Judge recall</td><td>4 of 4 (100%)</td><td>51.0% to 100.0%</td><td><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/reports/phase6_calibracion.md">phase6_calibracion.md</a></td></tr><tr><td>Calibration, rubric v2</td><td class="n">24</td><td>Kappa on “does not admit fault”</td><td>0.70</td><td>—</td><td><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/reports/phase6_calibracion.md">phase6_calibracion.md</a></td></tr><tr><td>Seeds, rubric v2</td><td class="n">10</td><td>The person&#x27;s failures the judge detects</td><td>1 of 3 (33%)</td><td>6.1% to 79.2%</td><td><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/results/phase6_semillas.json">phase6_semillas.json</a></td></tr><tr><td>Demo queue</td><td class="n">54</td><td>Pass every check</td><td>8 of 54 (15%)</td><td>7.7% to 26.6%</td><td><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/results/pipeline_cola.json">pipeline_cola.json</a></td></tr><tr><td>Real 1 to 3★ reviews</td><td class="n">24</td><td>Published without review (by design)</td><td>0 of 24 (0.0%)</td><td>0.0% to 13.8%</td><td><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/results/pipeline_cola.json">pipeline_cola.json</a></td></tr><tr><td>Blind comparison, v6 and v9</td><td class="n">25</td><td>Prefers v6, excluding 3 ties (p = 0.42)</td><td>15 of 25 (60%)</td><td>40.7% to 76.6%</td><td><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/reports/phase9_ciegas.md">phase9_ciegas.md</a></td></tr><tr><td>Blind comparison, v6</td><td class="n">30</td><td>Publishable as it stands</td><td>8 of 30 (27%)</td><td>14.2% to 44.4%</td><td><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/reports/phase9_ciegas.md">phase9_ciegas.md</a></td></tr><tr><td>Latency on one PC</td><td class="n">15</td><td>Median time to verdict</td><td>48.2 s (p90 52.2 s)</td><td>—</td><td><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/reports/phase9_latencia.md">phase9_latencia.md</a></td></tr></tbody></table></div>
-    <h2 id="conjuntos">Evaluation sets</h2>
-    <p>They measure different things and barely overlap, so the system has no single “n”.</p>
-    <div class="tablewrap"><table class="data"><thead><tr><th>Set</th><th>Size</th><th>Origin</th><th>Use</th></tr></thead><tbody><tr><td>Clean COAH test</td><td>269</td><td>Real, TripAdvisor</td><td>Measure the classifier</td></tr><tr><td>AHR</td><td>11,414</td><td>Real, TripAdvisor, 2021</td><td>Measure the classifier on unseen reviews</td></tr><tr><td>SFU</td><td>50</td><td>Real, ciao.es</td><td>Measure it on another website</td></tr><tr><td>Demo queue</td><td>54</td><td>14 synthetic and 40 real from AHR</td><td>Full system and gate</td></tr><tr><td>Blind comparison</td><td>30, 28 rated</td><td>Written by me</td><td>Choose between prompt versions</td></tr><tr><td>Calibration</td><td>24</td><td>Replies from 3 prompt versions</td><td>Judge against a person</td></tr><tr><td>Seeds</td><td>10</td><td>Replies from the first versions</td><td>Real generator failures</td></tr><tr><td>This page&#x27;s selector</td><td>15</td><td>6 written by me and 9 illustrative</td><td>Show cases; not a sample</td></tr></tbody></table></div>
+  <section class="prose" aria-labelledby="como">
+    <h2 id="como">How it works</h2>
+    <div class="steps pairs"><div><h3>1. Understand the review</h3><p>A classifier decides whether the review is negative, neutral or positive, and how confident it is. It is mRoBERTa, a model trained for Spanish that I fine-tuned on real reviews, averaged over three seeds. On 11,414 reviews it never saw in training, it reaches a macro F1 of 0.781: a score from 0 to 1 that weighs all three classes equally. The neutral class, the hardest, stays at 0.549.</p></div><div><h3>2. Find what it can say</h3><p>A language model writes well, but it tends to <b>make things up</b>. To limit that, it gets the hotel's full fact sheet and, through RAG, the policies and approved replies closest to this review. RAG (Retrieval-Augmented Generation) here means finding the relevant documents and handing them to the model before it writes. For policies, it combines search by keywords (BM25) and by meaning (bge-m3 embeddings).</p></div><div><h3>3. Draft and check</h3><p>Qwen3.6 27B, an LLM running locally, works out what the guest is talking about and drafts the reply. Two filters then check it: fixed rules (services missing from the fact sheet, compensation, people's names) and a second model, Gemma 4 12B, which I call the judge. It comes from another family so it does not share the generator's biases: it answers yes or no to 8 criteria and quotes the sentence behind each failure.</p></div><div><h3>4. Decide who publishes</h3><p>The gate makes the final decision. Negative and neutral reviews, doubtful ones (confidence below 0.85), traps and any accident or legal risk go to a person. Of the 54 reviews in the test, 8 pass every check. Of the 24 real 1 to 3★ reviews, none was published without review. It is not auto-publishing: it prepares drafts, at a median of 48 s per review on one PC.</p></div></div>
+  </section>
+
+  <section class="prose" aria-labelledby="aprendido">
+    <h2 id="aprendido">What I learned along the way</h2>
+    <div class="steps"><div><h3>The first figures were worthless</h3><p>This project began as an earlier version that appeared to work, but the result was very poor, so I audited it: 50.8% of the final exam (the test set) also appeared, word for word, in the training data. The model already knew the answers. This is called data leakage (<a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/reports/data_report.md#5-reproducción-de-la-fuga-del-proyecto-original">reproduction</a>). It also picked the model with that same exam and had never seen a 4★ review. I rebuilt it from scratch: duplicates removed before splitting, and a separate validation set.</p></div><div><h3>More variety did not mean better replies</h3><p>Almost every reply opens the same way, so I tried more varied versions of the prompt, the model's instructions. Comparing them blind, without knowing which was which, I preferred the current one on 15 reviews and the newer one on 10, a difference that could be chance (p = 0.42). I kept the current one, and the replies are still repetitive. I will try again when I have more reviews, so as not to fit the prompt to these same cases and overfit.</p></div><div><h3>An automatic evaluator has to be evaluated too</h3><p>I compared the judge with my own blind labels on 24 replies. It failed 7 and I failed 4, all of them among its 7: it missed none of mine, with 3 false alarms. The sample is small, and reading other replies I found implicit admissions of fault that it lets through (<a href="#p08">p08</a> and <a href="#rag-carteles">rag-carteles</a>). So anything delicate always has to go to a person.</p></div></div>
+  </section>
+
+  <section class="prose" aria-labelledby="limites">
+    <h2 id="limites">What has not been tested</h2>
+    <ul>
+      <li><strong>A real hotel.</strong> The hotels' fact sheets and policies are made up, and some of the cases are synthetic. It would need testing with a real hotel's documents.</li>
+      <li><strong>Whether it pays off.</strong> I have not measured how much work it saves or what error rate would be acceptable in production.</li>
+      <li><strong>More people.</strong> Almost all the human evaluation is mine, and the sample is small. It needs a second evaluator.</li>
+      <li><strong>Trap reviews.</strong> When it detects hidden instructions or a joke, the reply is deliberately ironic (p02, adv-inyeccion, vampiros). I accept it in context, but the judge fails the tone. Pending improvement: a neutral reply when an injection is detected.</li>
+      <li><strong>Classifier confidence.</strong> It is the mean probability of the chosen class across the ensemble's 3 seeds. It almost never exceeds 0.93, so it cannot yet be read as a true probability of being right.</li>
+    </ul>
+  </section>
+
+  <section class="evidence" aria-labelledby="evidencia">
+    <h2 id="evidencia">Evidence</h2>
+    <p>Every figure on this page comes from a file in the repository. Here they all are, with their sample size and source. I built the project with Claude Code: <a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM#how-it-was-made">what I decided and what was done with the tool</a>.</p>
+    <details class="detail" id="resultados">
+      <summary>All the results</summary>
+      <p class="tablenote">Each figure links to its file. Intervals on proportions are Wilson intervals; those on F1 come from each report's bootstrap. Calibration used rubric v2, and production uses v2g.</p>
+      <div class="tablewrap"><table class="data"><thead><tr><th>Set</th><th>n</th><th>Metric</th><th>Value</th><th>95% CI</th><th>Source</th></tr></thead><tbody><tr><td>AHR, never used for training</td><td class="n">11,414</td><td>F1 macro</td><td>0.781</td><td>0.770 to 0.791</td><td><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/results/phase3b_realista.json">phase3b_realista.json</a></td></tr><tr><td>AHR</td><td class="n">11,414</td><td>F1 of the neutral class</td><td>0.549</td><td>—</td><td><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/results/phase3b_realista.json">phase3b_realista.json</a></td></tr><tr><td>AHR, confidence ≥ 0.85</td><td class="n">8,487</td><td>Error</td><td>264 of 8,487 (3.1%)</td><td>2.8% to 3.5%</td><td><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/results/phase3b_realista.json">phase3b_realista.json</a></td></tr><tr><td>Clean COAH test</td><td class="n">269</td><td>F1 macro</td><td>0.797</td><td>0.732 to 0.853</td><td><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/results/phase3b_realista.json">phase3b_realista.json</a></td></tr><tr><td>COAH, confidence ≥ 0.85</td><td class="n">191</td><td>Error</td><td>2 of 191 (1.0%)</td><td>0.3% to 3.7%</td><td><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/results/phase3b_realista.json">phase3b_realista.json</a></td></tr><tr><td>SFU, another website</td><td class="n">50</td><td>Correct</td><td>39 of 50 (78%)</td><td>64.8% to 87.2%</td><td><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/results/phase3b_realista.json">phase3b_realista.json</a></td></tr><tr><td>Calibration, rubric v2</td><td class="n">24</td><td>Judge precision</td><td>4 of 7 (57%)</td><td>25.0% to 84.2%</td><td><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/reports/phase6_calibracion.md">phase6_calibracion.md</a></td></tr><tr><td>Calibration, rubric v2</td><td class="n">24</td><td>Judge recall</td><td>4 of 4 (100%)</td><td>51.0% to 100.0%</td><td><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/reports/phase6_calibracion.md">phase6_calibracion.md</a></td></tr><tr><td>Calibration, rubric v2</td><td class="n">24</td><td>Kappa on “does not admit fault”</td><td>0.70</td><td>—</td><td><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/reports/phase6_calibracion.md">phase6_calibracion.md</a></td></tr><tr><td>Seeds, rubric v2</td><td class="n">10</td><td>The person&#x27;s failures the judge detects</td><td>1 of 3 (33%)</td><td>6.1% to 79.2%</td><td><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/results/phase6_semillas.json">phase6_semillas.json</a></td></tr><tr><td>Demo queue</td><td class="n">54</td><td>Pass every check</td><td>8 of 54 (15%)</td><td>7.7% to 26.6%</td><td><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/results/pipeline_cola.json">pipeline_cola.json</a></td></tr><tr><td>Real 1 to 3★ reviews</td><td class="n">24</td><td>Published without review (by design)</td><td>0 of 24 (0.0%)</td><td>0.0% to 13.8%</td><td><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/results/pipeline_cola.json">pipeline_cola.json</a></td></tr><tr><td>Blind comparison, v6 and v9</td><td class="n">25</td><td>Prefers v6, excluding 3 ties (p = 0.42)</td><td>15 of 25 (60%)</td><td>40.7% to 76.6%</td><td><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/reports/phase9_ciegas.md">phase9_ciegas.md</a></td></tr><tr><td>Blind comparison, v6</td><td class="n">30</td><td>Publishable as it stands</td><td>8 of 30 (27%)</td><td>14.2% to 44.4%</td><td><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/reports/phase9_ciegas.md">phase9_ciegas.md</a></td></tr><tr><td>Latency on one PC</td><td class="n">15</td><td>Median time to verdict</td><td>48.2 s (p90 52.2 s)</td><td>—</td><td><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/reports/phase9_latencia.md">phase9_latencia.md</a></td></tr></tbody></table></div>
+    </details>
+    <details class="detail" id="matriz">
+      <summary>The judge against my rating</summary>
+      <p class="tablenote">Only 6 cases have my verdict, with the criteria written before generating, and 1 fails: the matrix shows which cases they are, it does not measure the judge. Each ID opens the case in the viewer.</p>
+      <div class="tablewrap"><table class="data matrix"><thead><tr><td></td><th scope="col">Me: passes</th><th scope="col">Me: fails</th></tr></thead><tbody><tr><th scope="row">Judge approves</th><td><a href="#p01"><code>p01</code></a> <a href="#p09"><code>p09</code></a> <a href="#p18"><code>p18</code></a> <a href="#p20"><code>p20</code></a></td><td><a href="#p08"><code>p08</code></a></td></tr><tr><th scope="row">Judge fails</th><td><a href="#p02"><code>p02</code></a></td><td>None</td></tr></tbody></table></div>
+    </details>
+    <details class="detail" id="conjuntos">
+      <summary>Evaluation sets</summary>
+      <p class="tablenote">They measure different things and barely overlap, so the system has no single “n”.</p>
+      <div class="tablewrap"><table class="data"><thead><tr><th>Set</th><th>Size</th><th>Origin</th><th>Use</th></tr></thead><tbody><tr><td>Clean COAH test</td><td>269</td><td>Real, TripAdvisor</td><td>Measure the classifier</td></tr><tr><td>AHR</td><td>11,414</td><td>Real, TripAdvisor, 2021</td><td>Measure the classifier on unseen reviews</td></tr><tr><td>SFU</td><td>50</td><td>Real, ciao.es</td><td>Measure it on another website</td></tr><tr><td>Demo queue</td><td>54</td><td>14 synthetic and 40 real from AHR</td><td>Full system and gate</td></tr><tr><td>Blind comparison</td><td>30, 28 rated</td><td>Written by me</td><td>Choose between prompt versions</td></tr><tr><td>Calibration</td><td>24</td><td>Replies from 3 prompt versions</td><td>Judge against a person</td></tr><tr><td>Seeds</td><td>10</td><td>Replies from the first versions</td><td>Real generator failures</td></tr><tr><td>This page&#x27;s selector</td><td>15</td><td>6 written by me and 9 illustrative</td><td>Show cases; not a sample</td></tr></tbody></table></div>
+    </details>
+    <details class="detail">
+      <summary>For technical reviewers</summary>
+      <ul>
+        <li><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/reports/phase3b_realista.md">Out-of-distribution evaluation</a>: the classifier measured on reviews it never saw, not only on the clean test set.</li>
+        <li><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/reports/phase6_calibracion.md">Judge against a person</a>: where they agree and how the labels were corrected.</li>
+        <li><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/reports/phase9_regresion.md">Regression</a> and <a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/reports/phase9_ciegas.md">blind comparison</a>: why v6 stays over later versions.</li>
+        <li><a href="https://github.com/JaviRomano/Spanish-hotel-review-LLM/blob/main/src/caso_uso_llm/ollama_gpu.py"><code>ollama_gpu.py</code></a>: the check that prevents running on the CPU without warning, added after that incident.</li>
+      </ul>
+    </details>
   </section>
 
   <footer>
@@ -1991,7 +1987,7 @@ footer { margin-top: 34px; color: var(--muted); font-size: .86rem; border-top: 1
   },
   {
    "id": "adv-reembolso",
-   "ensena": "A failure the gate catches: the judge sees an implicit admission of fault and the review goes to a person."
+   "ensena": "A failure the system catches: the judge sees an implicit admission of fault and the review goes to a person."
   },
   {
    "id": "p02",
@@ -2260,9 +2256,13 @@ footer { margin-top: 34px; color: var(--muted); font-size: .86rem; border-top: 1
   $("next").addEventListener("click", () => move(1));
   $("tour").addEventListener("click", () => { step = 0; show(tour[0].id); });
   $("tourexit").addEventListener("click", () => { step = null; show(select.value); });
+  const reveal = id => {
+    const target = id && document.getElementById(id), fold = target && target.closest("details");
+    if (fold) { fold.open = true; target.scrollIntoView({block: "start"}); }
+  };
   window.addEventListener("hashchange", () => {
     const id = location.hash.slice(1);
-    if (!byId[id]) return;
+    if (!byId[id]) { reveal(id); return; }
     show(id); $("summary").scrollIntoView({block: "start"});
   });
 
@@ -2276,6 +2276,7 @@ footer { margin-top: 34px; color: var(--muted); font-size: .86rem; border-top: 1
   });
 
   show(location.hash.slice(1));
+  reveal(location.hash.slice(1));
 })();
 </script>
 </body>

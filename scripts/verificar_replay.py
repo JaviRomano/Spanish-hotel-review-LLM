@@ -34,7 +34,7 @@ SPANISH = ("pasa a una persona", "se publica sola", "Mi valoración", "Puerta", 
 # Texto sobre fondo de color: selector del elemento cuyo color y fondo se comparan
 CONTRAST = [".pill.ok", ".pill.no", ".pill.partial", ".pill.mode", ".pill.neutral", ".note",
             ".rating p", ".rating .head", ".alertbox", ".stamp", ".reasons li",
-            ".headline", ".evidence > p", "table.data td", ".label", ".btn.primary", "mark",
+            ".steps p", ".evidence > p", "table.data td", ".label", ".btn.primary", "mark",
             ".inspect td", ".criterion p", ".flow li span"]  # fmt: skip
 
 
@@ -80,12 +80,12 @@ def check_english(browser) -> list[str]:
         problems += [f"inglés {width}: error de consola: {e}" for e in errors]
         page.close()
     page = browser.new_page(viewport={"width": 1280, "height": 800})
-    page.goto(PAGE_EN)
-    page.click(".fold summary")
-    page.click('a[href="#resultados"]')
+    page.goto(PAGE_EN + "#resultados")
     page.wait_for_timeout(200)
-    if page.evaluate("location.hash") != "#resultados":
-        problems.append("inglés: el enlace a resultados no funciona")
+    if not page.locator("#resultados table").is_visible():
+        problems.append("inglés: el enlace a resultados no abre la tabla")
+    page.goto(PAGE_EN + "#matriz")
+    page.wait_for_timeout(200)
     page.locator("table.matrix a").last.click()
     page.wait_for_timeout(200)
     if page.input_value("#case") != page.evaluate("location.hash.slice(1)"):
@@ -167,7 +167,7 @@ def check_form(browser) -> list[str]:
 
 
 def check_text(browser) -> list[str]:
-    """Jerarquía de títulos sin saltos y un solo «Por eso» en el texto y los pasos."""
+    """Jerarquía de títulos sin saltos y como mucho un «Por eso» en el texto y los pasos."""
     page = browser.new_page()
     page.goto(PAGE)
     levels = page.evaluate("[...document.querySelectorAll('h1,h2,h3,h4')].map(h => +h.tagName[1])")
@@ -176,8 +176,8 @@ def check_text(browser) -> list[str]:
     problems = []
     if levels[0] != 1 or any(b - a > 1 for a, b in zip(levels, levels[1:], strict=False)):
         problems.append(f"títulos: la jerarquía tiene saltos: {levels}")
-    if len(re.findall("por eso", html, re.IGNORECASE)) != 1:
-        problems.append("texto: debe quedar un solo «Por eso»")
+    if len(re.findall("por eso", html, re.IGNORECASE)) > 1:
+        problems.append("texto: sobra algún «Por eso»")
     return problems
 
 
@@ -186,15 +186,18 @@ def check_links(browser) -> list[str]:
     problems = []
     page = browser.new_context(viewport={"width": 375, "height": 760}, has_touch=True).new_page()
     page.goto(PAGE)
-    page.click(".fold summary")
-    page.click('a[href="#resultados"]')
+    page.click('.jump a[href="#como"]')
     page.wait_for_timeout(200)
-    if page.evaluate("location.hash") != "#resultados":
+    if page.evaluate("location.hash") != "#como":
         problems.append("enlaces: un enlace a una sección lo captura el visor de casos")
     page.goto(PAGE + "#conjuntos")
     page.wait_for_timeout(200)
     if page.evaluate("location.hash") != "#conjuntos":
         problems.append("enlaces: abrir la página en una sección no la respeta")
+    if not page.locator("#conjuntos table").is_visible():
+        problems.append("enlaces: una sección plegada no se abre al llegar a ella")
+    page.goto(PAGE + "#matriz")
+    page.wait_for_timeout(200)
     page.locator("table.matrix a").last.click()
     page.wait_for_timeout(200)
     if page.input_value("#case") != page.evaluate("location.hash.slice(1)"):
@@ -223,10 +226,16 @@ def main() -> int:
                 page.on(
                     "console", lambda m, errors=errors: m.type == "error" and errors.append(m.text)
                 )
-                for view, hash_ in (("cabecera", ""), ("p08", "#p08"), ("p02", "#p02")):
+                views = (
+                    ("cabecera", ""),
+                    ("p08", "#p08"),
+                    ("p02", "#p02"),
+                    ("resultados", "#resultados"),
+                )
+                for view, hash_ in views:
                     page.goto(PAGE + hash_)
                     page.wait_for_timeout(300)
-                    if hash_:
+                    if hash_ in ("#p08", "#p02"):
                         page.locator("#summary").scroll_into_view_if_needed()
                     page.screenshot(path=SHOTS / f"{view}_{width}_{theme}.png")
                     overflow = page.evaluate("document.documentElement.scrollWidth") - width

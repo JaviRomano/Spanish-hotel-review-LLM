@@ -14,7 +14,17 @@ It is a rebuild of a first attempt (in [`legacy/`](legacy/), tag `v1-original`) 
 
 *Guided tour of the [demo page](https://javiromano.github.io/Spanish-hotel-review-LLM/en/), which replays saved results. Reviews and replies stay in Spanish, the language the system works in.*
 
+## In short
+
+- **What it does:** it reads a hotel review, works out its sentiment, finds what the hotel can truthfully say, drafts a reply and checks it.
+- **What it is not:** auto-publishing. In the test, 8 of 54 reviews pass every check; anything negative, neutral, doubtful or legally risky goes to a person.
+- **How it is built:** a fine-tuned classifier (mRoBERTa), RAG over fact sheets and policies, a local LLM that writes (Qwen3.6 27B) and another from a different family that judges it (Gemma 4 12B), all on one AMD GPU.
+- **What it shows:** auditing my own first version found that half of its test set was also in training, so I rebuilt it. The sections below give the evidence, including what still fails.
+
 ## Status
+
+<details>
+<summary>Phase by phase</summary>
 
 | Phase | Content | Status |
 |---|---|---|
@@ -27,6 +37,8 @@ It is a rebuild of a first attempt (in [`legacy/`](legacy/), tag `v1-original`) 
 | 7. Distillation (optional) | LoRA on a small model to replace the 27B generator | Not done: out of scope for now, the 27B model runs locally fast enough on the GPU |
 | 8. Service | End-to-end pipeline (CLI and CSV batch) and Gradio demo with a review queue | Done ([demo](#full-pipeline-and-demo)) |
 | 9. Demo and hardening | Live demo with real people, new guardrails from what they wrote, trap detection, latency (75 → 49 s per review), asynchronous judge, replay mode, prompt regression and blind human comparison | Done ([guardrails](#full-pipeline-and-demo), [prompt versions](#prompt-versions-after-v6-why-the-pipeline-stays-on-v6)); a smaller 9B generator was rejected ([report](reports/phase9_qwen3.5-9b.md)) |
+
+</details>
 
 ## Key figures
 
@@ -349,7 +361,17 @@ Es la reconstrucción de un primer intento (en [`legacy/`](legacy/), etiqueta `v
 
 *Recorrido guiado de la [página de demostración](https://javiromano.github.io/Spanish-hotel-review-LLM/), que repite resultados ya guardados.*
 
+## En resumen
+
+- **Qué hace:** lee una reseña de hotel, identifica su sentimiento, busca lo que el hotel puede decir con verdad, redacta una respuesta y la revisa.
+- **Qué no es:** autopublicación. En la prueba, 8 de 54 reseñas pasan todos los controles; lo negativo, lo neutral, lo dudoso y lo que tenga riesgo legal va a una persona.
+- **Cómo está hecho:** un clasificador ajustado (mRoBERTa), RAG sobre fichas y políticas, un LLM local que redacta (Qwen3.6 27B) y otro de otra familia que lo juzga (Gemma 4 12B), todo en una GPU AMD.
+- **Qué demuestra:** al auditar mi primera versión descubrí que la mitad de su test estaba también en el entrenamiento, así que lo rehíce. Las secciones siguientes dan la evidencia, incluido lo que aún falla.
+
 ## Estado
+
+<details>
+<summary>Fase por fase</summary>
 
 | Fase | Contenido | Estado |
 |---|---|---|
@@ -362,6 +384,8 @@ Es la reconstrucción de un primer intento (en [`legacy/`](legacy/), etiqueta `v
 | 7. Destilación (opcional) | LoRA sobre un modelo pequeño para sustituir al generador de 27B | No hecha: fuera de alcance por ahora, el modelo de 27B ya va rápido en local con la GPU |
 | 8. Servicio | Pipeline completo (línea de comandos y lotes con CSV) y demo en Gradio con cola de revisión | Hecho ([demo](#pipeline-completo-y-demo)) |
 | 9. Demo y refuerzo | Demo en vivo con personas reales, guardarraíles nuevos a partir de lo que escribieron, detección de trampas, latencia (de 75 a 49 s por reseña), juez asíncrono, modo repetición, regresión de prompts y comparación humana a ciegas | Hecho ([guardarraíles](#pipeline-completo-y-demo), [versiones del prompt](#versiones-del-prompt-posteriores-a-v6-por-qué-se-mantiene-v6)); se descartó un generador más pequeño, de 9B ([informe](reports/phase9_qwen3.5-9b.md)) |
+
+</details>
 
 ## Cifras clave
 

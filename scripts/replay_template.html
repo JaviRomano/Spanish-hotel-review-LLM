@@ -90,10 +90,18 @@ p { margin: 0; }
 }
 .hero .intro { display: grid; gap: 16px; }
 .lead { max-width: 62ch; font-size: 1.06rem; }
-.headline, .rebuilt { max-width: 70ch; margin: 0; }
-.evidence { margin-top: 44px; display: grid; gap: 12px; }
-.evidence > p { max-width: 70ch; color: var(--muted); margin: 0; }
-.evidence h2 { scroll-margin-top: 16px; }
+.jump { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .95rem; }
+.deskintro { max-width: 70ch; margin-bottom: 14px; }
+.prose, .evidence { margin-top: 48px; border-top: 2px solid var(--ink); padding-top: 14px; display: grid; gap: 14px; }
+.prose > *, .evidence > *, .evidence details > * { min-width: 0; }
+.prose h2, .evidence h2 { font-size: 1.5rem; scroll-margin-top: 16px; }
+.prose h3 { font: 700 1.02rem/1.35 var(--body); margin-bottom: 4px; }
+.prose > ul, .evidence > p, .tablenote { max-width: 70ch; }
+.prose > ul { margin: 0; padding-left: 20px; display: grid; gap: 8px; }
+.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 22px 40px; }
+.steps > div { min-width: 0; }
+.steps.pairs { grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); }
+.tablenote { color: var(--muted); margin-bottom: 10px; }
 .tablewrap { overflow-x: auto; }
 table.data { border-collapse: collapse; width: 100%; font-size: .9rem; }
 table.data th { text-align: left; font-weight: 700; border-bottom: 1px solid var(--ink); padding: 6px 12px 6px 0; white-space: nowrap; }
@@ -129,11 +137,6 @@ table.matrix a { display: inline-block; margin-right: 12px; }
 .formstatus { font-weight: 700; min-height: 1.4em; }
 .formstatus.bad { color: var(--fail); } .formstatus.good { color: var(--pass); }
 #addreview, #sendform { justify-self: start; }
-details.fold { max-width: 70ch; border-top: 1px solid var(--rule); }
-details.fold summary { cursor: pointer; padding: 9px 0; font-weight: 700; color: var(--accent); }
-details.fold ul { margin: 0 0 12px; padding-left: 20px; color: var(--muted); }
-details.fold li + li { margin-top: 6px; }
-details.fold p { color: var(--muted); margin-bottom: 12px; }
 
 /* Diagrama: el recorrido de una reseña por el mostrador */
 .flow { border-left: 1px solid var(--rule); padding-left: 28px; }
@@ -236,7 +239,8 @@ pre.ficha { white-space: pre-wrap; background: var(--sheet); border: 1px solid v
 dl.facts { margin: 0 0 14px; }
 dl.facts dt { font: 600 .82rem var(--body); color: var(--muted); margin-top: 10px; }
 dl.facts dd { margin: 2px 0 0; }
-details.limits { margin-top: 0; }
+details.detail ul { margin: 0 0 14px; padding-left: 20px; }
+.evidence details.detail { margin-top: 0; scroll-margin-top: 16px; }
 footer { margin-top: 34px; color: var(--muted); font-size: .86rem; border-top: 1px solid var(--rule); padding-top: 14px; max-width: 90ch; }
 </style>
 </head>
@@ -259,23 +263,21 @@ footer { margin-top: 34px; color: var(--muted); font-size: .86rem; border-top: 1
   <header class="hero">
     <div class="intro">
       <h1>¿Cómo responde una IA a las reseñas difíciles de un hotel?</h1>
-      <p class="lead">Un hotel responde a cientos de reseñas, y una sola frase mal escrita puede admitir una culpa que nadie ha comprobado. Este sistema redacta la respuesta, la revisa y decide si se publica sola o pasa a una persona.</p>
-      <p class="why">Trabajé años en hostelería respondiendo a incidencias de clientes, y sé lo difícil que es hacerlo bien.</p>
-      <p class="headline">__HEADLINE__</p>
-      <p class="rebuilt">__REBUILT__</p>
+      <p class="lead">Un hotel recibe cientos de reseñas, y en una frase mal escrita se puede admitir una culpa que nadie ha comprobado. Este sistema interpreta la reseña, redacta la respuesta, la revisa y decide si se publica sola o pasa a una persona.</p>
+      <p class="why">Trabajé años en hostelería respondiendo a incidencias de clientes y conozco lo delicado que es hacerlo bien.</p>
       <div class="actions">
-        <a class="btn primary" href="__LINKEDIN__" target="_blank" rel="noopener">Contactar</a>
-        <button class="btn secondary" id="livebtn" type="button" aria-expanded="false" aria-controls="livepanel">Pedir una prueba en vivo</button>
+        <a class="btn primary" href="__LINKEDIN__" target="_blank" rel="noopener">Contacto</a>
+        <button class="btn secondary" id="livebtn" type="button" aria-expanded="false" aria-controls="livepanel">Pruébalo</button>
       </div>
       <div class="livepanel" id="livepanel" hidden>
         <!--SIN_FORM--><p id="livetext">Esta página repite resultados ya generados: aquí no se ejecuta ningún modelo. Envíame por <a href="__LINKEDIN__" target="_blank" rel="noopener">LinkedIn</a> hasta 5 reseñas, inventadas o reales sin datos personales, y en una sesión en directo desde mi ordenador verás, para cada una, la respuesta, si se publicaría o pasaría a una persona y por qué, y cuánto tarda.</p><!--/SIN_FORM-->
         <!--CON_FORM--><form id="liveform" novalidate>
-          <p>Esta página repite resultados ya generados. Escribe de 1 a 5 reseñas, inventadas o reales sin datos personales. Las pasaré por el sistema en mi ordenador y te enviaré, para cada una, la respuesta, si se publicaría o pasaría a una persona, y por qué.</p>
+          <p>Esta página muestra resultados ya generados. Escribe una o varias reseñas, inventadas o reales, sin datos personales. Se las paso al sistema y te envío las respuestas y justificaciones.</p>
           <div id="formreviews"></div>
           <button class="btn secondary" id="addreview" type="button">Añadir otra reseña</button>
           <div class="formrow">
             <div class="field"><label for="f-nick">Nick (no tu nombre)</label><input id="f-nick" maxlength="30" autocomplete="off" required></div>
-            <div class="field"><label for="f-contact">Dónde te envío el resultado</label><input id="f-contact" maxlength="120" placeholder="Perfil de LinkedIn o correo" required></div>
+            <div class="field"><label for="f-contact">Dónde te envío el resultado</label><input id="f-contact" maxlength="120" placeholder="email" required></div>
           </div>
           <div class="trap" aria-hidden="true"><label for="f-web">No rellenar</label><input id="f-web" tabindex="-1" autocomplete="off"></div>
           <label class="check"><input id="f-consent" type="checkbox" required> <span>Acepto que mis reseñas y mi contacto se envíen a través de Google Forms y se guarden para evaluar y mejorar el sistema y enviarme el resultado. No se publicarán. No incluyas datos personales en las reseñas.</span></label>
@@ -283,42 +285,7 @@ footer { margin-top: 34px; color: var(--muted); font-size: .86rem; border-top: 1
           <p class="formstatus" id="formstatus" role="status"></p>
         </form><!--/CON_FORM-->
       </div>
-      <div>
-        <details class="fold">
-          <summary>Lo que funciona hoy y lo que todavía no he probado</summary>
-          <ul>
-            <li><strong>Funciona</strong>, en local, con reseñas públicas y casos sintéticos: el clasificador, la recuperación de contexto, el juez y las reglas, cada uno medido por separado (<a href="__REPO__#key-figures">cifras clave</a>). Las reseñas negativas, dudosas, trampa o con accidentes y reclamaciones legales pasan siempre por una persona.</li>
-            <li><strong>Qué aporta hoy:</strong> prepara borradores y la persona decide; no es autopublicación. Solo pasan todos los controles algunas reseñas positivas, y las negativas van siempre a una persona (<a href="#resultados">resultados</a>).</li>
-            <li><strong>Sin probar todavía:</strong> el comportamiento con reseñas y fichas de un hotel real, una tasa de error aceptable para producción y el ahorro de trabajo. La evaluación humana es pequeña (<a href="#conjuntos">conjuntos de evaluación</a>), y las fichas y políticas de los hoteles son inventadas.</li>
-          </ul>
-        </details>
-        <details class="fold">
-          <summary>Qué hay en esta página y cómo se hizo</summary>
-          <ul>
-            <li><strong>Reseñas de prueba:</strong> escritas a propósito para ponerlo a prueba (amenazas legales, instrucciones ocultas, datos falsos, ataques al personal), con el criterio de una buena respuesta escrito antes de generar y mi valoración después.</li>
-            <li><strong>Casos ilustrativos:</strong> casos sintéticos y reseñas reales del corpus Andalusian Hotels' Reviews (AHR), de origen TripAdvisor, con una nota escrita después de leer la respuesta.</li>
-          </ul>
-          <p>Ni las reglas ni el juez son infalibles: lo dudoso o delicado lo decide una persona.</p>
-          <p><a href="__REPO__#cómo-se-hizo">Qué decidí yo y qué se hizo con Claude Code</a>.</p>
-        </details>
-        <details class="fold">
-          <summary>Por qué se rehízo</summary>
-          <p>Este proyecto nace de auditar la primera versión. Además de la fuga, que venía de sobremuestrear antes de partir el dataset:</p>
-          <ul>
-            <li><strong>Selección con el test:</strong> el modelo se elegía con el test, sin conjunto de validación.</li>
-            <li><strong>Falta el 4★:</strong> «positivo» significaba solo 5★, y en producción llegan reseñas de 4★.</li>
-          </ul>
-        </details>
-        <details class="fold">
-          <summary>Para revisores técnicos</summary>
-          <ul>
-            <li><a href="__REPO__/blob/main/reports/phase3b_realista.md">Evaluación fuera de distribución</a>: el clasificador medido con reseñas que no vio, no solo con el test limpio.</li>
-            <li><a href="__REPO__/blob/main/reports/phase6_calibracion.md">Juez frente a una persona</a>: dónde coinciden y cómo se corrigieron las etiquetas.</li>
-            <li><a href="__REPO__/blob/main/reports/phase9_regresion.md">Regresión</a> y <a href="__REPO__/blob/main/reports/phase9_ciegas.md">comparación a ciegas</a>: por qué se mantiene v6 frente a versiones posteriores.</li>
-            <li><a href="__REPO__/blob/main/src/caso_uso_llm/ollama_gpu.py"><code>ollama_gpu.py</code></a>: la comprobación que impide ejecutar en CPU sin avisar, añadida tras ese incidente.</li>
-          </ul>
-        </details>
-      </div>
+      <nav class="jump" aria-label="En esta página"><a href="#casos">Ver los casos</a><a href="#como">Cómo funciona</a><a href="#aprendido">Qué aprendí</a><a href="#limites">Qué falta</a><a href="#evidencia">Evidencia</a></nav>
     </div>
 
     <aside class="flow" aria-labelledby="flow-title">
@@ -329,24 +296,25 @@ footer { margin-top: 34px; color: var(--muted); font-size: .86rem; border-top: 1
         <li><b>Ficha del hotel y políticas</b><span>ficha completa · RAG: políticas y respuestas aprobadas</span></li>
         <li><b>Borrador</b><span>Qwen3.6 27B · aspectos en JSON y respuesta</span></li>
         <li><b>Reglas y juez</b><span>Gemma 4 12B · 8 criterios con evidencia</span></li>
-        <li class="gate"><b>Puerta</b><span>se publica sola o pasa a una persona</span></li>
+        <li class="gate"><b>Puerta (decisión final)</b><span>se publica sola o pasa a una persona</span></li>
       </ol>
-      <p class="note">Los modelos corren en un PC, en una sola GPU: ninguna reseña pasa por un modelo externo.</p>
+      <p class="note">Los modelos corren en un PC, en una sola GPU: <b>ninguna reseña pasa por un modelo externo</b>.</p>
     </aside>
   </header>
 
   <section class="desk" aria-labelledby="casos">
     <h2 class="deskhead" id="casos">Casos</h2>
+    <p class="deskintro">__CASES_INTRO__</p>
     <div class="picker">
       <label for="case">Reseña</label>
       <button class="nav" id="prev" type="button" aria-label="Anterior">←</button>
       <select id="case"></select>
       <button class="nav" id="next" type="button" aria-label="Siguiente">→</button>
-      <button class="btn secondary" id="tour" type="button">Recorrido guiado</button>
+      <button class="btn secondary" id="tour" type="button">Guía orientativa</button>
     </div>
     <div class="tourbar" id="tourbar" role="status" aria-live="polite">
       <p><span class="step" id="tourstep"></span><span id="tourtext"></span></p>
-      <button type="button" id="tourexit">Salir del recorrido</button>
+      <button type="button" id="tourexit">Salir de la guía</button>
     </div>
 
     <div class="summary" id="summary" aria-label="Resumen del caso"></div>
@@ -361,7 +329,7 @@ footer { margin-top: 34px; color: var(--muted); font-size: .86rem; border-top: 1
       <div class="right">
         <article class="letter" aria-labelledby="letter-hotel">
           <div class="letterhead">
-            <div><h3 id="letter-hotel"></h3><span class="label">Respuesta del establecimiento · borrador</span></div>
+            <div><h3 id="letter-hotel"></h3><span class="label">Respuesta generada · borrador</span></div>
             <div class="stamp" id="stamp"></div>
           </div>
           <pre class="reply" id="reply"></pre>
@@ -382,28 +350,56 @@ footer { margin-top: 34px; color: var(--muted); font-size: .86rem; border-top: 1
       <summary>Clasificador y contexto recuperado</summary>
       <div id="detail-body"></div>
     </details>
-    <details class="detail limits">
-      <summary>Limitaciones conocidas</summary>
-      <ul>
-        <li><strong>Respuestas formularias.</strong> Casi todas empiezan igual («Estimado cliente: Muchas gracias por compartir…») y repiten frases entre casos. Una versión del prompt que lo corregía perdió en una valoración humana a ciegas. Se volverá a intentar con más reseñas valoradas por personas, para no ajustar el prompt a estos mismos casos.</li>
-        <li><strong>Reseñas trampa.</strong> Cuando detecta instrucciones ocultas o una broma, la respuesta es irónica a propósito (p02, adv-inyeccion, vampiros). Yo la doy por buena en contexto, pero el juez la suspende por tono porque no distingue esa excepción, y hay que afinarlo. Las trampas pasan siempre por una persona. Mejora pendiente: una respuesta neutra cuando se detecta una inyección.</li>
-        <li><strong>El juez no lo ve todo.</strong> Deja pasar algunas admisiones implícitas de culpa (p08, rag-carteles). Por eso lo negativo, lo dudoso y cualquier accidente o riesgo legal pasan siempre por una persona.</li>
-        <li><strong>Confianza del clasificador.</strong> Es la probabilidad media de la clase elegida en las 3 semillas del ensamble. Casi nunca pasa de 0,93, y por debajo de 0,85 la reseña va a una persona.</li>
-        <li>Las fichas de hotel, las políticas y parte de los casos son sintéticos.</li>
-      </ul>
-    </details>
   </section>
 
-  <section class="evidence" aria-labelledby="matriz">
-    <h2 id="matriz">El juez frente a mi valoración</h2>
-    <p>__MATRIX_NOTE__</p>
-    <div class="tablewrap">__MATRIX__</div>
-    <h2 id="resultados">Resultados</h2>
-    <p>Cada cifra enlaza a su fichero. Los intervalos de proporciones son de Wilson; los de F1 vienen del bootstrap de cada informe. La calibración usa la rúbrica v2, y producción usa v2g.</p>
-    <div class="tablewrap">__RESULTS_TABLE__</div>
-    <h2 id="conjuntos">Conjuntos de evaluación</h2>
-    <p>Miden cosas distintas y apenas se solapan, así que no hay una única «n» del sistema.</p>
-    <div class="tablewrap">__SETS_TABLE__</div>
+  <section class="prose" aria-labelledby="como">
+    <h2 id="como">Cómo funciona</h2>
+    __HOW__
+  </section>
+
+  <section class="prose" aria-labelledby="aprendido">
+    <h2 id="aprendido">Lo que aprendí por el camino</h2>
+    __LESSONS__
+  </section>
+
+  <section class="prose" aria-labelledby="limites">
+    <h2 id="limites">Lo que no se ha probado</h2>
+    <ul>
+      <li><strong>Un hotel real.</strong> Las fichas de los hoteles y sus políticas son inventadas, y parte de los casos son sintéticos. Habría que verlo con la documentación de un hotel de verdad.</li>
+      <li><strong>Si compensa.</strong> No he medido cuánto trabajo ahorra ni qué tasa de error sería aceptable en producción.</li>
+      <li><strong>Más personas.</strong> Casi toda la evaluación humana es mía, y la muestra es pequeña. Falta un segundo evaluador.</li>
+      <li><strong>Reseñas trampa.</strong> Cuando detecta instrucciones ocultas o una broma, la respuesta es irónica a propósito (p02, adv-inyeccion, vampiros). Yo la doy por buena en contexto, pero el juez la suspende por tono. Mejora pendiente: una respuesta neutra cuando se detecta una inyección.</li>
+      <li><strong>Confianza del clasificador.</strong> Es la probabilidad media de la clase elegida en las 3 semillas del ensamble. Casi nunca pasa de 0,93, así que todavía no se puede leer como una probabilidad real de acierto.</li>
+    </ul>
+  </section>
+
+  <section class="evidence" aria-labelledby="evidencia">
+    <h2 id="evidencia">Evidencia</h2>
+    <p>Cada cifra de esta página sale de un fichero del repositorio. Aquí están todas, con su tamaño de muestra y su origen. Construí el proyecto con Claude Code: <a href="__REPO__#cómo-se-hizo">qué decidí yo y qué se hizo con la herramienta</a>.</p>
+    <details class="detail" id="resultados">
+      <summary>Todos los resultados</summary>
+      <p class="tablenote">Cada cifra enlaza a su fichero. Los intervalos de proporciones son de Wilson; los de F1 vienen del bootstrap de cada informe. La calibración usa la rúbrica v2, y producción usa v2g.</p>
+      <div class="tablewrap">__RESULTS_TABLE__</div>
+    </details>
+    <details class="detail" id="matriz">
+      <summary>El juez frente a mi valoración</summary>
+      <p class="tablenote">__MATRIX_NOTE__</p>
+      <div class="tablewrap">__MATRIX__</div>
+    </details>
+    <details class="detail" id="conjuntos">
+      <summary>Conjuntos de evaluación</summary>
+      <p class="tablenote">Miden cosas distintas y apenas se solapan, así que no hay una única «n» del sistema.</p>
+      <div class="tablewrap">__SETS_TABLE__</div>
+    </details>
+    <details class="detail">
+      <summary>Para revisores técnicos</summary>
+      <ul>
+        <li><a href="__REPO__/blob/main/reports/phase3b_realista.md">Evaluación fuera de distribución</a>: el clasificador medido con reseñas que no vio, no solo con el test limpio.</li>
+        <li><a href="__REPO__/blob/main/reports/phase6_calibracion.md">Juez frente a una persona</a>: dónde coinciden y cómo se corrigieron las etiquetas.</li>
+        <li><a href="__REPO__/blob/main/reports/phase9_regresion.md">Regresión</a> y <a href="__REPO__/blob/main/reports/phase9_ciegas.md">comparación a ciegas</a>: por qué se mantiene v6 frente a versiones posteriores.</li>
+        <li><a href="__REPO__/blob/main/src/caso_uso_llm/ollama_gpu.py"><code>ollama_gpu.py</code></a>: la comprobación que impide ejecutar en CPU sin avisar, añadida tras ese incidente.</li>
+      </ul>
+    </details>
   </section>
 
   <footer>
@@ -611,9 +607,13 @@ footer { margin-top: 34px; color: var(--muted); font-size: .86rem; border-top: 1
   $("next").addEventListener("click", () => move(1));
   $("tour").addEventListener("click", () => { step = 0; show(tour[0].id); });
   $("tourexit").addEventListener("click", () => { step = null; show(select.value); });
+  const reveal = id => {
+    const target = id && document.getElementById(id), fold = target && target.closest("details");
+    if (fold) { fold.open = true; target.scrollIntoView({block: "start"}); }
+  };
   window.addEventListener("hashchange", () => {
     const id = location.hash.slice(1);
-    if (!byId[id]) return;
+    if (!byId[id]) { reveal(id); return; }
     show(id); $("summary").scrollIntoView({block: "start"});
   });
 
@@ -627,6 +627,7 @@ footer { margin-top: 34px; color: var(--muted); font-size: .86rem; border-top: 1
   });
 
   show(location.hash.slice(1));
+  reveal(location.hash.slice(1));
 })();
 </script>
 </body>

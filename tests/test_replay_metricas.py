@@ -50,6 +50,9 @@ def test_la_tabla_lleva_la_cifra_del_fichero():
     assert all((M.ROOT / row[5]).exists() for row in M.result_rows(f))
 
 
-def test_una_cifra_de_la_cabecera_sale_de_la_cola():
+def test_el_texto_lleva_las_cifras_de_los_ficheros():
     f = M.facts()
-    assert f"{f['low']} reseñas reales" in M.headline(f, "https://repo")
+    text = M.how(f, 0.85, 8) + M.lessons(f, "https://repo")
+    assert f"De las {f['low']} reales" in text
+    assert f"{M.miles(f['ahr']['n'])} reseñas" in text
+    assert f"en {f['ciegas']['v6']} reseñas" in text

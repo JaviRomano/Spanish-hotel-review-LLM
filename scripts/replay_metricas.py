@@ -130,33 +130,133 @@ def source(rel: str, repo: str) -> str:
     return f'<a href="{repo}/blob/main/{rel}">{escape(Path(rel).name)}</a>'
 
 
-def headline(f: dict, repo: str) -> str:
-    cases = t(" y ", " and ").join(f"<code>{c}</code>" for c in JUDGE_MISSES)
+def cases_intro(tour_steps: int) -> str:
+    return t(f"Empieza por la guía orientativa: {tour_steps} casos, de un acierto claro al fallo que el juez no ve.",
+             f"Start with the guided tour: {tour_steps} cases, from a clean success to the failure the judge misses.")  # fmt: skip
+
+
+def how(f: dict, threshold: float, criteria: int) -> str:
+    ahr, none = f["ahr"], t("ninguna", "none")
+    neutral = num(ahr["f1_per_class"]["neutral"], 3)
+    seconds = num(float(f["latencia"][0]), 0)
     if _english:
-        return (f"Of the {f['low']} real 1 to 3★ reviews in the test, {f['low_pub'] or 'none'} was "
-                f"published without review, and that is by design (<a href=\"{repo}/blob/main/{COLA}\">data</a>). "
-                f"The judge let {len(JUDGE_MISSES)} implicit admissions of fault through ({cases}): these "
-                "are cases flagged by reading the replies, not a rate.")  # fmt: skip
-    return (f"De las {f['low']} reseñas reales de 1 a 3★ de la prueba, {f['low_pub'] or 'ninguna'} se "
-            f"publicó sin revisión, y es así por diseño (<a href=\"{repo}/blob/main/{COLA}\">datos</a>). "
-            f"El juez dejó pasar {len(JUDGE_MISSES)} admisiones implícitas de culpa ({cases}): son "
-            "casos señalados al leer las respuestas, no una tasa.")  # fmt: skip
+        steps = [
+            ("1. Understand the review",
+             "A classifier decides whether the review is negative, neutral or positive, and how confident "
+             "it is. It is mRoBERTa, a model trained for Spanish that I fine-tuned on real reviews, averaged "
+             f"over three seeds. On {miles(ahr['n'])} reviews it never saw in training, it reaches a macro "
+             f"F1 of {num(ahr['f1_macro'], 3)}: a score from 0 to 1 that weighs all three classes equally. "
+             f"The neutral class, the hardest, stays at {neutral}."),
+            ("2. Find what it can say",
+             "A language model writes well, but it tends to <b>make things up</b>. To limit that, it gets the hotel's full "
+             "fact sheet and, through RAG, the policies and approved replies closest to this review. RAG "
+             "(Retrieval-Augmented Generation) here means finding the relevant documents and handing them to "
+             "the model before it writes. For "
+             "policies, it combines search by keywords (BM25) and by meaning (bge-m3 embeddings)."),
+            ("3. Draft and check",
+             "Qwen3.6 27B, an LLM running locally, works out what the guest is talking about and drafts the "
+             "reply. Two filters then check it: fixed rules (services missing from the fact sheet, "
+             "compensation, people's names) and a second model, Gemma 4 12B, which I call the judge. It "
+             f"comes from another family so it does not share the generator's biases: it answers yes or no "
+             f"to {criteria} criteria and quotes the sentence behind each failure."),
+            ("4. Decide who publishes",
+             f"The gate makes the final decision. Negative and neutral reviews, doubtful ones (confidence below "
+             f"{num(threshold, 2)}), traps and any accident or legal risk go to a person. Of the "
+             f"{f['n_cola']} reviews in the test, {f['publicables']} pass every check. Of the {f['low']} "
+             f"real 1 to 3★ reviews, {f['low_pub'] or none} was published without review. It is not "
+             f"auto-publishing: it prepares drafts, at a median of {seconds} s per review on one PC."),
+        ]  # fmt: skip
+    else:
+        steps = [
+            ("1. Entender la reseña",
+             "Un clasificador decide si la reseña es negativa, neutral o positiva, y con cuánta confianza. "
+             "Es mRoBERTa, un modelo entrenado para español que ajusté con reseñas reales (fine-tuning), "
+             f"promediando tres semillas. En {miles(ahr['n'])} reseñas que no vio al entrenar saca un F1 "
+             f"macro de {num(ahr['f1_macro'], 3)}: una nota de 0 a 1 que da el mismo peso a las tres clases. "
+             f"La neutral, la más difícil, se queda en {neutral}."),
+            ("2. Buscar lo que se puede decir",
+             "Un modelo de lenguaje redacta bien, pero tiende a <b>inventar</b>. Para limitarlo, recibe la ficha completa del "
+             "hotel y, mediante RAG, las políticas y las respuestas aprobadas más parecidas a esta reseña. "
+             "RAG (Retrieval-Augmented Generation) en este caso consiste en buscar los documentos pertinentes "
+             "y dárselos al modelo antes de que escriba. "
+             "En las políticas combina búsqueda por palabras (BM25) y por significado (embeddings de bge-m3)."),
+            ("3. Redactar y revisar",
+             "Qwen3.6 27B, un LLM que corre en local, identifica de qué habla el cliente y redacta el "
+             "borrador. Después lo revisan dos filtros: reglas fijas (servicios que no están en la ficha, "
+             "compensaciones, nombres de personas) y un segundo modelo, Gemma 4 12B, al que llamo juez. Es "
+             f"de otra familia para no compartir los sesgos del generador: contesta sí o no a {criteria} "
+             "criterios y cita la frase que justifica cada suspenso."),
+            ("4. Decidir quién publica",
+             f"La puerta toma la decisión final. Lo negativo, lo neutral, lo dudoso (confianza por debajo de "
+             f"{num(threshold, 2)}), las trampas y cualquier accidente o riesgo legal pasan a una persona. "
+             f"De las {f['n_cola']} reseñas de la prueba, {f['publicables']} superan todos los controles. "
+             f"De las {f['low']} reales de 1 a 3★, {f['low_pub'] or none} se publicó sin revisión. No es "
+             f"autopublicación: prepara borradores, con una mediana de {seconds} s por reseña en un PC."),
+        ]  # fmt: skip
+    return _blocks(steps, "steps pairs")
 
 
-def rebuilt(f: dict, repo: str) -> str:
+def lessons(f: dict, repo: str) -> str:
     report = (
         f"{repo}/blob/main/reports/data_report.md#5-reproducción-de-la-fuga-del-proyecto-original"
     )
+    c = f["ciegas"]
+    fp = f["juez_marca"] - f["coinciden"]
+    cases = t(" y ", " and ").join(f'<a href="#{i}">{i}</a>' for i in JUDGE_MISSES)
     if _english:
-        return (f"<strong>Why I rebuilt it:</strong> {f['leak']}% of the first version's test set was "
-                f"literally in train (<a href=\"{report}\">reproduction</a>), so that F1 is worthless. On "
-                f"clean data, the classifier reaches a macro F1 of {num(f['coah']['f1_macro'], 3)} on the "
-                f"test set and {num(f['ahr']['f1_macro'], 3)} on {miles(f['ahr']['n'])} unseen reviews.")  # fmt: skip
-    return (f"<strong>Por qué lo rehíce:</strong> el {f['leak'].replace('.', ',')} % del test de la "
-            f"primera versión estaba literalmente en train (<a href=\"{report}\">reproducción</a>), "
-            f"así que aquel F1 no sirve. Con los datos limpios, el clasificador saca un F1 macro de "
-            f"{num(f['coah']['f1_macro'], 3)} en el test y de {num(f['ahr']['f1_macro'], 3)} en "
-            f"{miles(f['ahr']['n'])} reseñas que no vio.")  # fmt: skip
+        items = [
+            ("The first figures were worthless",
+             f"This project began as an earlier version that appeared to work, but the result was very poor, "
+             f"so I audited it: "
+             f"{f['leak']}% of the final exam (the test set) also appeared, word for word, in the training "
+             f"data. The model already knew the answers. This is called data leakage "
+             f"(<a href=\"{report}\">reproduction</a>). It also picked the model with that same exam and had "
+             "never seen a 4★ review. I rebuilt it from scratch: duplicates removed before splitting, and a "
+             "separate validation set."),
+            ("More variety did not mean better replies",
+             "Almost every reply opens the same way, so I tried more varied versions of the prompt, the "
+             f"model's instructions. Comparing them blind, without knowing which was which, I preferred the "
+             f"current one on {c['v6']} reviews and the newer one on {c['v9']}, a difference that could be "
+             f"chance (p = {num(float(c['p']), 2)}). I kept the current one, and the replies are still repetitive. "
+             "I will try again when I have more reviews, so as not to fit the "
+             "prompt to these same cases and overfit."),
+            ("An automatic evaluator has to be evaluated too",
+             f"I compared the judge with my own blind labels on {f['n_calibracion']} replies. It failed "
+             f"{f['juez_marca']} and I failed {f['persona_marca']}, all of them among its {f['juez_marca']}: "
+             f"it missed none of mine, with {fp} false alarms. The sample is small, and reading other "
+             f"replies I found implicit admissions of fault that it lets through ({cases}). So "
+             "anything delicate always has to go to a person."),
+        ]  # fmt: skip
+    else:
+        items = [
+            ("Las primeras cifras no valían",
+             "Este proyecto nació de una versión anterior que en apariencia funcionaba, pero el resultado era "
+             "muy deficiente, de modo que la audité: el "
+             f"{f['leak'].replace('.', ',')} % del examen final (el test) estaba también, letra por letra, "
+             "en los datos de entrenamiento. El modelo se sabía las respuestas. Es lo que se llama fuga de "
+             f"datos (<a href=\"{report}\">reproducción</a>). Además, elegía el modelo con ese mismo examen y "
+             "nunca había visto una reseña de 4★. Lo rehíce desde cero: duplicados fuera antes de separar "
+             "los datos y un conjunto de validación aparte."),
+            ("Más variedad no significó mejores respuestas",
+             "Casi todas las respuestas empiezan igual, así que probé versiones más variadas del prompt, las "
+             "instrucciones que recibe el modelo. Al compararlas a ciegas, sin saber cuál era cuál, preferí "
+             f"la actual en {c['v6']} reseñas y la nueva en {c['v9']}, una diferencia que podría ser azar "
+             f"(p = {num(float(c['p']), 2)}). Me quedé con la actual, y las respuestas siguen siendo repetitivas. "
+             "Volveré a intentarlo cuando disponga de más reseñas, para no ajustar "
+             "el prompt a estos mismos casos y provocar sobreajuste."),
+            ("A un evaluador automático también hay que evaluarlo",
+             f"Comparé al juez con mis etiquetas, puestas a ciegas, en {f['n_calibracion']} respuestas. "
+             f"Suspendió {f['juez_marca']} y yo {f['persona_marca']}, todas dentro de sus {f['juez_marca']}: "
+             f"no se le escapó ninguna de las mías, con {fp} falsas alarmas. La muestra es pequeña, y al "
+             f"leer otras respuestas encontré admisiones implícitas de culpa que deja pasar ({cases}). Eso "
+             "obliga a que lo delicado pase siempre por una persona."),
+        ]  # fmt: skip
+    return _blocks(items)
+
+
+def _blocks(items: list[tuple[str, str]], cls: str = "steps") -> str:
+    body = "".join(f"<div><h3>{title}</h3><p>{text}</p></div>" for title, text in items)
+    return f'<div class="{cls}">{body}</div>'
 
 
 def result_rows(f: dict) -> list[tuple]:
