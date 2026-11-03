@@ -18,6 +18,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Hotel Review LLM · __AUTHOR__">
 <meta name="twitter:image" content="__PAGE_URL__og.png">
+<link rel="alternate" hreflang="es" href="__PAGE_URL__">
+<link rel="alternate" hreflang="en" href="__PAGE_URL__en/">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap">
@@ -250,7 +252,7 @@ footer { margin-top: 34px; color: var(--muted); font-size: .86rem; border-top: 1
 </svg>
 <div class="wrap">
   <div class="topbar">
-    <p class="who"><strong>__AUTHOR__</strong> · <a href="__LINKEDIN__" target="_blank" rel="noopener">LinkedIn</a> · <a href="__GITHUB__">GitHub (@JaviRomano)</a> · <a href="__REPO__">Código e informes</a></p>
+    <p class="who"><strong>__AUTHOR__</strong> · <a href="__LINKEDIN__" target="_blank" rel="noopener">LinkedIn</a> · <a href="__GITHUB__">GitHub (@JaviRomano)</a> · <a href="__REPO__">Código e informes</a> · <a href="__OTHER_HREF__" lang="__OTHER_LANG__" hreflang="__OTHER_LANG__">__OTHER_LABEL__</a></p>
     <button class="theme" id="theme" type="button">Cambiar tema</button>
   </div>
 
@@ -574,7 +576,7 @@ footer { margin-top: 34px; color: var(--muted); font-size: .86rem; border-top: 1
     if (!pub) { reasons.append(el("h3", "Motivos de la puerta")); const ul = el("ul"); c.reasons.forEach(r => ul.append(el("li", r))); reasons.append(ul); }
 
     const cap = $("h-judge"); cap.replaceChildren();
-    cap.append(total ? `Inspección del juez: ${total - failed} de ${total} ` : "Inspección del juez: no se aplica a una reseña trampa ", el("small", "Gemma 12B, de otra familia que el generador"));
+    cap.append(total ? `Inspección del juez: ${total - failed} de ${total} ` : "Inspección del juez: no se aplica a una reseña trampa ", el("small", "Gemma 4 12B, de otra familia que el generador"));
     const tb = $("judge"); tb.replaceChildren();
     for (const j of c.judge) {
       const tr = el("tr", null, j.cumple ? "ok" : "no");

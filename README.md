@@ -10,9 +10,9 @@ A pipeline for a hotel chain that **classifies the sentiment** of a review (nega
 
 It is a rebuild of a first attempt (in [`legacy/`](legacy/), tag `v1-original`) whose metrics were not valid. See [why it was rebuilt](#why-it-was-rebuilt).
 
-[![Guided tour of the demo page: nine cases, from a clean success to the failure the judge misses](docs/img/recorrido.gif)](https://javiromano.github.io/Spanish-hotel-review-LLM/)
+[![Guided tour of the demo page: nine cases, from a clean success to the failure the judge misses](docs/img/recorrido_en.gif)](https://javiromano.github.io/Spanish-hotel-review-LLM/en/)
 
-*Guided tour of the [demo page](https://javiromano.github.io/Spanish-hotel-review-LLM/), which replays saved results. The page is in Spanish.*
+*Guided tour of the [demo page](https://javiromano.github.io/Spanish-hotel-review-LLM/en/), which replays saved results. Reviews and replies stay in Spanish, the language the system works in.*
 
 ## Status
 

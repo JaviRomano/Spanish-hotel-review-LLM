@@ -31,6 +31,18 @@ def test_formato_espanol():
     assert (M.num(0.781, 3), M.miles(11414), M.pct(0.031, 1)) == ("0,781", "11.414", "3,1 %")
 
 
+def test_formato_ingles_con_las_mismas_cifras():
+    M.set_english(True)
+    try:
+        f = M.facts()
+        assert (M.num(0.781, 3), M.miles(11414), M.pct(0.031, 1)) == ("0.781", "11,414", "3.1%")
+        rows = M.result_rows(f)
+        assert all(not str(r[3]).startswith("0,") for r in rows)
+        assert "of 54" in M.results_table(f, "https://repo")
+    finally:
+        M.set_english(False)
+
+
 def test_la_tabla_lleva_la_cifra_del_fichero():
     f = M.facts()
     html = M.results_table(f, "https://repo")

@@ -23,8 +23,24 @@ LATENCIA = "reports/phase9_latencia.md"
 MAPA = "evals/gold/calibracion_mapa.json"
 GOLD = "evals/gold/semillas_fase4.json"
 Z_95 = 1.96
+EN = json.loads((ROOT / "evals" / "demo" / "replay_en.json").read_text(encoding="utf-8"))["tablas"]
+_english = False
 # Admisiones implícitas señaladas al leer: casos, no una tasa
 JUDGE_MISSES = ("p08", "rag-carteles")
+
+
+def set_english(on: bool) -> None:
+    global _english
+    _english = on
+
+
+def t(es: str, en: str) -> str:
+    return en if _english else es
+
+
+def cell(text: str) -> str:
+    """Celda fija de una tabla, en el idioma de la página."""
+    return EN.get(text, text) if _english else text
 
 
 def wilson(k: int, n: int, z: float = Z_95) -> tuple[float, float]:
@@ -37,24 +53,25 @@ def wilson(k: int, n: int, z: float = Z_95) -> tuple[float, float]:
 
 
 def num(x: float, digits: int) -> str:
-    return f"{x:.{digits}f}".replace(".", ",")
+    text = f"{x:.{digits}f}"
+    return text if _english else text.replace(".", ",")
 
 
 def miles(n: int) -> str:
-    return f"{n:,}".replace(",", ".")
+    return f"{n:,}" if _english else f"{n:,}".replace(",", ".")
 
 
 def pct(x: float, digits: int = 0) -> str:
-    return f"{num(x * 100, digits)} %"
+    return f"{num(x * 100, digits)}%" if _english else f"{num(x * 100, digits)} %"
 
 
 def share(k: int, n: int) -> str:
-    return f"{miles(k)} de {miles(n)} ({pct(k / n, 1 if k / n < 0.1 else 0)})"
+    return f"{miles(k)} {t('de', 'of')} {miles(n)} ({pct(k / n, 1 if k / n < 0.1 else 0)})"
 
 
 def wilson_text(k: int, n: int) -> str:
     low, high = wilson(k, n)
-    return f"{pct(low, 1)} a {pct(high, 1)}"
+    return f"{pct(low, 1)} {t('a', 'to')} {pct(high, 1)}"
 
 
 def _json(rel: str):
@@ -114,7 +131,12 @@ def source(rel: str, repo: str) -> str:
 
 
 def headline(f: dict, repo: str) -> str:
-    cases = " y ".join(f"<code>{c}</code>" for c in JUDGE_MISSES)
+    cases = t(" y ", " and ").join(f"<code>{c}</code>" for c in JUDGE_MISSES)
+    if _english:
+        return (f"Of the {f['low']} real 1 to 3★ reviews in the test, {f['low_pub'] or 'none'} was "
+                f"published without review, and that is by design (<a href=\"{repo}/blob/main/{COLA}\">data</a>). "
+                f"The judge let {len(JUDGE_MISSES)} implicit admissions of fault through ({cases}): these "
+                "are cases flagged by reading the replies, not a rate.")  # fmt: skip
     return (f"De las {f['low']} reseñas reales de 1 a 3★ de la prueba, {f['low_pub'] or 'ninguna'} se "
             f"publicó sin revisión, y es así por diseño (<a href=\"{repo}/blob/main/{COLA}\">datos</a>). "
             f"El juez dejó pasar {len(JUDGE_MISSES)} admisiones implícitas de culpa ({cases}): son "
@@ -125,6 +147,11 @@ def rebuilt(f: dict, repo: str) -> str:
     report = (
         f"{repo}/blob/main/reports/data_report.md#5-reproducción-de-la-fuga-del-proyecto-original"
     )
+    if _english:
+        return (f"<strong>Why I rebuilt it:</strong> {f['leak']}% of the first version's test set was "
+                f"literally in train (<a href=\"{report}\">reproduction</a>), so that F1 is worthless. On "
+                f"clean data, the classifier reaches a macro F1 of {num(f['coah']['f1_macro'], 3)} on the "
+                f"test set and {num(f['ahr']['f1_macro'], 3)} on {miles(f['ahr']['n'])} unseen reviews.")  # fmt: skip
     return (f"<strong>Por qué lo rehíce:</strong> el {f['leak'].replace('.', ',')} % del test de la "
             f"primera versión estaba literalmente en train (<a href=\"{report}\">reproducción</a>), "
             f"así que aquel F1 no sirve. Con los datos limpios, el clasificador saca un F1 macro de "
@@ -138,7 +165,7 @@ def result_rows(f: dict) -> list[tuple]:
     hits = round(sfu["accuracy"] * sfu["n"])
     decided = c["v6"] + c["v9"]
     prop = lambda k, n: (share(k, n), wilson_text(k, n))  # noqa: E731
-    interval = lambda v: f"{num(v[0], 3)} a {num(v[1], 3)}"  # noqa: E731
+    interval = lambda v: f"{num(v[0], 3)} {t('a', 'to')} {num(v[1], 3)}"  # noqa: E731
     return [
         ("AHR, nunca usado para entrenar", ahr["n"], "F1 macro", num(ahr["f1_macro"], 3),
          interval(ahr["ci95"]), REALISTA),
@@ -149,16 +176,16 @@ def result_rows(f: dict) -> list[tuple]:
         ("SFU, otra web", sfu["n"], "Aciertos", *prop(hits, sfu["n"]), REALISTA),
         ("Calibración, rúbrica v2", f["n_calibracion"], "Precisión del juez", *prop(f["coinciden"], f["juez_marca"]), CALIBRACION),
         ("Calibración, rúbrica v2", f["n_calibracion"], "Recall del juez", *prop(f["coinciden"], f["persona_marca"]), CALIBRACION),
-        ("Calibración, rúbrica v2", f["n_calibracion"], "Kappa en «no admite culpa»", f["kappa"].replace(".", ","), "—", CALIBRACION),
+        ("Calibración, rúbrica v2", f["n_calibracion"], "Kappa en «no admite culpa»", num(float(f["kappa"]), 2), "—", CALIBRACION),
         ("Semillas, rúbrica v2", f["n_semillas"], "Fallos de la persona que detecta el juez",
          *prop(seeds["coinciden"], seeds["referencia"]), SEMILLAS),
         ("Cola de demostración", f["n_cola"], "Pasan todos los controles", *prop(f["publicables"], f["n_cola"]), COLA),
         ("Reales de 1 a 3★", f["low"], "Publicadas sin revisión (por diseño)", *prop(f["low_pub"], f["low"]), COLA),
-        ("Comparación a ciegas, v6 y v9", decided, f"Prefiere v6, sin {c['empates']} empates (p = {num(float(c['p']), 2)})",
+        ("Comparación a ciegas, v6 y v9", decided, t(f"Prefiere v6, sin {c['empates']} empates (p = {num(float(c['p']), 2)})", f"Prefers v6, excluding {c['empates']} ties (p = {num(float(c['p']), 2)})"),
          *prop(c["v6"], decided), CIEGAS),
         ("Comparación a ciegas, v6", c["n"], "Publicable tal cual", *prop(c["publicable_v6"], c["n"]), CIEGAS),
         ("Latencia en un PC", f["n_latencia"], "Mediana hasta el veredicto",
-         f"{f['latencia'][0].replace('.', ',')} s (p90 {f['latencia'][1].replace('.', ',')} s)", "—", LATENCIA),
+         f"{num(float(f['latencia'][0]), 1)} s (p90 {num(float(f['latencia'][1]), 1)} s)", "—", LATENCIA),
     ]  # fmt: skip
 
 
@@ -168,11 +195,11 @@ def set_rows(f: dict, shown: int, own: int) -> list[tuple]:
         ("Test limpio de COAH", str(f["n_coah"]), "Real, TripAdvisor", "Medir el clasificador"),
         ("AHR", miles(f["ahr"]["n"]), "Real, TripAdvisor, 2021", "Medir el clasificador con reseñas que no vio"),
         ("SFU", str(f["sfu"]["n"]), "Real, ciao.es", "Medirlo con otra web"),
-        ("Cola de demostración", str(f["n_cola"]), f"{f['n_sint']} sintéticas y {f['n_real']} reales del AHR", "Sistema completo y puerta"),
-        ("Comparación a ciegas", f"{c['n']}, valoradas {c['n'] - c['sin_valorar']}", "Escritas por mí", "Elegir entre versiones del prompt"),
-        ("Calibración", str(f["n_calibracion"]), f"Respuestas de {f['versiones_calibracion']} versiones del prompt", "Juez frente a una persona"),
+        ("Cola de demostración", str(f["n_cola"]), t(f"{f['n_sint']} sintéticas y {f['n_real']} reales del AHR", f"{f['n_sint']} synthetic and {f['n_real']} real from AHR"), "Sistema completo y puerta"),
+        ("Comparación a ciegas", t(f"{c['n']}, valoradas {c['n'] - c['sin_valorar']}", f"{c['n']}, {c['n'] - c['sin_valorar']} rated"), "Escritas por mí", "Elegir entre versiones del prompt"),
+        ("Calibración", str(f["n_calibracion"]), t(f"Respuestas de {f['versiones_calibracion']} versiones del prompt", f"Replies from {f['versiones_calibracion']} prompt versions"), "Juez frente a una persona"),
         ("Semillas", str(f["n_semillas"]), "Respuestas de las primeras versiones", "Fallos reales del generador"),
-        ("Selector de esta página", str(shown), f"{own} escritas por mí y {shown - own} ilustrativas", "Enseñar casos; no es una muestra"),
+        ("Selector de esta página", str(shown), t(f"{own} escritas por mí y {shown - own} ilustrativas", f"{own} written by me and {shown - own} illustrative"), "Enseñar casos; no es una muestra"),
     ]  # fmt: skip
 
 
@@ -190,6 +217,10 @@ def matrix(cases: list[dict]) -> dict[tuple[bool, bool], list[str]]:
 def matrix_note(cells: dict) -> str:
     total = sum(map(len, cells.values()))
     fails = sum(len(v) for (_, ok), v in cells.items() if not ok)
+    if _english:
+        return (f"Only {total} cases have my verdict, with the criteria written before generating, and "
+                f"{fails} fails: the matrix shows which cases they are, it does not measure the judge. Each "
+                "ID opens the case in the viewer.")  # fmt: skip
     return (f"Solo {total} casos tienen mi veredicto, con el criterio escrito antes de generar, y "
             f"{fails} no cumple: la matriz enseña qué casos son, no mide al juez. Cada identificador "
             "abre el caso en el visor.")  # fmt: skip
@@ -200,20 +231,32 @@ def matrix_table(cells: dict) -> str:
         ids = cells[(approves, fine)]
         return (
             "<td>"
-            + (" ".join(f'<a href="#{i}"><code>{i}</code></a>' for i in ids) or "Ninguno")
+            + (
+                " ".join(f'<a href="#{i}"><code>{i}</code></a>' for i in ids)
+                or t("Ninguno", "None")
+            )
             + "</td>"
         )
 
-    head = '<tr><td></td><th scope="col">Yo: cumple</th><th scope="col">Yo: no cumple</th></tr>'
+    head = (f'<tr><td></td><th scope="col">{t("Yo: cumple", "Me: passes")}</th>'
+            f'<th scope="col">{t("Yo: no cumple", "Me: fails")}</th></tr>')  # fmt: skip
     rows = "".join(f'<tr><th scope="row">{name}</th>{cell(v, True)}{cell(v, False)}</tr>'
-                   for name, v in (("El juez aprueba", True), ("El juez suspende", False)))  # fmt: skip
+                   for name, v in ((t("El juez aprueba", "Judge approves"), True), (t("El juez suspende", "Judge fails"), False)))  # fmt: skip
     return f'<table class="data matrix"><thead>{head}</thead><tbody>{rows}</tbody></table>'
 
 
 def results_table(f: dict, repo: str) -> str:
-    head = "<tr><th>Conjunto</th><th>n</th><th>Métrica</th><th>Valor</th><th>IC 95 %</th><th>Origen</th></tr>"
+    names = (
+        t("Conjunto", "Set"),
+        "n",
+        t("Métrica", "Metric"),
+        t("Valor", "Value"),
+        t("IC 95 %", "95% CI"),
+        t("Origen", "Source"),
+    )
+    head = "<tr>" + "".join(f"<th>{x}</th>" for x in names) + "</tr>"
     body = "".join(
-        f'<tr><td>{escape(a)}</td><td class="n">{miles(n)}</td><td>{escape(m)}</td><td>{escape(v)}</td>'
+        f'<tr><td>{escape(cell(a))}</td><td class="n">{miles(n)}</td><td>{escape(cell(m))}</td><td>{escape(v)}</td>'
         f"<td>{escape(ci)}</td><td>{source(rel, repo)}</td></tr>"
         for a, n, m, v, ci, rel in result_rows(f)
     )
@@ -221,7 +264,8 @@ def results_table(f: dict, repo: str) -> str:
 
 
 def sets_table(f: dict, shown: int, own: int) -> str:
-    head = "<tr><th>Conjunto</th><th>Tamaño</th><th>Origen</th><th>Uso</th></tr>"
-    body = "".join("<tr>" + "".join(f"<td>{escape(x)}</td>" for x in row) + "</tr>"
+    names = (t("Conjunto", "Set"), t("Tamaño", "Size"), t("Origen", "Origin"), t("Uso", "Use"))
+    head = "<tr>" + "".join(f"<th>{x}</th>" for x in names) + "</tr>"
+    body = "".join("<tr>" + "".join(f"<td>{escape(cell(x))}</td>" for x in row) + "</tr>"
                    for row in set_rows(f, shown, own))  # fmt: skip
     return f'<table class="data"><thead>{head}</thead><tbody>{body}</tbody></table>'

@@ -26,7 +26,11 @@ from caso_uso_llm.rag import kb
 
 ROOT = Path(__file__).resolve().parents[1]
 PAGE = (ROOT / "docs" / "index.html").as_uri()
+PAGE_EN = (ROOT / "docs" / "en" / "index.html").as_uri()
 SHOTS = ROOT / "docs" / "screenshots"
+# Texto de la interfaz que no debe quedar en la versión inglesa
+SPANISH = ("pasa a una persona", "se publica sola", "Mi valoración", "Puerta", "Motivos de la puerta",
+           "Inspección del juez", "sin valorar", "Paso ", "Criterio escrito", "Ver más")  # fmt: skip
 # Texto sobre fondo de color: selector del elemento cuyo color y fondo se comparan
 CONTRAST = [".pill.ok", ".pill.no", ".pill.partial", ".pill.mode", ".pill.neutral", ".note",
             ".rating p", ".rating .head", ".alertbox", ".stamp", ".reasons li",
@@ -53,6 +57,43 @@ def ratio(a: str, b: str) -> float:
 BG = """el => { let n = el; while (n) { const c = getComputedStyle(n).backgroundColor;
   if (c && !c.startsWith('rgba(0, 0, 0, 0)') && c !== 'transparent') return c; n = n.parentElement; }
   return getComputedStyle(document.body).backgroundColor; }"""
+
+
+def check_english(browser) -> list[str]:
+    """Versión inglesa: sin errores ni desbordes, todos los casos sin interfaz en español."""
+    problems = []
+    for width in (375, 1280):
+        page = browser.new_page(viewport={"width": width, "height": 800})
+        errors = []
+        page.on("pageerror", lambda e, errors=errors: errors.append(str(e)))
+        page.goto(PAGE_EN)
+        ids = page.evaluate("[...document.getElementById('case').options].map(o => o.value)")
+        for case in ids:
+            page.select_option("#case", case)
+            page.wait_for_timeout(30)
+            text = " ".join(
+                page.inner_text(s) for s in ("#summary", "#stamp", "#h-judge", "#reasons")
+            )
+            problems += [f"inglés {case}: queda «{w}»" for w in SPANISH if w in text]
+            if page.evaluate("document.documentElement.scrollWidth") > width:
+                problems.append(f"inglés {width} {case}: desborda")
+        problems += [f"inglés {width}: error de consola: {e}" for e in errors]
+        page.close()
+    page = browser.new_page(viewport={"width": 1280, "height": 800})
+    page.goto(PAGE_EN)
+    page.click(".fold summary")
+    page.click('a[href="#resultados"]')
+    page.wait_for_timeout(200)
+    if page.evaluate("location.hash") != "#resultados":
+        problems.append("inglés: el enlace a resultados no funciona")
+    page.locator("table.matrix a").last.click()
+    page.wait_for_timeout(200)
+    if page.input_value("#case") != page.evaluate("location.hash.slice(1)"):
+        problems.append("inglés: la matriz no abre su caso")
+    if page.get_attribute('a[hreflang="es"]', "href") != "../":
+        problems.append("inglés: falta el enlace a la versión en español")
+    page.close()
+    return problems
 
 
 def check_tour(browser) -> list[str]:
@@ -219,6 +260,7 @@ def main() -> int:
             problems.append("teclado: el resaltado enfocado no muestra su explicación")
         problems += check_links(browser)
         problems += check_tour(browser)
+        problems += check_english(browser)
         problems += check_text(browser)
         problems += check_form(browser)
         browser.close()

@@ -16,6 +16,7 @@ import json
 import re
 from pathlib import Path
 
+import replay_en as E
 import replay_metricas as M
 
 from caso_uso_llm.evals.judge import JUDGE_MODEL
@@ -35,6 +36,7 @@ SELECTION = ROOT / "evals" / "demo" / "seleccion_replay.json"
 RATINGS = ROOT / "evals" / "demo" / "valoracion_propias.json"  # del autor, frente a lo esperado
 TEMPLATE = ROOT / "scripts" / "replay_template.html"
 OUT = ROOT / "docs" / "index.html"
+OUT_EN = ROOT / "docs" / "en" / "index.html"
 OG = ROOT / "docs" / "og.png"
 PAGE_URL = "https://javiromano.github.io/Spanish-hotel-review-LLM/"
 REPO = "https://github.com/JaviRomano/Spanish-hotel-review-LLM"
@@ -53,7 +55,9 @@ GROUP = {
 QUOTE = re.compile(r"«([^»]{6,})»")
 
 
-def highlights(it: dict, response: str, extra_text: str, extra_label: str) -> list[dict]:
+def highlights(
+    it: dict, response: str, extra_text: str, extra_label: str, names: dict | None = None
+) -> list[dict]:
     """Fragmentos de la respuesta que algo ya señala, con su fuente: la evidencia de los
     criterios que suspende el juez y las frases que el autor cita entre comillas en su
     valoración o nota. Solo si aparecen literalmente en la respuesta; no se elige nada nuevo."""
@@ -62,7 +66,8 @@ def highlights(it: dict, response: str, extra_text: str, extra_label: str) -> li
         v = (it.get("judge") or {}).get(k, {})
         ev = (v.get("evidencia") or "").strip().strip("«»\"'")
         if not v.get("cumple", True) and ev and ev in response:
-            out.append({"text": ev, "comment": f"Juez: no cumple «{NAMES[k]}»"})
+            text = f"Judge: fails “{names[NAMES[k]]}”" if names else f"Juez: no cumple «{NAMES[k]}»"
+            out.append({"text": ev, "comment": text})
     note = extra_text if len(extra_text) <= 220 else extra_text[:217].rsplit(" ", 1)[0] + "…"
     for q in QUOTE.findall(extra_text or ""):
         if q in response and all(q not in h["text"] for h in out):
@@ -192,27 +197,52 @@ def main() -> None:
         url = f"https://docs.google.com/forms/d/e/{FORM_ID}/formResponse"
         form = {"url": url, "entry": FORM_ENTRY}
     hotels = [[k, f"{h['nombre']} ({h['ciudad']})"] for k, h in kb.fichas().items()]
+    facts = M.facts()
+    raw = demo | {
+        it["id"]: it for src in SOURCES for it in json.loads(src.read_text(encoding="utf-8"))
+    }
+    english = [
+        E.case(c, lambda i, text, label: highlights(raw[i], raw[i].get("response") or "", text, label,
+                                                    E.EN["criterios"]))
+        for c in cases
+    ]  # fmt: skip
+    render(cases, tour, facts, form, hotels, english=False)
+    render(english, E.tour(tour), facts, form, hotels, english=True)
+    og_image()
+    print(
+        f"{len(cases)} casos -> {OUT.relative_to(ROOT)}, {OUT_EN.relative_to(ROOT)} · {OG.relative_to(ROOT)}"
+    )
+
+
+def render(cases, tour, facts, form, hotels, english: bool) -> None:
+    """Escribe una versión de la página. Inglés y español comparten plantilla y cifras."""
+    M.set_english(english)
     doc = {"umbral": THRESHOLD, "casos": cases, "recorrido": tour, "formulario": form,
            "hoteles": hotels}  # fmt: skip
-    facts = M.facts()
     own = sum(c["eval_mode"] == "criterio_previo" for c in cases)
     cells = M.matrix(cases)
     data = json.dumps(doc, ensure_ascii=False, indent=1)
+    page = TEMPLATE.read_text(encoding="utf-8")
+    if english:
+        page = E.apply_ui(page)
     # Dentro de <script>, «</» cerraría la etiqueta antes de tiempo
-    page = TEMPLATE.read_text(encoding="utf-8").replace("__DATA__", data.replace("</", "<\\/"))
+    page = page.replace("__DATA__", data.replace("</", "<\\/"))
     page = live_panel(page, bool(form))
+    other = ("../", "es", "Español") if english else ("en/", "en", "English")
     for key, value in {"__HEADLINE__": M.headline(facts, REPO), "__REBUILT__": M.rebuilt(facts, REPO),
                        "__MATRIX_NOTE__": M.matrix_note(cells), "__MATRIX__": M.matrix_table(cells),
                        "__RESULTS_TABLE__": M.results_table(facts, REPO),
                        "__SETS_TABLE__": M.sets_table(facts, len(cases), own),
+                       "__OTHER_HREF__": other[0], "__OTHER_LANG__": other[1], "__OTHER_LABEL__": other[2],
                        "__REPO__": REPO, "__LINKEDIN__": LINKEDIN, "__GITHUB__": GITHUB,
                        "__AUTHOR__": AUTHOR, "__PAGE_URL__": PAGE_URL}.items():  # fmt: skip
         page = page.replace(key, value)
     left = re.findall(r"__[A-Z_]+__", page)
     assert not left, f"marcadores sin sustituir en la plantilla: {sorted(set(left))}"
-    OUT.write_text(page, encoding="utf-8", newline="\n")
-    og_image()
-    print(f"{len(cases)} casos -> {OUT.relative_to(ROOT)} · {OG.relative_to(ROOT)}")
+    path = OUT_EN if english else OUT
+    path.parent.mkdir(exist_ok=True)
+    path.write_text(page, encoding="utf-8", newline="\n")
+    M.set_english(False)
 
 
 NAMES = {c.id: c.nombre for c in criterios(RUBRIC)}
